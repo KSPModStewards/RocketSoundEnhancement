@@ -79,8 +79,8 @@ namespace RSEAudio
 			lowpassfilter.lowpassResonanceQ = lowpassResQ;
 			
 			if (HighLogic.LoadedScene != GameScenes.LOADING) {
-				GameEvents.onGamePause.Add(new EventVoid.OnEvent(OnGamePause));
-				GameEvents.onGameUnpause.Add(new EventVoid.OnEvent(OnGameUnpause));
+				GameEvents.onGamePause.Add(OnGamePause);
+				GameEvents.onGameUnpause.Add(OnGameUnpause);
 			}
 		}
 		
@@ -142,8 +142,8 @@ namespace RSEAudio
 		
 		void OnDestroy()
 		{
-			GameEvents.onGamePause.Remove(new EventVoid.OnEvent(OnGamePause));
-			GameEvents.onGameUnpause.Remove(new EventVoid.OnEvent(OnGameUnpause));
+			GameEvents.onGamePause.Remove(OnGamePause);
+			GameEvents.onGameUnpause.Remove(OnGameUnpause);
 		}
 	}
 }
