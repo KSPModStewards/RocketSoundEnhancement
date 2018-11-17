@@ -1,0 +1,5 @@
+D:\KSP-Modding\RocketSoundEnhancement\RSEAudio\RSEAudio\bin\Debug\RSEAudio.dll
+D:\KSP-Modding\RocketSoundEnhancement\RSEAudio\RSEAudio\bin\Debug\RSEAudio.pdb
+D:\KSP-Modding\RocketSoundEnhancement\RSEAudio\RSEAudio\obj\Debug\RSEAudio.dll
+D:\KSP-Modding\RocketSoundEnhancement\RSEAudio\RSEAudio\obj\Debug\RSEAudio.pdb
+D:\KSP-Modding\RocketSoundEnhancement\RSEAudio\RSEAudio\obj\Debug\RSEAudio.csprojResolveAssemblyReference.cache

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace RSEAudio
 {
 	[EffectDefinition("RSE_AUDIO")]
-	public class RSE_AdvanceAudio : EffectBehaviour
+	public class AdvanceAudioFX : EffectBehaviour
 	{
 		[Persistent]
 		public AudioFX.AudioChannel channel;
@@ -31,7 +31,7 @@ namespace RSEAudio
 		
 		public FXCurve volume = new FXCurve("volume", 1f);
 		public FXCurve pitch = new FXCurve("pitch", 1f);
-		public FXCurve lowpass = new FXCurve("lowpass", 22000f);
+		public FXCurve lowpass = new FXCurve("lowpass", 1f);
 		
 		GameObject audioParent;
 		AudioSource audioSource;
@@ -77,6 +77,7 @@ namespace RSEAudio
 			
 			lowpassfilter = audioParent.AddOrGetComponent<AudioLowPassFilter>();
 			lowpassfilter.lowpassResonanceQ = lowpassResQ;
+			lowpassfilter.customCutoffCurve = lowpass.fCurve;
 			
 			if (HighLogic.LoadedScene != GameScenes.LOADING) {
 				GameEvents.onGamePause.Add(OnGamePause);
@@ -123,8 +124,8 @@ namespace RSEAudio
 				audioSource.pitch = pitch.Value(thrustPow);
 				AudioFX.SetSourceVolume(audioSource, volume.Value(thrustPow), channel);
 			
-				var distance = Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, audioParent.transform.position);
-				lowpassfilter.cutoffFrequency = lowpass.Value(distance);
+				//var distance = Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, audioParent.transform.position);
+				//lowpassfilter.cutoffFrequency = lowpass.Value(distance);
 			} catch {
 				return;
 			}
