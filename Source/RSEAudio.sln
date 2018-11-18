@@ -1,8 +1,10 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 # SharpDevelop 5.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSEAudio", "RSEAudio\RSEAudio.csproj", "{5F6A7425-33F6-4925-971D-CD63DC2B1EB7}"
+VisualStudioVersion = 12.0.20827.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSEAudio", "RSEAudio.csproj", "{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,9 +12,9 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5F6A7425-33F6-4925-971D-CD63DC2B1EB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F6A7425-33F6-4925-971D-CD63DC2B1EB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F6A7425-33F6-4925-971D-CD63DC2B1EB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F6A7425-33F6-4925-971D-CD63DC2B1EB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

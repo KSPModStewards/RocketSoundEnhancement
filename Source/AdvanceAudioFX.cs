@@ -33,8 +33,9 @@ namespace RSEAudio
 		public FXCurve pitch = new FXCurve("pitch", 1f);
 		public FXCurve lowpass = new FXCurve("lowpass", 1f);
 		
-		GameObject audioParent;
 		AudioSource audioSource;
+		
+		GameObject audioParent;
 		AudioLowPassFilter lowpassfilter;
 		float thrustPow;
 		
@@ -63,6 +64,8 @@ namespace RSEAudio
 			
 			audioParent = new GameObject();
 			audioParent.transform.parent = gameObject.transform;
+			audioParent.transform.position = gameObject.transform.position;
+			audioParent.transform.rotation = gameObject.transform.rotation;
 			audioParent.layer = gameObject.layer;
 			
 			audioSource = audioParent.AddComponent<AudioSource>();
@@ -75,9 +78,11 @@ namespace RSEAudio
 			audioSource.dopplerLevel = doppler;
 			audioSource.loop = loop;
 			
-			lowpassfilter = audioParent.AddOrGetComponent<AudioLowPassFilter>();
-			lowpassfilter.lowpassResonanceQ = lowpassResQ;
-			lowpassfilter.customCutoffCurve = lowpass.fCurve;
+			if (lowpass.keyFrames.Count > 0) {
+				lowpassfilter = audioParent.AddOrGetComponent<AudioLowPassFilter>();
+				lowpassfilter.lowpassResonanceQ = lowpassResQ;
+				lowpassfilter.customCutoffCurve = lowpass.fCurve;
+			}
 			
 			if (HighLogic.LoadedScene != GameScenes.LOADING) {
 				GameEvents.onGamePause.Add(OnGamePause);
@@ -85,12 +90,14 @@ namespace RSEAudio
 			}
 		}
 		
-		bool playSoundSingle = false;
-		bool gamePaused = false;
+		bool _playSoundSingle = false;
+		bool _gamePaused = false;
+		int _fixedUpdateCount;
+		
 		public override void OnEvent()
 		{
 			thrustPow = 1f;
-			playSoundSingle = true;
+			_playSoundSingle = true;
 		}
 		
 		public override void OnEvent(float power)
@@ -98,13 +105,22 @@ namespace RSEAudio
 			thrustPow = power;
 		}
 		
+		void FixedUpdate()
+		{
+			if (_fixedUpdateCount < 2)
+				_fixedUpdateCount++;
+		}
+		
 		void Update()
 		{
+			if (_fixedUpdateCount < 2)
+				return;
+			
 			try {
 				if (audioSource.clip == null)
 					return;
 			
-				if (gamePaused) {
+				if (_gamePaused) {
 					if (audioSource.isPlaying) {
 						audioSource.Stop();
 					}
@@ -112,10 +128,11 @@ namespace RSEAudio
 				}
 				
 				if (audioSource.loop && !audioSource.isPlaying) {
+					audioSource.time = UnityEngine.Random.Range(0, audioSource.clip.length);
 					audioSource.Play();
-				} else if (playSoundSingle) {
+				} else if (_playSoundSingle) {
 					audioSource.Play();
-					playSoundSingle = false;
+					_playSoundSingle = false;
 				}
 
 				if (!audioSource.isPlaying)
@@ -124,8 +141,6 @@ namespace RSEAudio
 				audioSource.pitch = pitch.Value(thrustPow);
 				AudioFX.SetSourceVolume(audioSource, volume.Value(thrustPow), channel);
 			
-				//var distance = Vector3.Distance(FlightCamera.fetch.mainCamera.transform.position, audioParent.transform.position);
-				//lowpassfilter.cutoffFrequency = lowpass.Value(distance);
 			} catch {
 				return;
 			}
@@ -133,12 +148,12 @@ namespace RSEAudio
 
 		void OnGamePause()
 		{
-			gamePaused = true;
+			_gamePaused = true;
 		}
 
 		void OnGameUnpause()
 		{
-			gamePaused = false;
+			_gamePaused = false;
 		}
 		
 		void OnDestroy()
