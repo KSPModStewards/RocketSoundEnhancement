@@ -29,6 +29,13 @@ namespace RSEAudio
 		[Persistent]
 		public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
 		
+		[Persistent]
+		public float thumpAmount = 0;
+		[Persistent]
+		public float thumpRate = 1;
+		[Persistent]
+		public float thumpSensitivity = 50;
+		
 		public FXCurve volume = new FXCurve("volume", 1f);
 		public FXCurve pitch = new FXCurve("pitch", 1f);
 		public FXCurve lowpass = new FXCurve("lowpass", 1f);
@@ -36,7 +43,8 @@ namespace RSEAudio
 		AudioSource audioSource;
 		
 		GameObject audioParent;
-		AudioLowPassFilter lowpassfilter;
+		AudioLowPassFilter lowpassFilter;
+		
 		float thrustPow;
 		
 		public override void OnLoad(ConfigNode node)
@@ -45,7 +53,6 @@ namespace RSEAudio
 			volume.Load("volume", node);
 			pitch.Load("pitch", node);
 			lowpass.Load("lowpass", node);
-			
 		}
 	
 		public override void OnSave(ConfigNode node)
@@ -79,9 +86,9 @@ namespace RSEAudio
 			audioSource.loop = loop;
 			
 			if (lowpass.keyFrames.Count > 0) {
-				lowpassfilter = audioParent.AddOrGetComponent<AudioLowPassFilter>();
-				lowpassfilter.lowpassResonanceQ = lowpassResQ;
-				lowpassfilter.customCutoffCurve = lowpass.fCurve;
+				lowpassFilter = audioParent.AddOrGetComponent<AudioLowPassFilter>();
+				lowpassFilter.lowpassResonanceQ = lowpassResQ;
+				lowpassFilter.customCutoffCurve = lowpass.fCurve;
 			}
 			
 			if (HighLogic.LoadedScene != GameScenes.LOADING) {
@@ -111,6 +118,8 @@ namespace RSEAudio
 				_fixedUpdateCount++;
 		}
 		
+		float lastThrust;
+		float _thumper;
 		void Update()
 		{
 			if (_fixedUpdateCount < 2)
@@ -138,8 +147,20 @@ namespace RSEAudio
 				if (!audioSource.isPlaying)
 					return;
 				
-				audioSource.pitch = pitch.Value(thrustPow);
-				AudioFX.SetSourceVolume(audioSource, volume.Value(thrustPow), channel);
+				if (thumpAmount > 0) {
+					float thrustDelta = (thrustPow - lastThrust) * 60;
+					if (thrustDelta > thumpSensitivity) {
+						_thumper = thumpAmount;
+					}
+					float thumpProgress = _thumper / thumpAmount;
+					_thumper = Mathf.MoveTowards(_thumper, 0, (thumpRate * thumpProgress) * Time.deltaTime);
+				}
+
+	
+				audioSource.pitch = pitch.Value(thrustPow) + _thumper;
+				AudioFX.SetSourceVolume(audioSource, Mathf.Clamp(volume.Value(thrustPow), 0, 3), channel);
+				
+				lastThrust = thrustPow;
 			
 			} catch {
 				return;
