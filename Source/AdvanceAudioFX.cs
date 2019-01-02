@@ -15,6 +15,15 @@ namespace RSEAudio
 		public bool loop;
 		
 		[Persistent]
+		public bool oneShot = false;
+		
+		[Persistent]
+		public float oneShotSensitivity = 50;
+		
+		[Persistent]
+		public int oneShotTimeout = 60;
+		
+		[Persistent]
 		public string clip = string.Empty;
 
 		[Persistent]
@@ -66,6 +75,7 @@ namespace RSEAudio
 		public override void OnInitialize()
 		{
 			var audioClip = GameDatabase.Instance.GetAudioClip(clip);
+			
 			if (audioClip == null)
 				return;
 			
@@ -76,6 +86,7 @@ namespace RSEAudio
 			audioParent.layer = gameObject.layer;
 			
 			audioSource = audioParent.AddComponent<AudioSource>();
+			audioSource.playOnAwake = false;
 			audioSource.clip = audioClip;
 			audioSource.volume = volume;
 			audioSource.pitch = pitch;
@@ -100,7 +111,9 @@ namespace RSEAudio
 		bool _playSoundSingle = false;
 		bool _gamePaused = false;
 		int _fixedUpdateCount;
-		
+		float lastThrust;
+		float _thumper;
+		int _oneshotTimeOut;
 		public override void OnEvent()
 		{
 			thrustPow = 1f;
@@ -118,8 +131,6 @@ namespace RSEAudio
 				_fixedUpdateCount++;
 		}
 		
-		float lastThrust;
-		float _thumper;
 		void Update()
 		{
 			if (_fixedUpdateCount < 2)
@@ -142,21 +153,31 @@ namespace RSEAudio
 				} else if (_playSoundSingle) {
 					audioSource.Play();
 					_playSoundSingle = false;
+				} else if (oneShot) {
+					
+					if (_oneshotTimeOut != 0) {
+						_oneshotTimeOut--;
+						return;
+					}
+					
+					float thrustDelta = (thrustPow - lastThrust) * 60;
+					if (thrustDelta > oneShotSensitivity) {
+						audioSource.Play();
+						_oneshotTimeOut = oneShotTimeout;
+					}
 				}
 
-				if (!audioSource.isPlaying)
-					return;
-				
 				if (thumpAmount > 0) {
 					float thrustDelta = (thrustPow - lastThrust) * 60;
 					if (thrustDelta > thumpSensitivity) {
 						_thumper = thumpAmount;
 					}
+					
 					float thumpProgress = _thumper / thumpAmount;
-					_thumper = Mathf.MoveTowards(_thumper, 0, (thumpRate * thumpProgress) * Time.deltaTime);
+					//_thumper = Mathf.MoveTowards(_thumper, 0, (thumpRate * thumpProgress) * Time.deltaTime);
+					_thumper = Mathf.MoveTowards(_thumper, 0, thumpRate * Time.deltaTime);
 				}
-
-	
+				
 				audioSource.pitch = pitch.Value(thrustPow) + _thumper;
 				AudioFX.SetSourceVolume(audioSource, Mathf.Clamp(volume.Value(thrustPow), 0, 3), channel);
 				
