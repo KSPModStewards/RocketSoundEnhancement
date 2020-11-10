@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30611.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement", "RocketSoundEnhancement.csproj", "{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {690879CC-0199-4D04-9D65-64CE9A442824}
+	EndGlobalSection
+EndGlobal
