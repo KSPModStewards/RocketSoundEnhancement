@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
     <LangVersion>preview</LangVersion>
-    <OutputPath>..\..\..\KSP 1.10.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+    <OutputPath>bin\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">

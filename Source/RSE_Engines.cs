@@ -99,10 +99,6 @@ namespace RocketSoundEnhancement
 
                         //For Looped sounds cleanup
                         if(control < 0.01f) {
-                            var lp = gameObject.GetComponent<AudioLowPassFilter>();
-                            if(Sources.Count == 1 && lp) {
-                                UnityEngine.Object.Destroy(lp);
-                            }
                             if(Sources.ContainsKey(sourceLayerName)) {
                                 UnityEngine.Object.Destroy(Sources[sourceLayerName]);
                                 Sources.Remove(sourceLayerName);
@@ -183,8 +179,6 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
-
-            //_sources = Sources.Count();
         }
 
         void onGamePause()
@@ -218,8 +212,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            GameEvents.onGamePause.Remove(new EventVoid.OnEvent(onGamePause));
-            GameEvents.onGameUnpause.Remove(new EventVoid.OnEvent(onGameUnpause));
+            GameEvents.onGamePause.Remove(onGamePause);
+            GameEvents.onGameUnpause.Remove(onGameUnpause);
         }
 
     }
