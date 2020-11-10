@@ -6,9 +6,16 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
+    public enum CollisionType
+    {
+        CollisionEnter,
+        CollisionStay,
+        CollisionExit
+    }
+
     public class ShipEffectsCollisions : PartModule
     {
-        public Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+        public Dictionary<CollisionType, List<SoundLayer>> SoundLayerGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
         public bool collided;
         public bool collidedStay;
@@ -23,11 +30,15 @@ namespace RocketSoundEnhancement
 
             foreach(var groupNode in configNode.GetNodes()) {
                 var soundLayerNodes = groupNode.GetNodes("SOUNDLAYER");
+                CollisionType collisionType;
 
-                string collisionType = groupNode.name;
-
-                if(SoundLayerGroups.ContainsKey(collisionType)) {
-                    SoundLayerGroups[collisionType].AddRange(AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
+                if(Enum.TryParse(groupNode.name, out collisionType)) {
+                    var soundLayers = AudioUtility.CreateSoundLayerGroup(soundLayerNodes);
+                    if(SoundLayerGroups.ContainsKey(collisionType)) {
+                        SoundLayerGroups[collisionType].AddRange(soundLayers);
+                    } else {
+                        SoundLayerGroups.Add(collisionType, soundLayers);
+                    }
                 }
             }
         }
@@ -57,9 +68,9 @@ namespace RocketSoundEnhancement
 
         void OnCollisionEnter(Collision collision)
         {
-            if(SoundLayerGroups.ContainsKey("COLLISIONENTER")) {
-                foreach(var soundLayer in SoundLayerGroups["COLLISIONENTER"]) {
-                    PlaySound(soundLayer, collision.relativeVelocity.magnitude, true);
+            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
+                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionEnter]) {
+                    PlaySound(soundLayer, collision.relativeVelocity.magnitude, false, true);
                 }
             }
             collided = true;
@@ -67,8 +78,8 @@ namespace RocketSoundEnhancement
 
         void OnCollisionStay(Collision collision)
         {
-            if(SoundLayerGroups.ContainsKey("COLLISIONSTAY")) {
-                foreach(var soundLayer in SoundLayerGroups["COLLISIONSTAY"]) {
+            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
+                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionStay]) {
                     PlaySound(soundLayer, collision.relativeVelocity.magnitude, soundLayer.loop);
                 }
             }
@@ -76,9 +87,9 @@ namespace RocketSoundEnhancement
 
         void OnCollisionExit(Collision other)
         {
-            if(SoundLayerGroups.ContainsKey("COLLISIONEXIT")) {
-                foreach(var soundLayer in SoundLayerGroups["COLLISIONEXIT"]) {
-                    PlaySound(soundLayer, other.relativeVelocity.magnitude, true);
+            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
+                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionExit]) {
+                    PlaySound(soundLayer, other.relativeVelocity.magnitude, false, true);
                 }
             }
             collided = false;
@@ -86,26 +97,26 @@ namespace RocketSoundEnhancement
 
         void PlaySound(SoundLayer soundLayer, float control, bool loop = false, bool oneshot = false)
         {
-            if(!Sources.ContainsKey(soundLayer.name)) {
-                Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
-            }
-
-            var source = Sources[soundLayer.name];
-
-            if(source == null)
-                return;
-
             float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(control);
-            float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
 
             if(finalVolume > float.Epsilon) {
-                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
-                source.pitch = finalPitch;
-                if(oneshot) {
-
-                } else {
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, oneshot);
+                if(!Sources.ContainsKey(soundLayer.name)) {
+                    Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
                 }
+
+                var source = Sources[soundLayer.name];
+
+                if(source == null)
+                    return;
+
+                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
+                if(oneshot) {
+                    source.volume *= UnityEngine.Random.Range(0.8f, 1.0f);
+                    source.pitch *= UnityEngine.Random.Range(0.95f, 1.05f);
+                }
+
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, oneshot);
             }
         }
     }

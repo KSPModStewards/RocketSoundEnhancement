@@ -4,3 +4,8 @@ D:\Games\Kerbal Space Program\My Mod Projects\RocketSoundEnhancement\RSEAudio\ob
 D:\Games\Kerbal Space Program\My Mod Projects\RocketSoundEnhancement\RSEAudio\obj\Debug\RocketSoundEnhancement.csproj.CoreCompileInputs.cache
 D:\Games\Kerbal Space Program\My Mod Projects\RocketSoundEnhancement\RSEAudio\obj\Debug\RocketSoundEnhancement.dll
 D:\Games\Kerbal Space Program\My Mod Projects\RocketSoundEnhancement\RSEAudio\obj\Debug\RocketSoundEnhancement.pdb
+D:\KSP Mod Projects\RocketSoundEnhancement\Source\bin\RocketSoundEnhancement.dll
+D:\KSP Mod Projects\RocketSoundEnhancement\Source\bin\RocketSoundEnhancement.pdb
+D:\KSP Mod Projects\RocketSoundEnhancement\Source\obj\Debug\RocketSoundEnhancement.csproj.CoreCompileInputs.cache
+D:\KSP Mod Projects\RocketSoundEnhancement\Source\obj\Debug\RocketSoundEnhancement.dll
+D:\KSP Mod Projects\RocketSoundEnhancement\Source\obj\Debug\RocketSoundEnhancement.pdb
