@@ -42,7 +42,8 @@ namespace RocketSoundEnhancement
             }
 
             initialized = true;
-            UnityEngine.Debug.Log("ShipEffects: [" + vessel.GetDisplayName() + "] Loaded with" + " PartCount: " + vessel.Parts.Count());
+
+            //UnityEngine.Debug.Log("ShipEffects: [" + vessel.GetDisplayName() + "] Loaded with" + " PartCount: " + vessel.Parts.Count());
         }
 
         void onGamePause()

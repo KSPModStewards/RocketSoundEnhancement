@@ -114,4 +114,7 @@
     <Compile Include="ShipEffects.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\Games\Kerbal Space Program\KSP 1.10.1\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

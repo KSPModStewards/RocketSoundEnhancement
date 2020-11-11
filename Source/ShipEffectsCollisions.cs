@@ -1,5 +1,4 @@
-﻿using Smooth.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -66,30 +65,30 @@ namespace RocketSoundEnhancement
             }
         }
 
-        void OnCollisionEnter(Collision collision)
+        void OnCollisionEnter(Collision col)
         {
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
                 foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionEnter]) {
-                    PlaySound(soundLayer, collision.relativeVelocity.magnitude, false, true);
+                    PlaySound(soundLayer, col.relativeVelocity.magnitude, false, true);
                 }
             }
             collided = true;
         }
 
-        void OnCollisionStay(Collision collision)
+        void OnCollisionStay(Collision col)
         {
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
                 foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionStay]) {
-                    PlaySound(soundLayer, collision.relativeVelocity.magnitude, soundLayer.loop);
+                    PlaySound(soundLayer, col.relativeVelocity.magnitude, soundLayer.loop);
                 }
             }
         }
 
-        void OnCollisionExit(Collision other)
+        void OnCollisionExit(Collision col)
         {
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
                 foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionExit]) {
-                    PlaySound(soundLayer, other.relativeVelocity.magnitude, false, true);
+                    PlaySound(soundLayer, col.relativeVelocity.magnitude, false, true);
                 }
             }
             collided = false;

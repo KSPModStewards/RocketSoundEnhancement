@@ -1,9 +1,5 @@
-﻿using Smooth.Collections;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -16,7 +12,7 @@ namespace RocketSoundEnhancement
         [KSPField(isPersistant = false)]
         public float volume = 1;
 
-        GameObject AudioParent;
+        GameObject audioParent;
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
         Dictionary<string, bool> ignites = new Dictionary<string, bool>();
         Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
@@ -30,13 +26,13 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            string partParentName = part.name + "_RSEFX";
-            AudioParent = part.gameObject.GetChild(partParentName);
-            if(AudioParent == null) {
-                AudioParent = new GameObject(partParentName);
-                AudioParent.transform.rotation = part.transform.rotation;
-                AudioParent.transform.position = part.transform.position;
-                AudioParent.transform.parent = part.transform;
+            string partParentName = part.name + "_" + this.moduleName;
+            audioParent = part.gameObject.GetChild(partParentName);
+            if(audioParent == null) {
+                audioParent = new GameObject(partParentName);
+                audioParent.transform.rotation = part.transform.rotation;
+                audioParent.transform.position = part.transform.position;
+                audioParent.transform.parent = part.transform;
             }
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
@@ -68,9 +64,9 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        void LateUpdate()
+        public override void OnUpdate()
         {
-            if(AudioParent == null || !HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+            if(audioParent == null || !HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
 
             foreach(var engineModule in engineModules) {
@@ -111,7 +107,7 @@ namespace RocketSoundEnhancement
 
                         AudioSource source;
                         if(!Sources.ContainsKey(sourceLayerName)) {
-                            source = AudioUtility.CreateSource(AudioParent, soundLayer);
+                            source = AudioUtility.CreateSource(audioParent, soundLayer);
                             Sources.Add(sourceLayerName, source);
                         } else {
                             source = Sources[sourceLayerName];
@@ -162,7 +158,7 @@ namespace RocketSoundEnhancement
                             source = Sources[oneShotLayerName];
                         } else {
                             float vol = oneShotLayer.volume * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
-                            source = AudioUtility.CreateOneShotSource(AudioParent, vol, oneShotLayer.pitch, oneShotLayer.maxDistance);
+                            source = AudioUtility.CreateOneShotSource(audioParent, vol, oneShotLayer.pitch, oneShotLayer.maxDistance);
                             Sources.Add(oneShotLayerName, source);
                         }
                         source.PlayOneShot(oneShotLayer.audioClip);

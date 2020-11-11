@@ -1,9 +1,6 @@
-﻿using Smooth.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -202,6 +199,7 @@ namespace RocketSoundEnhancement
         {
 
             var source = gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
             source.volume = volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
             source.pitch = pitch;
             source.loop = false;

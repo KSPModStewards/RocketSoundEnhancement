@@ -1,51 +1,105 @@
-﻿using Smooth.Collections;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Tracing;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
     public class RSE_Coupler : PartModule
     {
-
-
         Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
-        public bool activated;
+        List<SoundLayer> SoundLayers = new List<SoundLayer>();
+
+        FXGroup fxGroup;
+        GameObject audioParent;
+        bool isDecoupler;
 
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            string partParentName = part.name + "_" + this.moduleName;
+            audioParent = part.gameObject.GetChild(partParentName);
+            if(audioParent == null) {
+                audioParent = new GameObject(partParentName);
+                audioParent.transform.rotation = part.transform.rotation;
+                audioParent.transform.position = part.transform.position;
+                audioParent.transform.parent = part.transform;
+            }
+
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
-            foreach(var node in configNode.GetNodes()) {
+            SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
 
-                string _couplerState = node.name;
+            Debug.Log(part.partInfo.name + " SoundLayers = " + SoundLayers.Count);
 
-                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                if(soundLayers.Count > 0) {
-                    if(SoundLayerGroups.ContainsKey(_couplerState)) {
-                        SoundLayerGroups[_couplerState].AddRange(soundLayers);
-                    } else {
-                        SoundLayerGroups.Add(_couplerState, soundLayers);
+            if(part.isLaunchClamp()) {
+                fxGroup = part.findFxGroup("activate");
+                isDecoupler = true;
+            }
+
+            if(part.GetComponent<ModuleDecouplerBase>()) {
+                fxGroup = part.findFxGroup("decouple");
+                isDecoupler = true;
+            }
+
+            if(fxGroup != null) {
+                if(SoundLayers.Where(x => x.name == fxGroup.name).Count() > 0) {
+                    var soundLayer = SoundLayers.Find(x => x.name == fxGroup.name);
+
+                    if(soundLayer.audioClip != null) {
+                        fxGroup.sfx = soundLayer.audioClip;
+                        fxGroup.audio = AudioUtility.CreateOneShotSource(
+                            audioParent,
+                            soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume,
+                            soundLayer.pitch,
+                            soundLayer.maxDistance,
+                            soundLayer.spread);
+
+                        Sources.Add(soundLayer.name, fxGroup.audio);
                     }
+                }
+            }
+
+            GameEvents.onGameUnpause.Add(onGameUnpause);
+            GameEvents.onDockingComplete.Add(onDock);
+            GameEvents.onPartUndockComplete.Add(onUnDock);
+        }
+
+        private void onUnDock(Part data)
+        {
+            if(part.flightID == data.flightID && !isDecoupler) {
+                PlaySound("undock");
+            }
+        }
+
+        private void onDock(GameEvents.FromToAction<Part, Part> data)
+        {
+            if(part.flightID == data.from.flightID && !isDecoupler) {
+                PlaySound("dock");
+            }
+        }
+
+        private void onGameUnpause()
+        {
+            foreach(var sound in SoundLayers) {
+                if(Sources.ContainsKey(sound.name)) {
+                    Sources[sound.name].volume = sound.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
                 }
             }
         }
 
-        void LateUpdate()
+        public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            foreach(var asource in Sources.Keys.ToList()) {
+            foreach(var asource in Sources.Keys) {
+                if(asource == "decouple" || asource == "activate")
+                    continue;
+
                 if(!Sources[asource].isPlaying) {
                     UnityEngine.Object.Destroy(Sources[asource]);
                     Sources.Remove(asource);
@@ -53,29 +107,29 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void PlayCouplerSound(string action)
+        public void PlaySound(string action)
         {
-            if(SoundLayerGroups.ContainsKey(action)) {
-                foreach(var soundLayer in SoundLayerGroups[action]) {
-                    PlaySoundLayer(soundLayer);
+            if(SoundLayers.Where(x => x.name == action).Count() > 0) {
+                var soundLayer = SoundLayers.Find(x => x.name == action);
+
+                if(soundLayer.audioClip == null)
+                    return;
+
+                AudioSource source;
+                if(Sources.ContainsKey(action)) {
+                    source = Sources[action];
+                } else {
+                    source = AudioUtility.CreateOneShotSource(
+                        audioParent,
+                        soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume,
+                        soundLayer.pitch,
+                        soundLayer.maxDistance,
+                        soundLayer.spread);
+                    Sources.Add(soundLayer.name, source);
                 }
+
+                source.PlayOneShot(soundLayer.audioClip);
             }
-        }
-
-        void PlaySoundLayer(SoundLayer soundLayer)
-        {
-            var soundLayerName = soundLayer.name;
-
-            AudioSource source;
-            if(!Sources.ContainsKey(soundLayerName)) {
-                source = AudioUtility.CreateSource(gameObject, soundLayer);
-                Sources.Add(soundLayerName, source);
-            } else {
-                source = Sources[soundLayerName];
-            }
-
-            source.volume = soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false, true);
         }
 
         void OnDestroy()
@@ -83,6 +137,10 @@ namespace RocketSoundEnhancement
             foreach(var source in Sources.Keys) {
                 GameObject.Destroy(Sources[source]);
             }
+
+            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            GameEvents.onDockingComplete.Remove(onDock);
+            GameEvents.onPartUndockComplete.Remove(onUnDock);
         }
     }
 }

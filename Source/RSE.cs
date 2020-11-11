@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using UnityEngine;
-using UnityEngine.Audio;
 
 namespace RocketSoundEnhancement
 {
@@ -52,10 +50,6 @@ namespace RocketSoundEnhancement
             lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EnableMuffling;
             lowpassFilter.lowpassResonanceQ = 3;
             lowpassCurve = AnimationCurve.Linear(1, 22200, 0, HighLogic.CurrentGame.Parameters.CustomParams<Settings>().VaccumMuffling);
-
-            GameEvents.onPartCouple.Add(PartCouple);
-            GameEvents.onPartUndock.Add(PartUndock);
-            GameEvents.onPartDeCouple.Add(PartDecouple);
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnPause);
@@ -185,54 +179,12 @@ namespace RocketSoundEnhancement
             GUI.DragWindow(new Rect(0, 0, 1000, 20));
         }
 
-        void PartDecouple(Part data)
-        {
-            var decoupler = data.GetComponent<RSE_Coupler>();
-            if(decoupler != null) {
-                if(!decoupler.activated) {
-                    decoupler.activated = true;
-                    decoupler.PlayCouplerSound("Decouple");
-
-                }
-            } else if(data.parent != null) {
-                var parentDecoupler = data.parent.GetComponent<RSE_Coupler>();
-                if(parentDecoupler != null) {
-                    if(!parentDecoupler.activated) {
-                        parentDecoupler.activated = true;
-                        parentDecoupler.PlayCouplerSound("Decouple");
-                    }
-                }
-            }
-        }
-
-        void PartCouple(GameEvents.FromToAction<Part, Part> data)
-        {
-            var fromCoupler = data.from.GetComponent<RSE_Coupler>();
-            var toCoupler = data.to.GetComponent<RSE_Coupler>();
-
-            if(fromCoupler != null) {
-                fromCoupler.PlayCouplerSound("Dock");
-            }
-
-            if(toCoupler != null) {
-                toCoupler.PlayCouplerSound("Dock");
-            }
-        }
-
-        void PartUndock(Part data)
-        {
-            var coupler = data.GetComponent<RSE_Coupler>();
-            if(coupler != null) {
-                coupler.PlayCouplerSound("UnDock");
-            }
-        }
-
-        private void onGamePause()
+        void onGamePause()
         {
             gamePaused = true;
         }
 
-        private void onGameUnPause()
+        void onGameUnPause()
         {
             gamePaused = false;
             lowpassCurve = AnimationCurve.Linear(1, 22200, 0, HighLogic.CurrentGame.Parameters.CustomParams<Settings>().VaccumMuffling);
@@ -240,9 +192,6 @@ namespace RocketSoundEnhancement
 
         void OnDestroy()
         {
-            GameEvents.onPartCouple.Remove(PartCouple);
-            GameEvents.onPartUndock.Remove(PartUndock);
-            GameEvents.onPartDeCoupleComplete.Remove(PartDecouple);
             GameEvents.onGamePause.Remove(onGamePause);
             GameEvents.onGameUnpause.Remove(onGameUnPause);
         }
