@@ -42,7 +42,7 @@ namespace RocketSoundEnhancement
 
     }
 
-    static class AudioUtility
+    public static class AudioUtility
     {
         public static ConfigNode GetConfigNode(string partInfoName, string moduleName, string moduleID = "")
         {

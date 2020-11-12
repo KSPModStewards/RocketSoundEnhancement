@@ -107,6 +107,7 @@
     <Compile Include="RSE_Coupler.cs" />
     <Compile Include="RSE_Engines.cs" />
     <Compile Include="AudioUtility.cs" />
+    <Compile Include="RSE_Wheels.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="ShipEffectsCollisions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

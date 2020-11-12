@@ -11,17 +11,14 @@ namespace RocketSoundEnhancement
     {
         public static List<ConfigNode> SoundLayerNodes = new List<ConfigNode>();
 
-        AnimationCurve lowpassCurve;
-
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
+
+        AnimationCurve lowpassCurve;
 
         bool gamePaused;
         void Start()
         {
-            if(!HighLogic.LoadedSceneIsFlight)
-                return;
-
             foreach(var node in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
                 if(node.HasValue("nextStageClip")) {
                     StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(node.GetValue("nextStageClip"));
@@ -57,7 +54,7 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight && gamePaused)
+            if(gamePaused)
                 return;
 
             if(lowpassFilter == null)
@@ -124,21 +121,6 @@ namespace RocketSoundEnhancement
                               "Airspeed: " + ((float)vessel.indicatedAirSpeed).ToString("0.00") + "\r\n" +
                               "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
                               "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
-
-                int collisions = 0;
-                int collisionSources = 0;
-                foreach(var part in vessel.Parts) {
-                    var sec = part.GetComponent<ShipEffectsCollisions>();
-                    if(sec != null) {
-                        if(sec.collided) {
-                            collisions += 1;
-                        }
-                        collisionSources += sec.Sources.Count;
-                    }
-                }
-
-                info += "Collisions: " + collisions + "\r\n" +
-                    "Collisions Sources: " + collisionSources;
 
                 GUILayout.Label(info);
                 scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Height(225));

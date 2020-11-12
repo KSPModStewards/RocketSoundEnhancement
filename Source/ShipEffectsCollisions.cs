@@ -14,12 +14,12 @@ namespace RocketSoundEnhancement
 
     public class ShipEffectsCollisions : PartModule
     {
-        public Dictionary<CollisionType, List<SoundLayer>> SoundLayerGroups = new Dictionary<CollisionType, List<SoundLayer>>();
+        Dictionary<CollisionType, List<SoundLayer>> SoundLayerGroups = new Dictionary<CollisionType, List<SoundLayer>>();
+        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
         public bool collided;
         public bool collidedStay;
 
-        public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)

@@ -6,20 +6,20 @@ namespace RocketSoundEnhancement
 {
     class RSE_Engines : PartModule
     {
-        public Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-        public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
+        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
+        Dictionary<string, float> spools = new Dictionary<string, float>();
+        Dictionary<string, bool> ignites = new Dictionary<string, bool>();
+        Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
+
+        bool initialized;
+        bool gamePaused;
 
         [KSPField(isPersistant = false)]
         public float volume = 1;
 
-        GameObject audioParent;
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
-        Dictionary<string, bool> ignites = new Dictionary<string, bool>();
-        Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
-        Dictionary<string, float> spools = new Dictionary<string, float>();
-
-        bool initialized;
-        bool gamePaused;
+        GameObject audioParent;
 
         public override void OnStart(StartState state)
         {
@@ -84,10 +84,8 @@ namespace RocketSoundEnhancement
                             if(!spools.ContainsKey(sourceLayerName)) {
                                 spools.Add(sourceLayerName, 0);
                             }
-                            float idle = 0;
-                            if(engineModule.EngineIgnited) {
-                                idle = soundLayer.spoolIdle;
-                            }
+
+                            float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
 
                             spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolTime * Time.deltaTime);
                             control = spools[sourceLayerName];
@@ -102,9 +100,6 @@ namespace RocketSoundEnhancement
                             continue;
                         }
 
-                        float finalVolume = soundLayer.volume.Value(control);
-                        float finalPitch = soundLayer.pitch.Value(control);
-
                         AudioSource source;
                         if(!Sources.ContainsKey(sourceLayerName)) {
                             source = AudioUtility.CreateSource(audioParent, soundLayer);
@@ -113,8 +108,8 @@ namespace RocketSoundEnhancement
                             source = Sources[sourceLayerName];
                         }
 
-                        source.volume = finalVolume * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
-                        source.pitch = finalPitch;
+                        source.volume = soundLayer.volume.Value(control) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                        source.pitch = soundLayer.pitch.Value(control);
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                     }

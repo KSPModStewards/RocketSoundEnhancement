@@ -6,10 +6,8 @@ namespace RocketSoundEnhancement
 {
     public class RSE_Coupler : PartModule
     {
-        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-
-        List<SoundLayer> SoundLayers = new List<SoundLayer>();
+        public List<SoundLayer> SoundLayers = new List<SoundLayer>();
+        public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
         FXGroup fxGroup;
         GameObject audioParent;
@@ -32,8 +30,6 @@ namespace RocketSoundEnhancement
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
             SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
-
-            Debug.Log(part.partInfo.name + " SoundLayers = " + SoundLayers.Count);
 
             if(part.isLaunchClamp()) {
                 fxGroup = part.findFxGroup("activate");
