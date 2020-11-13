@@ -112,7 +112,7 @@ namespace RocketSoundEnhancement
 
         public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false)
         {
-            if(source == null)
+            if(source == null || source.clip == null)
                 return;
 
             if(TimeWarp.CurrentRate > TimeWarp.MaxPhysicsRate) {
