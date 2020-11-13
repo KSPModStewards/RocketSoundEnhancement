@@ -78,7 +78,7 @@ namespace RocketSoundEnhancement
                 float control = 0;
 
                 switch(soundLayerGroup.Key) {
-                    case "Motor":
+                    case "Torque":
                         control = running ? driveOutput : 0;
                         break;
                     case "Speed":
