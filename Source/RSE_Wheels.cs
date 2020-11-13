@@ -63,6 +63,7 @@ namespace RocketSoundEnhancement
         bool running;
         bool motorEnabled;
         float driveOutput;
+
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
@@ -72,6 +73,15 @@ namespace RocketSoundEnhancement
                 running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
                 motorEnabled = moduleMotor.motorEnabled;
                 driveOutput = moduleMotor.driveOutput;
+            }
+
+            WheelHit hit;
+            bool isConcrete = false;
+            if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
+                var groundTag = hit.collider.gameObject.tag.ToLower();
+                if(groundTag.Contains("runway") || groundTag.Contains("ksc")) {
+                    isConcrete = true;
+                }
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
@@ -85,17 +95,19 @@ namespace RocketSoundEnhancement
                         control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
                         break;
                     case "Ground":
-                        control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
+                        control = moduleWheel.isGrounded && !isConcrete ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
                         break;
-                    case "Slip":
-                        control = moduleWheel.slipDisplacement.magnitude;
+                    case "Concrete":
+                        control = moduleWheel.isGrounded && isConcrete ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
+                        break;
+                    case "SlipGround":
+                        control = moduleWheel.isGrounded && !isConcrete ? moduleWheel.slipDisplacement.magnitude : 0;
+                        break;
+                    case "SlipConcrete":
+                        control = moduleWheel.isGrounded && isConcrete ? moduleWheel.slipDisplacement.magnitude : 0;
                         break;
                     default:
                         continue;
-                }
-
-                if(TimeWarp.CurrentRate > TimeWarp.MaxPhysicsRate) {
-                    control = 0;
                 }
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
@@ -104,7 +116,7 @@ namespace RocketSoundEnhancement
                             spools.Add(soundLayer.name, 0);
                         }
 
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], Mathf.Max(0, control), soundLayer.spoolTime * Time.deltaTime);
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], Mathf.Max(0, control), soundLayer.spoolTime * TimeWarp.deltaTime);
                         control = spools[soundLayer.name];
                     }
 
@@ -130,6 +142,7 @@ namespace RocketSoundEnhancement
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                 }
             }
+
 
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();

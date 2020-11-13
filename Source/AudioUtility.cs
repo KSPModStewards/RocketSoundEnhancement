@@ -55,7 +55,6 @@ namespace RocketSoundEnhancement
                     } else {
                         return Array.FindAll(configNode.config.GetNodes("MODULE"), x => x.GetValue("name") == moduleName && x.GetValue("moduleID") == moduleID).FirstOrDefault();
                     }
-
                 }
             }
             return null;
@@ -115,7 +114,7 @@ namespace RocketSoundEnhancement
             if(source == null || source.clip == null)
                 return;
 
-            if(TimeWarp.CurrentRate > TimeWarp.MaxPhysicsRate) {
+            if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) {
                 if(source.isPlaying) {
                     source.Stop();
                 }

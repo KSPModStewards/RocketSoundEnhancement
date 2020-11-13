@@ -101,6 +101,10 @@
       <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.VehiclesModule">
+      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LowpassFilter.cs" />
