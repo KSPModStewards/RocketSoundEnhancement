@@ -19,6 +19,7 @@ namespace RocketSoundEnhancement
         bool gamePaused;
         void Start()
         {
+            SoundLayerNodes.Clear();
             foreach(var node in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
                 if(node.HasValue("nextStageClip")) {
                     StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(node.GetValue("nextStageClip"));
