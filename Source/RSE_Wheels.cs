@@ -79,7 +79,7 @@ namespace RocketSoundEnhancement
 
                 switch(soundLayerGroup.Key) {
                     case "Motor":
-                        control = running ? Mathf.Lerp(1, 0, driveOutput / 100) : 0;
+                        control = running ? driveOutput : 0;
                         break;
                     case "Speed":
                         control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
@@ -94,6 +94,10 @@ namespace RocketSoundEnhancement
                         continue;
                 }
 
+                if(TimeWarp.CurrentRate > TimeWarp.MaxPhysicsRate) {
+                    control = 0;
+                }
+
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     if(soundLayer.spool) {
                         if(!spools.ContainsKey(soundLayer.name)) {
@@ -104,7 +108,7 @@ namespace RocketSoundEnhancement
                         control = spools[soundLayer.name];
                     }
 
-                    if(control < 0.01f) {
+                    if(control < 0.01f && !running) {
                         if(Sources.ContainsKey(soundLayer.name)) {
                             UnityEngine.Object.Destroy(Sources[soundLayer.name]);
                             Sources.Remove(soundLayer.name);

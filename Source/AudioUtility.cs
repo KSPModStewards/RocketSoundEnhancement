@@ -115,6 +115,13 @@ namespace RocketSoundEnhancement
             if(source == null)
                 return;
 
+            if(TimeWarp.CurrentRate > TimeWarp.MaxPhysicsRate) {
+                if(source.isPlaying) {
+                    source.Stop();
+                }
+                return;
+            }
+
             switch(channel) {
                 case FXChannel.ShipBoth:
                     if(loop) {
