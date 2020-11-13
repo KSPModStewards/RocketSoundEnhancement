@@ -79,7 +79,7 @@ namespace RocketSoundEnhancement
 
                 switch(soundLayerGroup.Key) {
                     case "Torque":
-                        control = running ? driveOutput : 0;
+                        control = running ? driveOutput / 100 : 0;
                         break;
                     case "Speed":
                         control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
