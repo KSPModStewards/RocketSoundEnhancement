@@ -77,6 +77,8 @@ namespace RocketSoundEnhancement
                 float control = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
+                    float finalControl = control;
+
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
 
@@ -88,11 +90,11 @@ namespace RocketSoundEnhancement
                             float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
 
                             spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolTime * TimeWarp.deltaTime);
-                            control = spools[sourceLayerName];
+                            finalControl = spools[sourceLayerName];
                         }
 
                         //For Looped sounds cleanup
-                        if(control < 0.01f) {
+                        if(finalControl < 0.01f) {
                             if(Sources.ContainsKey(sourceLayerName)) {
                                 UnityEngine.Object.Destroy(Sources[sourceLayerName]);
                                 Sources.Remove(sourceLayerName);
@@ -108,8 +110,8 @@ namespace RocketSoundEnhancement
                             source = Sources[sourceLayerName];
                         }
 
-                        source.volume = soundLayer.volume.Value(control) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
-                        source.pitch = soundLayer.pitch.Value(control);
+                        source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                        source.pitch = soundLayer.pitch.Value(finalControl);
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                     }
@@ -156,7 +158,11 @@ namespace RocketSoundEnhancement
                             source = AudioUtility.CreateOneShotSource(audioParent, vol, oneShotLayer.pitch, oneShotLayer.maxDistance);
                             Sources.Add(oneShotLayerName, source);
                         }
-                        source.PlayOneShot(oneShotLayer.audioClip);
+                        var clip = GameDatabase.Instance.GetAudioClip(oneShotLayer.audioClip);
+                        if(clip != null) {
+                            source.PlayOneShot(clip);
+                        }
+
                     }
                 }
             }

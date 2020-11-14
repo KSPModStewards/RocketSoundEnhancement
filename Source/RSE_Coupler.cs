@@ -44,9 +44,9 @@ namespace RocketSoundEnhancement
             if(fxGroup != null) {
                 if(SoundLayers.Where(x => x.name == fxGroup.name).Count() > 0) {
                     var soundLayer = SoundLayers.Find(x => x.name == fxGroup.name);
-
-                    if(soundLayer.audioClip != null) {
-                        fxGroup.sfx = soundLayer.audioClip;
+                    var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClip);
+                    if(clip != null) {
+                        fxGroup.sfx = clip;
                         fxGroup.audio = AudioUtility.CreateOneShotSource(
                             audioParent,
                             soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume,
@@ -124,7 +124,10 @@ namespace RocketSoundEnhancement
                     Sources.Add(soundLayer.name, source);
                 }
 
-                source.PlayOneShot(soundLayer.audioClip);
+                var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClip);
+                if(clip != null) {
+                    source.PlayOneShot(clip);
+                }
             }
         }
 

@@ -34,7 +34,7 @@ namespace RocketSoundEnhancement
         public float spoolIdle;
         public float maxDistance;
         public float spread;
-        public AudioClip audioClip;
+        public string audioClip;
         public FXCurve volume;
         public FXCurve pitch;
         public FXCurve massToVolume;
@@ -74,12 +74,7 @@ namespace RocketSoundEnhancement
             var soundLayer = new SoundLayer();
 
             soundLayer.name = node.GetValue("name");
-            soundLayer.audioClip = GameDatabase.Instance.GetAudioClip(node.GetValue("audioClip"));
-
-            if(soundLayer.audioClip == null) {
-                Debug.LogWarning("Rocket Sound Enhancement: " + node.GetValue("audioClip") + " Cannot be Found, skipping SoundLayer: " + node.GetValue("name"));
-                return soundLayer;
-            }
+            soundLayer.audioClip = node.GetValue("audioClip");
 
             node.TryGetValue("loop", ref soundLayer.loop);
             node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom);
@@ -181,10 +176,9 @@ namespace RocketSoundEnhancement
 
         public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer)
         {
-
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.clip = soundLayer.audioClip;
+            source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClip);
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
             source.loop = soundLayer.loop;

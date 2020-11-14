@@ -64,6 +64,8 @@ namespace RocketSoundEnhancement
         bool motorEnabled;
         float driveOutput;
 
+        [KSPField(isPersistant = false, guiActive = true, guiName = "Ground Type")]
+        string groundType;
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
@@ -85,8 +87,8 @@ namespace RocketSoundEnhancement
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
+                string soundLayerKey = soundLayerGroup.Key;
                 float control = 0;
-
                 switch(soundLayerGroup.Key) {
                     case "Torque":
                         control = running ? driveOutput / 100 : 0;
@@ -95,32 +97,34 @@ namespace RocketSoundEnhancement
                         control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
                         break;
                     case "Ground":
-                        control = moduleWheel.isGrounded && !isConcrete ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
+                        control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.Wheel.speed) : 0;
                         break;
-                    case "Concrete":
-                        control = moduleWheel.isGrounded && isConcrete ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
-                        break;
-                    case "SlipGround":
-                        control = moduleWheel.isGrounded && !isConcrete ? moduleWheel.slipDisplacement.magnitude : 0;
-                        break;
-                    case "SlipConcrete":
-                        control = moduleWheel.isGrounded && isConcrete ? moduleWheel.slipDisplacement.magnitude : 0;
+                    case "Slip":
+                        control = moduleWheel.isGrounded ? moduleWheel.slipDisplacement.magnitude : 0;
                         break;
                     default:
                         continue;
                 }
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
+                    float finalControl = control;
+
+                    if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
+                        if(soundLayer.name.ToLower().Contains("-dirt") && isConcrete || soundLayer.name.ToLower().Contains("-concrete") && !isConcrete) {
+                            finalControl = 0;
+                        }
+                    }
+
                     if(soundLayer.spool) {
                         if(!spools.ContainsKey(soundLayer.name)) {
                             spools.Add(soundLayer.name, 0);
                         }
 
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], Mathf.Max(0, control), soundLayer.spoolTime * TimeWarp.deltaTime);
-                        control = spools[soundLayer.name];
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], Mathf.Max(0, finalControl), soundLayer.spoolTime * TimeWarp.deltaTime);
+                        finalControl = spools[soundLayer.name];
                     }
 
-                    if(control < 0.01f && !running) {
+                    if(finalControl < 0.01f) {
                         if(Sources.ContainsKey(soundLayer.name)) {
                             UnityEngine.Object.Destroy(Sources[soundLayer.name]);
                             Sources.Remove(soundLayer.name);
@@ -136,13 +140,12 @@ namespace RocketSoundEnhancement
                         Sources.Add(soundLayer.name, source);
                     }
 
-                    source.volume = soundLayer.volume.Value(control) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
-                    source.pitch = soundLayer.pitch.Value(control);
+                    source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                    source.pitch = soundLayer.pitch.Value(finalControl);
 
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                 }
             }
-
 
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
