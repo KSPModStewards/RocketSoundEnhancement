@@ -64,8 +64,6 @@ namespace RocketSoundEnhancement
         bool motorEnabled;
         float driveOutput;
 
-        [KSPField(isPersistant = false, guiActive = true, guiName = "Ground Type")]
-        string groundType;
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
