@@ -28,6 +28,9 @@ namespace RocketSoundEnhancement
         [GameParameters.CustomIntParameterUI("Vaccum Muffling", minValue = 10, maxValue = 22200)]
         public int VaccumMuffling = 300;
 
+        [GameParameters.CustomParameterUI("Disable Staging Sound", toolTip = "Requires Save and Reload")]
+        public bool DisableStagingSound = false;
+
         [GameParameters.CustomParameterUI("Debug Window")]
         public bool DebugWindow = false;
 

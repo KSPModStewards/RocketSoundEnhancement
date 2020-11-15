@@ -39,6 +39,10 @@ namespace RocketSoundEnhancement
                 }
             }
 
+            if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DisableStagingSound) {
+                GameObject.Destroy(StageManager.Instance.GetComponent<AudioSource>());
+            }
+
             //This is the easiest way to deal with multiple listeners, instead of chasing which listener is active.
             //Lowpass filter reads from whatever listener is active.
             audioListener = gameObject.AddOrGetComponent<AudioListener>();
