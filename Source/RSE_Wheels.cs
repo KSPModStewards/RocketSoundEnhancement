@@ -62,33 +62,32 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
-        bool running;
-        bool motorEnabled;
-        bool isConcrete = false;
-        bool isRetracted = false;
-        float driveOutput;
-
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
                 return;
 
+            bool running = false;
+            bool motorEnabled = false;
+            float driveOutput = 0;
             if(moduleMotor) {
                 running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
                 motorEnabled = moduleMotor.motorEnabled;
                 driveOutput = moduleMotor.driveOutput;
             }
 
-            if(moduleDeploy) {
-                isRetracted = moduleDeploy.stateString == "Retracted";
-            }
-
             WheelHit hit;
+            bool isConcrete = false;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
                 var groundTag = hit.collider.gameObject.tag.ToLower();
                 if(groundTag.Contains("runway") || groundTag.Contains("ksc")) {
                     isConcrete = true;
                 }
+            }
+
+            bool isRetracted = false;
+            if(moduleDeploy) {
+                isRetracted = moduleDeploy.stateString == "Retracted";
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
