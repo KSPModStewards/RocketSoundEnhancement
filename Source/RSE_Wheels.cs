@@ -67,7 +67,6 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
-        float pastSteering;
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
@@ -78,8 +77,6 @@ namespace RocketSoundEnhancement
             float driveOutput = 0;
             float wheelSpeed = moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity;
             float slipDisplacement = Mathf.Abs(GetSlipDisplacement(wheelSpeed));
-            float steering = Mathf.Abs(moduleWheel.Wheel.steerState - pastSteering) / TimeWarp.deltaTime;
-            pastSteering = moduleWheel.Wheel.steerState;
 
             WheelHit hit;
             bool isConcrete = false;
@@ -113,9 +110,6 @@ namespace RocketSoundEnhancement
                             break;
                         case "Speed":
                             control = motorEnabled ? Mathf.Abs(wheelSpeed) : 0;
-                            break;
-                        case "Steer":
-                            control = steering;
                             break;
                         case "Ground":
                             control = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
