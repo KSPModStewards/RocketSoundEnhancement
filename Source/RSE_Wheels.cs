@@ -45,6 +45,8 @@ namespace RocketSoundEnhancement
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
+            SoundLayerGroups.Clear();
+            spools.Clear();
             foreach(var node in configNode.GetNodes()) {
 
                 string _wheelState = node.name;
