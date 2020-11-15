@@ -18,6 +18,9 @@ namespace RocketSoundEnhancement
         [KSPField(isPersistant = false)]
         public float volume = 1;
 
+        [KSPField(isPersistant = false)]
+        public bool invertSlip = false;
+
         ModuleWheelBase moduleWheel;
         ModuleWheelMotor moduleMotor;
         ModuleWheelDeployment moduleDeploy;
@@ -70,11 +73,8 @@ namespace RocketSoundEnhancement
             bool running = false;
             bool motorEnabled = false;
             float driveOutput = 0;
-            if(moduleMotor) {
-                running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
-                motorEnabled = moduleMotor.motorEnabled;
-                driveOutput = moduleMotor.driveOutput;
-            }
+            float wheelSpeed = moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity;
+            float slipDisplacement = Mathf.Abs(GetSlipDisplacement(wheelSpeed));
 
             WheelHit hit;
             bool isConcrete = false;
@@ -83,6 +83,12 @@ namespace RocketSoundEnhancement
                 if(groundTag.Contains("runway") || groundTag.Contains("ksc")) {
                     isConcrete = true;
                 }
+            }
+
+            if(moduleMotor) {
+                running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
+                motorEnabled = moduleMotor.motorEnabled;
+                driveOutput = moduleMotor.driveOutput;
             }
 
             bool isRetracted = false;
@@ -100,16 +106,16 @@ namespace RocketSoundEnhancement
                             control = running ? driveOutput / 100 : 0;
                             break;
                         case "Speed":
-                            control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
+                            control = motorEnabled ? Mathf.Abs(wheelSpeed) : 0;
                             break;
                         case "Steer":
                             control = moduleWheel.Wheel.steerState;
                             break;
                         case "Ground":
-                            control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.Wheel.speed) : 0;
+                            control = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
                             break;
                         case "Slip":
-                            control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.slipDisplacement.magnitude) : 0;
+                            control = moduleWheel.isGrounded ? slipDisplacement : 0;
                             break;
                         default:
                             continue;
@@ -166,6 +172,15 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
+        }
+
+        //Do Slip Displacement calculations on our own because KSP's ModuleWheelBase.slipDisplacement is broken for some wheels
+        float GetSlipDisplacement(float wheelSpeed)
+        {
+            float x = moduleWheel.Wheel.currentState.localWheelVelocity.x;
+            float y = wheelSpeed - moduleWheel.Wheel.currentState.localWheelVelocity.y;
+
+            return Mathf.Sqrt(x * x + y * y) * TimeWarp.deltaTime;
         }
 
         private void onGameUnpause()
