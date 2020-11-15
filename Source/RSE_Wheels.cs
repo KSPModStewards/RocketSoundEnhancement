@@ -20,6 +20,7 @@ namespace RocketSoundEnhancement
 
         ModuleWheelBase moduleWheel;
         ModuleWheelMotor moduleMotor;
+        ModuleWheelDeployment moduleDeploy;
 
         public override void OnStart(StartState state)
         {
@@ -37,6 +38,7 @@ namespace RocketSoundEnhancement
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
+            moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
@@ -62,6 +64,8 @@ namespace RocketSoundEnhancement
 
         bool running;
         bool motorEnabled;
+        bool isConcrete = false;
+        bool isRetracted = false;
         float driveOutput;
 
         public override void OnUpdate()
@@ -75,8 +79,11 @@ namespace RocketSoundEnhancement
                 driveOutput = moduleMotor.driveOutput;
             }
 
+            if(moduleDeploy) {
+                isRetracted = moduleDeploy.stateString == "Retracted";
+            }
+
             WheelHit hit;
-            bool isConcrete = false;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
                 var groundTag = hit.collider.gameObject.tag.ToLower();
                 if(groundTag.Contains("runway") || groundTag.Contains("ksc")) {
@@ -87,21 +94,27 @@ namespace RocketSoundEnhancement
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerKey = soundLayerGroup.Key;
                 float control = 0;
-                switch(soundLayerGroup.Key) {
-                    case "Torque":
-                        control = running ? driveOutput / 100 : 0;
-                        break;
-                    case "Speed":
-                        control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
-                        break;
-                    case "Ground":
-                        control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.Wheel.speed) : 0;
-                        break;
-                    case "Slip":
-                        control = moduleWheel.isGrounded ? moduleWheel.slipDisplacement.magnitude : 0;
-                        break;
-                    default:
-                        continue;
+
+                if(!isRetracted) {
+                    switch(soundLayerGroup.Key) {
+                        case "Torque":
+                            control = running ? driveOutput / 100 : 0;
+                            break;
+                        case "Speed":
+                            control = motorEnabled ? Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) : 0;
+                            break;
+                        case "Steer":
+                            control = moduleWheel.Wheel.steerState;
+                            break;
+                        case "Ground":
+                            control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.Wheel.speed) : 0;
+                            break;
+                        case "Slip":
+                            control = moduleWheel.isGrounded ? Mathf.Abs(moduleWheel.slipDisplacement.magnitude) : 0;
+                            break;
+                        default:
+                            continue;
+                    }
                 }
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
@@ -118,7 +131,7 @@ namespace RocketSoundEnhancement
                             spools.Add(soundLayer.name, 0);
                         }
 
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], Mathf.Max(0, finalControl), soundLayer.spoolTime * TimeWarp.deltaTime);
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], finalControl, soundLayer.spoolTime * TimeWarp.deltaTime);
                         finalControl = spools[soundLayer.name];
                     }
 
