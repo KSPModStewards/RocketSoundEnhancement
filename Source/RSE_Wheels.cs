@@ -64,8 +64,8 @@ namespace RocketSoundEnhancement
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups.Values) {
-                concreteLayerData = soundLayerGroup.Where(x => x.name.ToLower().Contains("-concrete")).Count() > 0;
-                vesselLayerData = soundLayerGroup.Where(x => x.name.ToLower().Contains("-vessel")).Count() > 0;
+                concreteLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("-concrete")).Count() > 0;
+                vesselLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("-vessel")).Count() > 0;
             }
 
             GameEvents.onGamePause.Add(onGamePause);
@@ -89,7 +89,7 @@ namespace RocketSoundEnhancement
 
             WheelHit hit;
 
-            CollisionObjectType colObjectType = CollisionObjectType.None;
+            CollidingObject colObjectType = CollidingObject.None;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
                 colObjectType = AudioUtility.GetCollidingType(hit.collider);
                 CollidingWith = hit.collider.name;
@@ -133,19 +133,19 @@ namespace RocketSoundEnhancement
                     float finalControl = control;
 
                     if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
-                        string layerMaskName = soundLayer.name.ToLower();
+                        string layerMaskName = soundLayer.data;
 
                         switch(colObjectType) {
-                            case CollisionObjectType.Concrete:
-                                if(!layerMaskName.Contains("-concrete") && concreteLayerData)
+                            case CollidingObject.Concrete:
+                                if(!layerMaskName.Contains("concrete") && concreteLayerData)
                                     finalControl = 0;
                                 break;
-                            case CollisionObjectType.Vessel:
-                                if(!layerMaskName.Contains("-vessel") && vesselLayerData)
+                            case CollidingObject.Vessel:
+                                if(!layerMaskName.Contains("vessel") && vesselLayerData)
                                     finalControl = 0;
                                 break;
-                            case CollisionObjectType.None:
-                                if(layerMaskName.Contains("-concrete") || layerMaskName.Contains("-vessel"))
+                            case CollidingObject.None:
+                                if(layerMaskName.Contains("concrete") || layerMaskName.Contains("vessel"))
                                     finalControl = 0;
                                 break;
                         }

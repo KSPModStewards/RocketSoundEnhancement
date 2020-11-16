@@ -10,7 +10,7 @@ namespace RocketSoundEnhancement
     public class RSE : MonoBehaviour
     {
         public static List<ConfigNode> SoundLayerNodes = new List<ConfigNode>();
-        public static Dictionary<string, CollisionObjectType> CollisionData = new Dictionary<string, CollisionObjectType>();
+        public static Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
 
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
@@ -39,7 +39,7 @@ namespace RocketSoundEnhancement
                     var colNode = configNode.GetNode("Colliders");
                     foreach(ConfigNode.Value node in colNode.values) {
 
-                        CollisionObjectType colDataType = (CollisionObjectType) Enum.Parse(typeof(CollisionObjectType), node.value, true);
+                        CollidingObject colDataType = (CollidingObject) Enum.Parse(typeof(CollidingObject), node.value, true);
                         if(!CollisionData.ContainsKey(node.name)) {
                             CollisionData.Add(node.name, colDataType);
                         } else {

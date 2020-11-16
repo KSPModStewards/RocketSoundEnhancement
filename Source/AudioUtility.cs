@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    public enum CollisionObjectType
+    public enum CollidingObject
     {
         Concrete,
         Vessel,
@@ -33,6 +33,7 @@ namespace RocketSoundEnhancement
     public struct SoundLayer
     {
         public string name;
+        public string data;
         public FXChannel channel;
         public PhysicsControl physicsControl;
         public bool loop;
@@ -108,6 +109,8 @@ namespace RocketSoundEnhancement
             soundLayer.maxDistance = 500f;
 
             node.TryGetValue("maxDistance", ref soundLayer.maxDistance);
+
+            soundLayer.data = node.GetValue("data");
 
             return soundLayer;
         }
@@ -223,22 +226,22 @@ namespace RocketSoundEnhancement
             return source;
         }
 
-        public static CollisionObjectType GetCollidingType(Collider collider)
+        public static CollidingObject GetCollidingType(Collider collider)
         {
             var gameObject = collider.gameObject;
 
             if(gameObject.GetComponent<Vessel>()) {
 
                 if(gameObject.GetComponent<Vessel>().isEVA) {
-                    return CollisionObjectType.Kerbal;
+                    return CollidingObject.Kerbal;
                 }
 
                 var part = Part.FromGO(gameObject);
                 if(part.GetComponent<AsteroidCollider>()) {
-                    return CollisionObjectType.None;
+                    return CollidingObject.None;
                 }
 
-                return CollisionObjectType.Vessel;
+                return CollidingObject.Vessel;
             }
 
             if(collider.gameObject.tag.ToLower() != "untagged") {
@@ -251,7 +254,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            return CollisionObjectType.None;
+            return CollidingObject.None;
         }
     }
 }
