@@ -25,8 +25,6 @@ namespace RocketSoundEnhancement
         ModuleWheelMotor moduleMotor;
         ModuleWheelDeployment moduleDeploy;
 
-        bool concreteLayerData;
-        bool vesselLayerData;
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -63,10 +61,11 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            foreach(var soundLayerGroup in SoundLayerGroups.Values) {
-                concreteLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("-concrete")).Count() > 0;
-                vesselLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("-vessel")).Count() > 0;
-            }
+            //foreach(var soundLayerGroup in SoundLayerGroups.Values) {
+            //
+            //    concreteLayerData = soundLayerGroup.Where(x => x.data != null && x.data.ToLower().Contains("concrete")).Count() > 0;
+            //    vesselLayerData = soundLayerGroup.Where(x => x.data != null && x.data.ToLower().Contains("vessel")).Count() > 0;
+            //}
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -128,6 +127,9 @@ namespace RocketSoundEnhancement
                             continue;
                     }
                 }
+
+                bool concreteLayerData = soundLayerGroup.Value.Where(x => x.data != null && x.data.ToLower().Contains("concrete")).Count() > 0;
+                bool vesselLayerData = soundLayerGroup.Value.Where(x => x.data != null && x.data.ToLower().Contains("vessel")).Count() > 0;
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     float finalControl = control;

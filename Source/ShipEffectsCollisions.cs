@@ -18,9 +18,6 @@ namespace RocketSoundEnhancement
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
         public bool collided;
-        public bool collidedStay;
-        private bool concreteLayerData;
-        private bool vesselLayerData;
 
         public override void OnStart(StartState state)
         {
@@ -41,11 +38,6 @@ namespace RocketSoundEnhancement
                         SoundLayerGroups.Add(collisionType, soundLayers);
                     }
                 }
-            }
-
-            foreach(var soundLayerGroup in SoundLayerGroups.Values) {
-                concreteLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("concrete")).Count() > 0;
-                vesselLayerData = soundLayerGroup.Where(x => x.data.ToLower().Contains("vessel")).Count() > 0;
             }
         }
 
@@ -75,22 +67,19 @@ namespace RocketSoundEnhancement
         void OnCollisionEnter(Collision col)
         {
             var collisionType = AudioUtility.GetCollidingType(col.collider);
+
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
-                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionEnter]) {
-                    PlaySound(soundLayer, col.relativeVelocity.magnitude, false, true, collisionType);
-                }
+                PlaySounds(CollisionType.CollisionEnter, col.relativeVelocity.magnitude, collisionType, true);
             }
+
             collided = true;
         }
 
         void OnCollisionStay(Collision col)
         {
             var collisionType = AudioUtility.GetCollidingType(col.collider);
-
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
-                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionStay]) {
-                    PlaySound(soundLayer, col.relativeVelocity.magnitude, soundLayer.loop, false, collisionType);
-                }
+                PlaySounds(CollisionType.CollisionStay, col.relativeVelocity.magnitude, collisionType);
             }
         }
 
@@ -106,56 +95,64 @@ namespace RocketSoundEnhancement
 
             var collisionType = AudioUtility.GetCollidingType(col.collider);
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
-                foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionExit]) {
-                    PlaySound(soundLayer, col.relativeVelocity.magnitude, false, true, collisionType);
-                }
+                PlaySounds(CollisionType.CollisionExit, col.relativeVelocity.magnitude, collisionType, true);
             }
             collided = false;
         }
 
-        void PlaySound(SoundLayer soundLayer, float control, bool loop = false, bool oneshot = false, CollidingObject collidingObjectType = CollidingObject.None)
+        void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.None, bool oneshot = false)
         {
-            float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(control);
+            bool concreteLayerData = SoundLayerGroups[collisionType].Where(x => x.data.ToLower().Contains("concrete")).Count() > 0;
+            bool vesselLayerData = SoundLayerGroups[collisionType].Where(x => x.data.ToLower().Contains("vessel")).Count() > 0;
 
-            var layerMaskName = soundLayer.data.ToLower();
-            switch(collidingObjectType) {
-                case CollidingObject.Concrete:
-                    if(!layerMaskName.Contains("concrete") && concreteLayerData)
-                        finalVolume = 0;
-                    break;
-                case CollidingObject.Vessel:
-                    if(!layerMaskName.Contains("vessel") && vesselLayerData)
-                        finalVolume = 0;
-                    break;
-                case CollidingObject.None:
-                    if(layerMaskName.Contains("concrete") || layerMaskName.Contains("vessel"))
-                        finalVolume = 0;
-                    break;
+            foreach(var soundLayer in SoundLayerGroups[collisionType]) {
+                float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(control);
+
+                var layerMaskName = soundLayer.data.ToLower();
+                switch(collidingObjectType) {
+                    case CollidingObject.Concrete:
+                        if(!layerMaskName.Contains("concrete") && concreteLayerData)
+                            finalVolume = 0;
+                        break;
+                    case CollidingObject.Vessel:
+                        if(!layerMaskName.Contains("vessel") && vesselLayerData)
+                            finalVolume = 0;
+                        break;
+                    case CollidingObject.None:
+                        if(layerMaskName.Contains("concrete") || layerMaskName.Contains("vessel"))
+                            finalVolume = 0;
+                        break;
+                }
+
+                if(finalVolume > float.Epsilon) {
+                    if(!Sources.ContainsKey(soundLayer.name)) {
+                        Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
+                    }
+
+                    var source = Sources[soundLayer.name];
+
+                    if(source == null)
+                        return;
+
+                    source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                    source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
+
+                    bool loop = source.loop;
+                    if(oneshot) {
+                        source.volume *= UnityEngine.Random.Range(0.8f, 1.0f);
+                        source.pitch *= UnityEngine.Random.Range(0.95f, 1.05f);
+                        loop = false;
+                    }
+
+                    AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, oneshot);
+                } else {
+                    if(Sources.ContainsKey(soundLayer.name) && Sources[soundLayer.name].isPlaying) {
+                        Sources[soundLayer.name].Stop();
+                    }
+                }
+
             }
 
-            if(finalVolume > float.Epsilon) {
-                if(!Sources.ContainsKey(soundLayer.name)) {
-                    Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
-                }
-
-                var source = Sources[soundLayer.name];
-
-                if(source == null)
-                    return;
-
-                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
-                source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
-                if(oneshot) {
-                    source.volume *= UnityEngine.Random.Range(0.8f, 1.0f);
-                    source.pitch *= UnityEngine.Random.Range(0.95f, 1.05f);
-                }
-
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, oneshot);
-            } else {
-                if(Sources.ContainsKey(soundLayer.name) && Sources[soundLayer.name].isPlaying) {
-                    Sources[soundLayer.name].Stop();
-                }
-            }
         }
     }
 }

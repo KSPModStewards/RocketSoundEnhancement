@@ -9,7 +9,6 @@ namespace RocketSoundEnhancement
     {
         Concrete,
         Vessel,
-        Kerbal,
         None
     }
 
@@ -110,7 +109,11 @@ namespace RocketSoundEnhancement
 
             node.TryGetValue("maxDistance", ref soundLayer.maxDistance);
 
-            soundLayer.data = node.GetValue("data");
+            if(node.HasValue("data")) {
+                soundLayer.data = node.GetValue("data");
+            } else {
+                soundLayer.data = "";
+            }
 
             return soundLayer;
         }
@@ -231,11 +234,6 @@ namespace RocketSoundEnhancement
             var gameObject = collider.gameObject;
 
             if(gameObject.GetComponent<Vessel>()) {
-
-                if(gameObject.GetComponent<Vessel>().isEVA) {
-                    return CollidingObject.Kerbal;
-                }
-
                 var part = Part.FromGO(gameObject);
                 if(part.GetComponent<AsteroidCollider>()) {
                     return CollidingObject.None;
