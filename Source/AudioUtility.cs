@@ -5,6 +5,14 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
+    public enum CollisionObjectType
+    {
+        Concrete,
+        Vessel,
+        Kerbal,
+        None
+    }
+
     public enum FXChannel
     {
         ShipInternal,
@@ -213,6 +221,31 @@ namespace RocketSoundEnhancement
             source.maxDistance = maxDistance;
 
             return source;
+        }
+
+        public static CollisionObjectType GetCollidingType(Collider collider)
+        {
+            var gameObject = collider.gameObject;
+
+            if(gameObject.GetComponent<Vessel>()) {
+
+                if(gameObject.GetComponent<Vessel>().isEVA) {
+                    return CollisionObjectType.Kerbal;
+                }
+
+                var part = Part.FromGO(gameObject);
+                if(part.GetComponent<AsteroidCollider>()) {
+                    return CollisionObjectType.None;
+                }
+
+                return CollisionObjectType.Vessel;
+            }
+
+            if(RSE.CollisionData.ContainsKey(collider.name)) {
+                return RSE.CollisionData[collider.name];
+            }
+
+            return CollisionObjectType.None;
         }
     }
 }

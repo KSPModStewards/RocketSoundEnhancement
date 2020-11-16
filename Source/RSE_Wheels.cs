@@ -25,6 +25,8 @@ namespace RocketSoundEnhancement
         ModuleWheelMotor moduleMotor;
         ModuleWheelDeployment moduleDeploy;
 
+        bool concreteLayerData;
+        bool vesselLayerData;
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -61,12 +63,19 @@ namespace RocketSoundEnhancement
                 }
             }
 
+            foreach(var soundLayerGroup in SoundLayerGroups.Values) {
+                concreteLayerData = soundLayerGroup.Where(x => x.name.ToLower().Contains("-concrete")).Count() > 0;
+                vesselLayerData = soundLayerGroup.Where(x => x.name.ToLower().Contains("-vessel")).Count() > 0;
+            }
+
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
 
             initialized = true;
         }
 
+        [KSPField(isPersistant = false, guiActive = true, guiName = "Collision")]
+        string CollidingWith;
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
@@ -79,12 +88,11 @@ namespace RocketSoundEnhancement
             float slipDisplacement = Mathf.Abs(GetSlipDisplacement(wheelSpeed));
 
             WheelHit hit;
-            bool isConcrete = false;
+
+            CollisionObjectType colObjectType = CollisionObjectType.None;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
-                var groundTag = hit.collider.gameObject.tag.ToLower();
-                if(groundTag.Contains("runway") || groundTag.Contains("ksc")) {
-                    isConcrete = true;
-                }
+                colObjectType = AudioUtility.GetCollidingType(hit.collider);
+                CollidingWith = hit.collider.name;
             }
 
             if(moduleMotor) {
@@ -97,7 +105,6 @@ namespace RocketSoundEnhancement
             if(moduleDeploy) {
                 isRetracted = moduleDeploy.stateString == "Retracted";
             }
-
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerKey = soundLayerGroup.Key;
@@ -126,8 +133,21 @@ namespace RocketSoundEnhancement
                     float finalControl = control;
 
                     if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
-                        if(soundLayer.name.ToLower().Contains("-dirt") && isConcrete || soundLayer.name.ToLower().Contains("-concrete") && !isConcrete) {
-                            finalControl = 0;
+                        string layerMaskName = soundLayer.name.ToLower();
+
+                        switch(colObjectType) {
+                            case CollisionObjectType.Concrete:
+                                if(!layerMaskName.Contains("-concrete") && concreteLayerData)
+                                    finalControl = 0;
+                                break;
+                            case CollisionObjectType.Vessel:
+                                if(!layerMaskName.Contains("-vessel") && vesselLayerData)
+                                    finalControl = 0;
+                                break;
+                            case CollisionObjectType.None:
+                                if(layerMaskName.Contains("-concrete") || layerMaskName.Contains("-vessel"))
+                                    finalControl = 0;
+                                break;
                         }
                     }
 

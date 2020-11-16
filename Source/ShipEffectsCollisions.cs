@@ -86,6 +86,14 @@ namespace RocketSoundEnhancement
 
         void OnCollisionExit(Collision col)
         {
+            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
+                foreach(var layer in SoundLayerGroups[CollisionType.CollisionStay]) {
+                    if(Sources.ContainsKey(layer.name)) {
+                        Sources[layer.name].Stop();
+                    }
+                }
+            }
+
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
                 foreach(var soundLayer in SoundLayerGroups[CollisionType.CollisionExit]) {
                     PlaySound(soundLayer, col.relativeVelocity.magnitude, false, true);

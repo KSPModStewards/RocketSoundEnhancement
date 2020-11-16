@@ -10,6 +10,7 @@ namespace RocketSoundEnhancement
     public class RSE : MonoBehaviour
     {
         public static List<ConfigNode> SoundLayerNodes = new List<ConfigNode>();
+        public static Dictionary<string, CollisionObjectType> CollisionData = new Dictionary<string, CollisionObjectType>();
 
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
@@ -20,6 +21,8 @@ namespace RocketSoundEnhancement
         void Start()
         {
             SoundLayerNodes.Clear();
+            CollisionData.Clear();
+
             foreach(var node in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
                 if(node.HasValue("nextStageClip")) {
                     StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(node.GetValue("nextStageClip"));
@@ -28,6 +31,22 @@ namespace RocketSoundEnhancement
                     StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(node.GetValue("cannotSeparateClip"));
                 }
                 SoundLayerNodes.AddRange(node.GetNodes("SOUNDLAYER"));
+            }
+
+            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_SETTINGS")) {
+                if(configNode.HasNode("Colliders")) {
+
+                    var colNode = configNode.GetNode("Colliders");
+                    foreach(ConfigNode.Value node in colNode.values) {
+
+                        CollisionObjectType colDataType = (CollisionObjectType) Enum.Parse(typeof(CollisionObjectType), node.value, true);
+                        if(!CollisionData.ContainsKey(node.name)) {
+                            CollisionData.Add(node.name, colDataType);
+                        } else {
+                            CollisionData[node.name] = colDataType;
+                        }
+                    }
+                }
             }
 
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
@@ -39,8 +58,13 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DisableStagingSound) {
-                GameObject.Destroy(StageManager.Instance.GetComponent<AudioSource>());
+            var stageSource = StageManager.Instance.GetComponent<AudioSource>();
+            if(stageSource) {
+                stageSource.bypassListenerEffects = true;
+
+                if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DisableStagingSound) {
+                    GameObject.Destroy(stageSource);
+                }
             }
 
             //This is the easiest way to deal with multiple listeners, instead of chasing which listener is active.
