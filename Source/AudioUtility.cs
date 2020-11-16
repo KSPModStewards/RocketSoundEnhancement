@@ -241,8 +241,14 @@ namespace RocketSoundEnhancement
                 return CollisionObjectType.Vessel;
             }
 
-            if(RSE.CollisionData.ContainsKey(collider.name)) {
-                return RSE.CollisionData[collider.name];
+            if(collider.gameObject.tag.ToLower() != "untagged") {
+                if(RSE.CollisionData.ContainsKey(collider.name)) {
+                    return RSE.CollisionData[collider.name];
+                }
+
+                if(RSE.CollisionData.ContainsKey("default")) {
+                    return RSE.CollisionData["default"];
+                }
             }
 
             return CollisionObjectType.None;
