@@ -44,6 +44,9 @@ namespace RocketSoundEnhancement
         }
     }
 
+    //RMS Meter from Lubomir's Tutorial:    http://neolit123.blogspot.com/2009/03/designing-analog-vu-meter-in-dsp.html
+    //Soft Saturation / Clipper:            https://www.musicdsp.org/en/latest/Effects/42-soft-saturation.html?highlight=saturation
+    //Lookahead / Delay:                    https://www.musicdsp.org/en/latest/Effects/153-most-simple-static-delay.html?highlight=delay
     [RequireComponent(typeof(AudioBehaviour))]
     public class AudioLimiter : MonoBehaviour
     {
