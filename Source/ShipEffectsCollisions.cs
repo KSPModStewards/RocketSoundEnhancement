@@ -113,7 +113,7 @@ namespace RocketSoundEnhancement
                                 finalVolume = 0;
                             break;
                         case CollidingObject.Dirt:
-                            if(!layerMaskName.Contains("ground"))
+                            if(!layerMaskName.Contains("dirt"))
                                 finalVolume = 0;
                             break;
                     }
@@ -139,7 +139,7 @@ namespace RocketSoundEnhancement
                         loop = false;
                     }
 
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, oneshot);
+                    AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, soundLayer.loopAtRandom, oneshot);
                 } else {
                     if(Sources.ContainsKey(soundLayer.name) && Sources[soundLayer.name].isPlaying) {
                         Sources[soundLayer.name].Stop();
