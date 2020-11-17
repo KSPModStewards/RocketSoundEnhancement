@@ -18,7 +18,7 @@ namespace RocketSoundEnhancement
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
         public bool collided;
-
+        bool gamePaused;
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -39,10 +39,35 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
+
+            GameEvents.onGamePause.Add(onGamePause);
+            GameEvents.onGameUnpause.Add(onGameUnpause);
+        }
+
+        private void onGameUnpause()
+        {
+            gamePaused = false;
+            if(Sources.Count > 0) {
+                foreach(var source in Sources.Values) {
+                    source.UnPause();
+                }
+            }
+        }
+
+        private void onGamePause()
+        {
+            gamePaused = true;
+            if(Sources.Count > 0) {
+                foreach(var source in Sources.Values) {
+                    source.Pause();
+                }
+            }
         }
 
         public override void OnUpdate()
         {
+            if(gamePaused) return;
+
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
                 foreach(var source in sourceKeys) {
@@ -56,6 +81,8 @@ namespace RocketSoundEnhancement
 
         void OnDestroy()
         {
+            GameEvents.onGamePause.Remove(onGamePause);
+            GameEvents.onGameUnpause.Remove(onGameUnpause);
             if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
                     source.Stop();
@@ -129,7 +156,7 @@ namespace RocketSoundEnhancement
                     if(source == null)
                         return;
 
-                    source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                    source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
                     source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
 
                     bool loop = source.loop;

@@ -212,7 +212,7 @@ namespace RocketSoundEnhancement
 
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.volume = volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+            source.volume = volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
             source.pitch = pitch;
             source.loop = false;
             source.spatialBlend = 1;

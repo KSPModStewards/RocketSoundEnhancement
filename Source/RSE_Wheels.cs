@@ -139,12 +139,16 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    if(soundLayer.spool) {
-                        if(!spools.ContainsKey(soundLayer.name)) {
-                            spools.Add(soundLayer.name, 0);
-                        }
+                    if(!spools.ContainsKey(soundLayer.name)) {
+                        spools.Add(soundLayer.name, 0);
+                    }
 
+                    if(soundLayer.spool) {
                         spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], finalControl, soundLayer.spoolTime * TimeWarp.deltaTime);
+                        finalControl = spools[soundLayer.name];
+                    } else {
+                        //fix for audiosource clicks
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, Mathf.Max(0.1f, control));
                         finalControl = spools[soundLayer.name];
                     }
 
@@ -164,7 +168,7 @@ namespace RocketSoundEnhancement
                         Sources.Add(soundLayer.name, source);
                     }
 
-                    source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                    source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
                     source.pitch = soundLayer.pitch.Value(finalControl);
 
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);

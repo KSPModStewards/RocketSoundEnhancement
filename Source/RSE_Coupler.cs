@@ -49,7 +49,7 @@ namespace RocketSoundEnhancement
                         fxGroup.sfx = clip;
                         fxGroup.audio = AudioUtility.CreateOneShotSource(
                             audioParent,
-                            soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume,
+                            soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume,
                             soundLayer.pitch,
                             soundLayer.maxDistance,
                             soundLayer.spread);
@@ -82,7 +82,7 @@ namespace RocketSoundEnhancement
         {
             foreach(var sound in SoundLayers) {
                 if(Sources.ContainsKey(sound.name)) {
-                    Sources[sound.name].volume = sound.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                    Sources[sound.name].volume = sound.volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
                 }
             }
         }
@@ -117,7 +117,7 @@ namespace RocketSoundEnhancement
                 } else {
                     source = AudioUtility.CreateOneShotSource(
                         audioParent,
-                        soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume,
+                        soundLayer.volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume,
                         soundLayer.pitch,
                         soundLayer.maxDistance,
                         soundLayer.spread);

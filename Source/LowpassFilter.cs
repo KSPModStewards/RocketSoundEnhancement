@@ -1,7 +1,36 @@
-﻿using UnityEngine;
+﻿using System.Reflection;
+using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
+    public class LowpassFilterSettings : GameParameters.CustomParameterNode
+    {
+        public override string Title { get { return "Audio Muffler"; } }
+        public override string Section { get { return "Rocket Sound Enhancement"; } }
+        public override string DisplaySection { get { return "Rocket Sound Enhancement"; } }
+        public override int SectionOrder { get { return 2; } }
+        public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
+        public override bool HasPresets { get { return false; } }
+
+        [GameParameters.CustomParameterUI("Enable Muffling")]
+        public bool EnableMuffling = true;
+
+        [GameParameters.CustomIntParameterUI("Interior Muffling", minValue = 10, maxValue = 22200)]
+        public int InteriorMuffling = 1500;
+
+        [GameParameters.CustomIntParameterUI("Vaccum Muffling", minValue = 10, maxValue = 22200)]
+        public int VaccumMuffling = 300;
+
+        public override bool Enabled(MemberInfo member, GameParameters parameters)
+        {
+            return true;
+        }
+        public override bool Interactible(MemberInfo member, GameParameters parameters)
+        {
+            return true;
+        }
+    }
+
     /// <summary>
     /// Thanks to Iron-Warrior for source: https://forum.unity.com/threads/custom-low-pass-filter-using-onaudiofilterread.976326/
     /// </summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -25,6 +26,7 @@ namespace RocketSoundEnhancement
         {
             SoundLayers.Clear();
             Sources.Clear();
+            controllers.Clear();
 
             if(vessel.Parts.Count <= 1) {
                 if(vessel.Parts[0].PhysicsSignificance == 1 || vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
@@ -50,18 +52,22 @@ namespace RocketSoundEnhancement
         void onGamePause()
         {
             gamePause = true;
-            if(initialized) {
+            if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
-                    source.Pause();
+                    if(source.isPlaying) {
+                        source.Pause();
+                    }
                 }
             }
         }
         void onGameUnpause()
         {
             gamePause = false;
-            if(initialized) {
+            if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
-                    source.UnPause();
+                    if(source.isPlaying) {
+                        source.UnPause();
+                    }
                 }
             }
         }
@@ -136,17 +142,15 @@ namespace RocketSoundEnhancement
             float controlDampener = Mathf.Lerp(0.2f, 0.1f, DryMass / TotalMass);
 
             foreach(var soundLayer in SoundLayers) {
-                //float control = GetController(soundLayer.physicsControl);
-                float control = GetController(soundLayer.data);
-
                 if(!controllers.ContainsKey(soundLayer.name)) {
                     controllers.Add(soundLayer.name, 0);
                 }
-
-                float pastControl = controllers[soundLayer.name];
-
-                control = Mathf.MoveTowards(pastControl, control, Mathf.Abs(pastControl - control) * TimeWarp.deltaTime);
+                float controller = GetController(soundLayer.data);
+                float control = Mathf.MoveTowards(controllers[soundLayer.name], controller, Mathf.Max(1, Mathf.Abs(controllers[soundLayer.name] - controller)) * TimeWarp.deltaTime);
                 controllers[soundLayer.name] = control;
+
+                //controllers[soundLayer.name] = Mathf.MoveTowards(controllers[soundLayer.name], control, 30 * TimeWarp.deltaTime);
+                //control = controllers[soundLayer.name];
 
                 float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(TotalMass);
                 float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(TotalMass);
@@ -169,7 +173,7 @@ namespace RocketSoundEnhancement
                     Sources.Add(soundLayer.name, source);
                 }
 
-                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
                 source.pitch = finalPitch;
 
                 AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
