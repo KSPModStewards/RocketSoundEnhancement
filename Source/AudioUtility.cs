@@ -8,8 +8,7 @@ namespace RocketSoundEnhancement
     public enum CollidingObject
     {
         Concrete,
-        Vessel,
-        None
+        Dirt
     }
 
     public enum FXChannel
@@ -34,7 +33,6 @@ namespace RocketSoundEnhancement
         public string name;
         public string data;
         public FXChannel channel;
-        public PhysicsControl physicsControl;
         public bool loop;
         public bool loopAtRandom;
         public bool spool;
@@ -98,7 +96,7 @@ namespace RocketSoundEnhancement
             soundLayer.massToPitch = new FXCurve("massToPitch", 1);
 
             node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.ShipBoth);
-            node.TryGetEnum("physicsControl", ref soundLayer.physicsControl, PhysicsControl.None);
+            //node.TryGetEnum("physicsControl", ref soundLayer.physicsControl, PhysicsControl.None);
 
             soundLayer.volume.Load("volume", node);
             soundLayer.pitch.Load("pitch", node);
@@ -229,22 +227,19 @@ namespace RocketSoundEnhancement
             return source;
         }
 
-        public static CollidingObject GetCollidingType(Collider collider)
+        public static CollidingObject GetCollidingType(GameObject gameObject)
         {
-            var gameObject = collider.gameObject;
-
-            if(gameObject.GetComponent<Vessel>()) {
-                var part = Part.FromGO(gameObject);
-                if(part.GetComponent<AsteroidCollider>()) {
-                    return CollidingObject.None;
+            var part = Part.FromGO(gameObject);
+            if(part) {
+                if(part.GetComponent<ModuleAsteroid>()) {
+                    return CollidingObject.Dirt;
                 }
-
-                return CollidingObject.Vessel;
+                return CollidingObject.Concrete;
             }
 
-            if(collider.gameObject.tag.ToLower() != "untagged") {
-                if(RSE.CollisionData.ContainsKey(collider.name)) {
-                    return RSE.CollisionData[collider.name];
+            if(gameObject.tag.ToLower() != "untagged") {
+                if(RSE.CollisionData.ContainsKey(gameObject.name)) {
+                    return RSE.CollisionData[gameObject.name];
                 }
 
                 if(RSE.CollisionData.ContainsKey("default")) {
@@ -252,7 +247,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            return CollidingObject.None;
+            return CollidingObject.Dirt;
         }
     }
 }

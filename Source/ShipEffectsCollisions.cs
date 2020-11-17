@@ -66,7 +66,7 @@ namespace RocketSoundEnhancement
 
         void OnCollisionEnter(Collision col)
         {
-            var collisionType = AudioUtility.GetCollidingType(col.collider);
+            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
 
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
                 PlaySounds(CollisionType.CollisionEnter, col.relativeVelocity.magnitude, collisionType, true);
@@ -77,7 +77,7 @@ namespace RocketSoundEnhancement
 
         void OnCollisionStay(Collision col)
         {
-            var collisionType = AudioUtility.GetCollidingType(col.collider);
+            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
                 PlaySounds(CollisionType.CollisionStay, col.relativeVelocity.magnitude, collisionType);
             }
@@ -93,35 +93,30 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            var collisionType = AudioUtility.GetCollidingType(col.collider);
+            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
                 PlaySounds(CollisionType.CollisionExit, col.relativeVelocity.magnitude, collisionType, true);
             }
             collided = false;
         }
 
-        void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.None, bool oneshot = false)
+        void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.Dirt, bool oneshot = false)
         {
-            bool concreteLayerData = SoundLayerGroups[collisionType].Where(x => x.data.ToLower().Contains("concrete")).Count() > 0;
-            bool vesselLayerData = SoundLayerGroups[collisionType].Where(x => x.data.ToLower().Contains("vessel")).Count() > 0;
-
             foreach(var soundLayer in SoundLayerGroups[collisionType]) {
                 float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(control);
 
                 var layerMaskName = soundLayer.data.ToLower();
-                switch(collidingObjectType) {
-                    case CollidingObject.Concrete:
-                        if(!layerMaskName.Contains("concrete") && concreteLayerData)
-                            finalVolume = 0;
-                        break;
-                    case CollidingObject.Vessel:
-                        if(!layerMaskName.Contains("vessel") && vesselLayerData)
-                            finalVolume = 0;
-                        break;
-                    case CollidingObject.None:
-                        if(layerMaskName.Contains("concrete") || layerMaskName.Contains("vessel"))
-                            finalVolume = 0;
-                        break;
+                if(layerMaskName != "") {
+                    switch(collidingObjectType) {
+                        case CollidingObject.Concrete:
+                            if(!layerMaskName.Contains("concrete"))
+                                finalVolume = 0;
+                            break;
+                        case CollidingObject.Dirt:
+                            if(!layerMaskName.Contains("ground"))
+                                finalVolume = 0;
+                            break;
+                    }
                 }
 
                 if(finalVolume > float.Epsilon) {

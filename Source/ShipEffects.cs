@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -135,7 +136,8 @@ namespace RocketSoundEnhancement
             float controlDampener = Mathf.Lerp(0.2f, 0.1f, DryMass / TotalMass);
 
             foreach(var soundLayer in SoundLayers) {
-                float control = GetController(soundLayer.physicsControl);
+                //float control = GetController(soundLayer.physicsControl);
+                float control = GetController(soundLayer.data);
 
                 if(!controllers.ContainsKey(soundLayer.name)) {
                     controllers.Add(soundLayer.name, 0);
@@ -174,8 +176,10 @@ namespace RocketSoundEnhancement
             }
         }
 
-        float GetController(PhysicsControl physControl)
+        float GetController(string data)
         {
+            PhysicsControl physControl = (PhysicsControl)Enum.Parse(typeof(PhysicsControl), data, true);
+
             float controller = 0;
             switch(physControl) {
                 case PhysicsControl.Acceleration:

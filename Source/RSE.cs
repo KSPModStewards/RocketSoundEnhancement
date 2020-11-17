@@ -160,7 +160,7 @@ namespace RocketSoundEnhancement
                     foreach(var soundLayer in SoundLayers) {
                         layerInfo +=
                             "SoundLayer: " + soundLayer.name + "\r\n" +
-                            "Control: " + soundLayer.physicsControl + "\r\n";
+                            "Control: " + soundLayer.data + "\r\n";
 
                         if(seModule.Sources.ContainsKey(soundLayer.name)) {
                             var source = seModule.Sources[soundLayer.name];

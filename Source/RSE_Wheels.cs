@@ -61,20 +61,12 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            //foreach(var soundLayerGroup in SoundLayerGroups.Values) {
-            //
-            //    concreteLayerData = soundLayerGroup.Where(x => x.data != null && x.data.ToLower().Contains("concrete")).Count() > 0;
-            //    vesselLayerData = soundLayerGroup.Where(x => x.data != null && x.data.ToLower().Contains("vessel")).Count() > 0;
-            //}
-
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
 
             initialized = true;
         }
 
-        [KSPField(isPersistant = false, guiActive = true, guiName = "Collision")]
-        string CollidingWith;
         public override void OnUpdate()
         {
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
@@ -88,10 +80,10 @@ namespace RocketSoundEnhancement
 
             WheelHit hit;
 
-            CollidingObject colObjectType = CollidingObject.None;
+            //ISSUES: it wont detect Vessels :(
+            CollidingObject colObjectType = CollidingObject.Dirt;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
-                colObjectType = AudioUtility.GetCollidingType(hit.collider);
-                CollidingWith = hit.collider.name;
+                colObjectType = AudioUtility.GetCollidingType(hit.collider.gameObject);
             }
 
             if(moduleMotor) {
@@ -128,28 +120,22 @@ namespace RocketSoundEnhancement
                     }
                 }
 
-                bool concreteLayerData = soundLayerGroup.Value.Where(x => x.data != null && x.data.ToLower().Contains("concrete")).Count() > 0;
-                bool vesselLayerData = soundLayerGroup.Value.Where(x => x.data != null && x.data.ToLower().Contains("vessel")).Count() > 0;
-
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     float finalControl = control;
 
                     if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
                         string layerMaskName = soundLayer.data;
-
-                        switch(colObjectType) {
-                            case CollidingObject.Concrete:
-                                if(!layerMaskName.Contains("concrete") && concreteLayerData)
-                                    finalControl = 0;
-                                break;
-                            case CollidingObject.Vessel:
-                                if(!layerMaskName.Contains("vessel") && vesselLayerData)
-                                    finalControl = 0;
-                                break;
-                            case CollidingObject.None:
-                                if(layerMaskName.Contains("concrete") || layerMaskName.Contains("vessel"))
-                                    finalControl = 0;
-                                break;
+                        if(layerMaskName != "") {
+                            switch(colObjectType) {
+                                case CollidingObject.Concrete:
+                                    if(!layerMaskName.Contains("concrete"))
+                                        finalControl = 0;
+                                    break;
+                                case CollidingObject.Dirt:
+                                    if(!layerMaskName.Contains("dirt"))
+                                        finalControl = 0;
+                                    break;
+                            }
                         }
                     }
 
