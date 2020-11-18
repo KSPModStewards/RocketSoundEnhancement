@@ -18,6 +18,7 @@ namespace RocketSoundEnhancement
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
         public bool collided;
+
         bool gamePaused;
         public override void OnStart(StartState state)
         {
@@ -130,7 +131,7 @@ namespace RocketSoundEnhancement
         void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.Dirt, bool oneshot = false)
         {
             foreach(var soundLayer in SoundLayerGroups[collisionType]) {
-                float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(control);
+                float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value((float)part.physicsMass);
 
                 var layerMaskName = soundLayer.data.ToLower();
                 if(layerMaskName != "") {
@@ -157,7 +158,7 @@ namespace RocketSoundEnhancement
                         return;
 
                     source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
-                    source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(part.vessel.GetComponent<ShipEffects>().TotalMass);
+                    source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value((float)part.physicsMass);
 
                     bool loop = source.loop;
                     if(oneshot) {
