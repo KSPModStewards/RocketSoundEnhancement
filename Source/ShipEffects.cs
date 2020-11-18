@@ -39,7 +39,7 @@ namespace RocketSoundEnhancement
 
             foreach(var layerNode in RSE.SoundLayerNodes) {
                 var soundLayer = AudioUtility.CreateSoundLayer(layerNode);
-                if(soundLayer.audioClip != null && !SoundLayers.Contains(soundLayer)) {
+                if(soundLayer.audioClips != null && !SoundLayers.Contains(soundLayer)) {
                     SoundLayers.Add(soundLayer);
                 }
             }

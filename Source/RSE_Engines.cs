@@ -155,20 +155,22 @@ namespace RocketSoundEnhancement
 
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
-                        string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
-                        AudioSource source;
-                        if(Sources.ContainsKey(oneShotLayerName)) {
-                            source = Sources[oneShotLayerName];
-                        } else {
-                            float vol = oneShotLayer.volume * volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
-                            source = AudioUtility.CreateOneShotSource(audioParent, vol, oneShotLayer.pitch, oneShotLayer.maxDistance);
-                            Sources.Add(oneShotLayerName, source);
-                        }
-                        var clip = GameDatabase.Instance.GetAudioClip(oneShotLayer.audioClip);
-                        if(clip != null) {
-                            source.PlayOneShot(clip);
-                        }
+                        if(oneShotLayer.audioClips != null) {
+                            var clip = GameDatabase.Instance.GetAudioClip(oneShotLayer.audioClips[0]);
+                            string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
 
+                            AudioSource source;
+
+                            if(Sources.ContainsKey(oneShotLayerName)) {
+                                source = Sources[oneShotLayerName];
+                            } else {
+                                source = AudioUtility.CreateOneShotSource(audioParent, 1, oneShotLayer.pitch, oneShotLayer.maxDistance, oneShotLayer.spread);
+                                Sources.Add(oneShotLayerName, source);
+                            }
+
+                            float finalVolume = oneShotLayer.volume * volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
+                            AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
+                        }
                     }
                 }
             }

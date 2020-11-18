@@ -131,7 +131,9 @@ namespace RocketSoundEnhancement
         void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.Dirt, bool oneshot = false)
         {
             foreach(var soundLayer in SoundLayerGroups[collisionType]) {
+
                 float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value((float)part.physicsMass);
+                float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value((float)part.physicsMass);
 
                 var layerMaskName = soundLayer.data.ToLower();
                 if(layerMaskName != "") {
@@ -149,7 +151,11 @@ namespace RocketSoundEnhancement
 
                 if(finalVolume > float.Epsilon) {
                     if(!Sources.ContainsKey(soundLayer.name)) {
-                        Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
+                        if(oneshot) {
+                            Sources.Add(soundLayer.name, AudioUtility.CreateOneShotSource(part.gameObject, 1, 1, soundLayer.maxDistance, soundLayer.spread));
+                        } else {
+                            Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
+                        }
                     }
 
                     var source = Sources[soundLayer.name];
@@ -158,14 +164,23 @@ namespace RocketSoundEnhancement
                         return;
 
                     finalVolume *= HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
-
-
-                    source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value((float)part.physicsMass);
+                    source.pitch = finalPitch;
 
                     if(oneshot) {
+                        var audioClips = soundLayer.audioClips;
+                        if(audioClips == null)
+                            continue;
+
+                        int index = 0;
+                        if(audioClips.Length > 1)
+                            index = UnityEngine.Random.Range(0, audioClips.Length);
+
+                        var clip = GameDatabase.Instance.GetAudioClip(audioClips[index]);
+
                         source.volume = 1;
-                        finalVolume *= UnityEngine.Random.Range(0.8f, 1.0f);
-                        AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false, true, finalVolume);
+                        finalVolume *= UnityEngine.Random.Range(0.9f, 1.0f);
+                        AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false, true, finalVolume, clip);
+
                     } else {
                         source.volume = finalVolume;
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);

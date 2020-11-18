@@ -32,6 +32,7 @@ namespace RocketSoundEnhancement
     {
         public string name;
         public string data;
+        public string[] audioClips;
         public FXChannel channel;
         public bool loop;
         public bool loopAtRandom;
@@ -40,7 +41,6 @@ namespace RocketSoundEnhancement
         public float spoolIdle;
         public float maxDistance;
         public float spread;
-        public string audioClip;
         public FXCurve volume;
         public FXCurve pitch;
         public FXCurve massToVolume;
@@ -80,7 +80,13 @@ namespace RocketSoundEnhancement
             var soundLayer = new SoundLayer();
 
             soundLayer.name = node.GetValue("name");
-            soundLayer.audioClip = node.GetValue("audioClip");
+
+            if(node.HasValue("audioClip")) {
+                soundLayer.audioClips = new string[node.GetValues("audioClip").Length];
+                for(int i = 0; i < soundLayer.audioClips.Length; i++) {
+                    soundLayer.audioClips[i] = node.GetValue("audioClip", i);
+                }
+            }
 
             node.TryGetValue("loop", ref soundLayer.loop);
             node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom);
@@ -96,7 +102,6 @@ namespace RocketSoundEnhancement
             soundLayer.massToPitch = new FXCurve("massToPitch", 1);
 
             node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.ShipBoth);
-            //node.TryGetEnum("physicsControl", ref soundLayer.physicsControl, PhysicsControl.None);
 
             soundLayer.volume.Load("volume", node);
             soundLayer.pitch.Load("pitch", node);
@@ -116,9 +121,9 @@ namespace RocketSoundEnhancement
             return soundLayer;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
         {
-            if(source == null || source.clip == null)
+            if(source == null)
                 return;
 
             if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) {
@@ -139,7 +144,11 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, volume);
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
                         } else {
                             source.Play();
                         }
@@ -158,7 +167,11 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, volume);
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
                         } else {
                             source.Play();
                         }
@@ -176,7 +189,11 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, volume);
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
                         } else {
                             source.Play();
                         }
@@ -190,7 +207,16 @@ namespace RocketSoundEnhancement
         {
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClip);
+
+            if(soundLayer.audioClips != null) {
+                int index = 0;
+                if(soundLayer.audioClips.Length > 1) {
+                    index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+                }
+
+                source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+            }
+
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
             source.loop = soundLayer.loop;
@@ -209,13 +235,13 @@ namespace RocketSoundEnhancement
 
         public static AudioSource CreateOneShotSource(GameObject gameObject, float volume, float pitch, float maxDistance, float spread = 0)
         {
-
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.volume = volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
+            source.volume = volume;
             source.pitch = pitch;
             source.loop = false;
             source.spatialBlend = 1;
+
             if(spread != 0) {
                 source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, spread, 1, 0));
             }

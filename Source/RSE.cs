@@ -90,6 +90,17 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnPause);
+
+
+            FXMonger fxMonger = GameObject.FindObjectOfType<FXMonger>();
+
+            if(fxMonger != null) {
+                if(fxMonger.explosionSounds.Length > 0) {
+                    for(int i = 0; i < fxMonger.explosionSounds.Length; i++) {
+                        Debug.Log("Index: " + i + " : " + fxMonger.explosionSounds[i].name);
+                    }
+                }
+            }
         }
 
         void LateUpdate()
@@ -190,6 +201,11 @@ namespace RocketSoundEnhancement
                         layerInfo +=
                             "SoundLayer: " + soundLayer.name + "\r\n" +
                             "Control: " + soundLayer.data + "\r\n";
+                        if(soundLayer.audioClips != null) {
+                            layerInfo += "AudioClips: " + soundLayer.audioClips.Length.ToString() + "\r\n";
+                        } else {
+                            layerInfo += "No AudioClips \r\n";
+                        }
 
                         if(seModule.Sources.ContainsKey(soundLayer.name)) {
                             var source = seModule.Sources[soundLayer.name];
