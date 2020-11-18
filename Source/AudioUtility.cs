@@ -116,7 +116,7 @@ namespace RocketSoundEnhancement
             return soundLayer;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f)
         {
             if(source == null || source.clip == null)
                 return;
@@ -139,7 +139,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, 1.0f);
+                            source.PlayOneShot(source.clip, volume);
                         } else {
                             source.Play();
                         }
@@ -158,7 +158,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, 1.0f);
+                            source.PlayOneShot(source.clip, volume);
                         } else {
                             source.Play();
                         }
@@ -176,7 +176,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip, 1.0f);
+                            source.PlayOneShot(source.clip, volume);
                         } else {
                             source.Play();
                         }

@@ -157,17 +157,20 @@ namespace RocketSoundEnhancement
                     if(source == null)
                         return;
 
-                    source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
+                    finalVolume *= HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
+
+
                     source.pitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value((float)part.physicsMass);
 
-                    bool loop = source.loop;
                     if(oneshot) {
-                        source.volume *= UnityEngine.Random.Range(0.8f, 1.0f);
-                        source.pitch *= UnityEngine.Random.Range(0.99f, 1.01f);
-                        loop = false;
+                        source.volume = 1;
+                        finalVolume *= UnityEngine.Random.Range(0.8f, 1.0f);
+                        AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false, true, finalVolume);
+                    } else {
+                        source.volume = finalVolume;
+                        AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                     }
 
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, loop, soundLayer.loopAtRandom, oneshot);
                 } else {
                     if(Sources.ContainsKey(soundLayer.name) && Sources[soundLayer.name].isPlaying) {
                         Sources[soundLayer.name].Stop();
