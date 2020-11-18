@@ -16,7 +16,12 @@ namespace RocketSoundEnhancement
         public LowpassFilter lowpassFilter;
         public AudioLimiter audioLimiter;
 
-        AnimationCurve lowpassCurve;
+        AnimationCurve lowpassCurveExt;
+        AnimationCurve lowpassCurveInt;
+
+        int VacuumFreq => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().VacuumMuffling;
+        int InterFreqAtm => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingAtm;
+        int InterFreqVac => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingVac;
 
         bool gamePaused;
         void Start()
@@ -76,7 +81,9 @@ namespace RocketSoundEnhancement
             lowpassFilter = gameObject.AddOrGetComponent<LowpassFilter>();
             lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;
             lowpassFilter.lowpassResonanceQ = 3;
-            lowpassCurve = AnimationCurve.Linear(1, 22200, 0, HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().VaccumMuffling);
+
+            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
+            lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
 
             audioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
             audioLimiter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().EnableLimiter;
@@ -102,10 +109,11 @@ namespace RocketSoundEnhancement
                     return;
 
                 if(InternalCamera.Instance.isActive) {
-                    lowpassFilter.cutoffFrequency = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMuffling;
+                    lowpassFilter.cutoffFrequency = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
                 } else {
-                    lowpassFilter.cutoffFrequency = lowpassCurve.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                    lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
                 }
+
             } else if(lowpassFilter.enabled) {
                 lowpassFilter.enabled = false;
             }
@@ -219,7 +227,8 @@ namespace RocketSoundEnhancement
         void onGameUnPause()
         {
             gamePaused = false;
-            lowpassCurve = AnimationCurve.Linear(1, 22200, 0, HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().VaccumMuffling);
+            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
+            lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
 
             if(lowpassFilter != null)
                 lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;

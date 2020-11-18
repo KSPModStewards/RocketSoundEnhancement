@@ -15,11 +15,14 @@ namespace RocketSoundEnhancement
         [GameParameters.CustomParameterUI("Enable Muffling")]
         public bool EnableMuffling = true;
 
-        [GameParameters.CustomIntParameterUI("Interior Muffling", minValue = 10, maxValue = 22200)]
-        public int InteriorMuffling = 1500;
+        [GameParameters.CustomIntParameterUI("Interior Atmosphere", minValue = 10, maxValue = 22200)]
+        public int InteriorMufflingAtm = 3000;
 
-        [GameParameters.CustomIntParameterUI("Vaccum Muffling", minValue = 10, maxValue = 22200)]
-        public int VaccumMuffling = 300;
+        [GameParameters.CustomIntParameterUI("Interior Vacuum", minValue = 10, maxValue = 22200)]
+        public int InteriorMufflingVac = 1500;
+
+        [GameParameters.CustomIntParameterUI("Vacuum", minValue = 10, maxValue = 22200)]
+        public int VacuumMuffling = 300;
 
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
