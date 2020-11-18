@@ -163,7 +163,7 @@ namespace RocketSoundEnhancement
                     bool loop = source.loop;
                     if(oneshot) {
                         source.volume *= UnityEngine.Random.Range(0.8f, 1.0f);
-                        source.pitch *= UnityEngine.Random.Range(0.95f, 1.05f);
+                        source.pitch *= UnityEngine.Random.Range(0.99f, 1.01f);
                         loop = false;
                     }
 

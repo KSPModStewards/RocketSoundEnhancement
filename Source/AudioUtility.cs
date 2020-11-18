@@ -139,7 +139,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip);
+                            source.PlayOneShot(source.clip, 1.0f);
                         } else {
                             source.Play();
                         }
@@ -158,7 +158,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip);
+                            source.PlayOneShot(source.clip, 1.0f);
                         } else {
                             source.Play();
                         }
@@ -176,7 +176,7 @@ namespace RocketSoundEnhancement
                         }
                     } else {
                         if(oneshot) {
-                            source.PlayOneShot(source.clip);
+                            source.PlayOneShot(source.clip, 1.0f);
                         } else {
                             source.Play();
                         }
