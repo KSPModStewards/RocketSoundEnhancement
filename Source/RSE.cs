@@ -150,8 +150,7 @@ namespace RocketSoundEnhancement
                         "Attack: " + audioLimiter.Attack + "\r\n" +
                         "Release: " + audioLimiter.Release + "\r\n" +
                         "RMS: " + audioLimiter.RMS + "\r\n" +
-                        "Reduction: " + audioLimiter.Reduction + "\r\n" +
-                        "Clip: " + audioLimiter.Clip;
+                        "Reduction: " + audioLimiter.Reduction + "\r\n";
 
                     GUILayout.TextArea(limiterInfo, GUILayout.Height(175));
                 }

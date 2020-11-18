@@ -16,7 +16,7 @@ namespace RocketSoundEnhancement
         [GameParameters.CustomParameterUI("Enable Audio Limiter")]
         public bool EnableLimiter = true;
 
-        [GameParameters.CustomFloatParameterUI("Gain", minValue = 0f, maxValue = 5f, displayFormat = "N1")]
+        [GameParameters.CustomFloatParameterUI("Input Gain", minValue = 0f, maxValue = 5f, displayFormat = "N1")]
         public float Gain = 0.5f;
         [GameParameters.CustomFloatParameterUI("Makeup Gain", minValue = 0f, maxValue = 5f, displayFormat = "N1")]
         public float GainMakeup = 1.5f;
@@ -32,8 +32,7 @@ namespace RocketSoundEnhancement
         public int Attack = 10;
         [GameParameters.CustomIntParameterUI("Release (ms)", minValue = 1, maxValue = 5000)]
         public int Release = 250;
-        [GameParameters.CustomFloatParameterUI("Soft Saturation/Clipper", minValue = 0.1f, maxValue = 1f, displayFormat = "N1")]
-        public float Clip = 1.0f;
+
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
             return true;
@@ -45,7 +44,6 @@ namespace RocketSoundEnhancement
     }
 
     //RMS Meter from Lubomir's Tutorial:    http://neolit123.blogspot.com/2009/03/designing-analog-vu-meter-in-dsp.html
-    //Soft Saturation / Clipper:            https://www.musicdsp.org/en/latest/Effects/42-soft-saturation.html?highlight=saturation
     //Lookahead / Delay:                    https://www.musicdsp.org/en/latest/Effects/153-most-simple-static-delay.html?highlight=delay
     [RequireComponent(typeof(AudioBehaviour))]
     public class AudioLimiter : MonoBehaviour
@@ -58,7 +56,6 @@ namespace RocketSoundEnhancement
         public float Ratio => HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().Ratio;
         public int Attack => HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().Attack;
         public int Release => HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().Release;
-        public float Clip => HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().Clip;
 
         public float RMS = float.NegativeInfinity;
         public float Reduction = 1;
@@ -113,31 +110,12 @@ namespace RocketSoundEnhancement
             for(int i = 0; i < data.Length; i++) {
                 //LookAhead Buffer
                 buffer[write] = ProcessSamples(data[i]);
-                buffer[read] *= Reduction;
-
-                //Soft Saturation/ Clipper
-                float peak = Mathf.Abs(buffer[read]);
-                float clippedValue = 0;
-                if(peak > Clip) {
-                    clippedValue = Clip + (peak - Clip) / Mathf.Pow(1 + ((peak - Clip) / (1 - Clip)), 2);
-                }
-                if(peak > 1) {
-                    clippedValue *= (1 / ((Clip + 1) / 2));
-                }
-                if(clippedValue != 0) {
-                    if(buffer[read] < 0) {
-                        buffer[read] = -clippedValue;
-                    } else {
-                        buffer[read] = clippedValue;
-                    }
-                }
-
-                data[i] = buffer[read] * MakeUp;
+                data[i] = buffer[read] * Reduction * MakeUp;
 
                 ++write;
                 if(write >= numSamplesDelay * 2)
                     write = 0;
-
+                
                 ++read;
                 if(read >= numSamplesDelay * 2)
                     read = 0;
