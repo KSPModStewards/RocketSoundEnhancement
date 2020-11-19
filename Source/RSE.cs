@@ -90,17 +90,6 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnPause);
-
-
-            FXMonger fxMonger = GameObject.FindObjectOfType<FXMonger>();
-
-            if(fxMonger != null) {
-                if(fxMonger.explosionSounds.Length > 0) {
-                    for(int i = 0; i < fxMonger.explosionSounds.Length; i++) {
-                        Debug.Log("Index: " + i + " : " + fxMonger.explosionSounds[i].name);
-                    }
-                }
-            }
         }
 
         void LateUpdate()
