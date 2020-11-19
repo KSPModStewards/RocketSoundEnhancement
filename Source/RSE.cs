@@ -29,17 +29,18 @@ namespace RocketSoundEnhancement
             SoundLayerNodes.Clear();
             CollisionData.Clear();
 
-            foreach(var node in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
-                if(node.HasValue("nextStageClip")) {
-                    StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(node.GetValue("nextStageClip"));
-                }
-                if(node.HasValue("cannotSeparateClip")) {
-                    StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(node.GetValue("cannotSeparateClip"));
-                }
-                SoundLayerNodes.AddRange(node.GetNodes("SOUNDLAYER"));
+            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
+                SoundLayerNodes.AddRange(configNode.GetNodes("SOUNDLAYER"));
             }
 
             foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_SETTINGS")) {
+                if(configNode.HasValue("nextStageClip")) {
+                    StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
+                }
+                if(configNode.HasValue("cannotSeparateClip")) {
+                    StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("cannotSeparateClip"));
+                }
+
                 if(configNode.HasNode("Colliders")) {
 
                     var colNode = configNode.GetNode("Colliders");
