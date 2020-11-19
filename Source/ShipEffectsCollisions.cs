@@ -138,6 +138,10 @@ namespace RocketSoundEnhancement
                 var layerMaskName = soundLayer.data.ToLower();
                 if(layerMaskName != "") {
                     switch(collidingObjectType) {
+                        case CollidingObject.Vessel:
+                            if(!layerMaskName.Contains("vessel"))
+                                finalVolume = 0;
+                            break;
                         case CollidingObject.Concrete:
                             if(!layerMaskName.Contains("concrete"))
                                 finalVolume = 0;

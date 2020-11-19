@@ -7,6 +7,7 @@ namespace RocketSoundEnhancement
 {
     public enum CollidingObject
     {
+        Vessel,
         Concrete,
         Dirt
     }
@@ -260,7 +261,7 @@ namespace RocketSoundEnhancement
                 if(part.GetComponent<ModuleAsteroid>()) {
                     return CollidingObject.Dirt;
                 }
-                return CollidingObject.Concrete;
+                return CollidingObject.Vessel;
             }
 
             if(gameObject.tag.ToLower() != "untagged") {

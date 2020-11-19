@@ -149,9 +149,6 @@ namespace RocketSoundEnhancement
                 float control = Mathf.MoveTowards(controllers[soundLayer.name], controller, Mathf.Max(1, Mathf.Abs(controllers[soundLayer.name] - controller)) * TimeWarp.deltaTime);
                 controllers[soundLayer.name] = control;
 
-                //controllers[soundLayer.name] = Mathf.MoveTowards(controllers[soundLayer.name], control, 30 * TimeWarp.deltaTime);
-                //control = controllers[soundLayer.name];
-
                 float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(TotalMass);
                 float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(TotalMass);
 
