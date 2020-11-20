@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -23,6 +24,12 @@ namespace RocketSoundEnhancement
         int InterFreqAtm => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingAtm;
         int InterFreqVac => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingVac;
 
+        string[] ChattererPlayerNames = new string[] {
+            "rbr_chatter_player",
+            "rbr_beep_player_",
+            "rbr_sstv_player"
+        };
+
         bool gamePaused;
         void Start()
         {
@@ -42,10 +49,8 @@ namespace RocketSoundEnhancement
                 }
 
                 if(configNode.HasNode("Colliders")) {
-
                     var colNode = configNode.GetNode("Colliders");
                     foreach(ConfigNode.Value node in colNode.values) {
-
                         CollidingObject colDataType = (CollidingObject)Enum.Parse(typeof(CollidingObject), node.value, true);
                         if(!CollisionData.ContainsKey(node.name)) {
                             CollisionData.Add(node.name, colDataType);
@@ -71,6 +76,19 @@ namespace RocketSoundEnhancement
 
                 if(HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().DisableStagingSound) {
                     GameObject.Destroy(stageSource);
+                }
+            }
+
+            //Find Chatterer Players and set bypassListenerEffects to true
+            var chattererObjects = GameObject.FindObjectsOfType<GameObject>().Where(x => x.name.Contains("_player"));
+            if(chattererObjects.Count() > 0) {
+                foreach(var chatterer in chattererObjects) {
+                    if(ChattererPlayerNames.Contains(Regex.Replace(chatterer.name, @"\d", string.Empty))) {
+                        var sources = chatterer.GetComponents<AudioSource>();
+                        foreach(var source in sources) {
+                            source.bypassListenerEffects = true;
+                        }
+                    }
                 }
             }
 
