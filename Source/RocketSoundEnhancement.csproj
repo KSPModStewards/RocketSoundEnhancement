@@ -121,6 +121,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\Games\Kerbal Space Program\KSP 1.10.1\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\Games\Kerbal Space Program\KSP 1.10.1\GameData\RocketSoundEnhancement\Plugins"
+copy "$(TargetPath)" "D:\KSP Mod Projects\RocketSoundEnhancement\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
   </PropertyGroup>
 </Project>
