@@ -92,20 +92,14 @@ namespace RocketSoundEnhancement
             Initialize();
         }
 
-        void LateUpdate()
+        void OnAudioFilterRead(float[] data, int channels)
         {
             if(!initalized)
                 return;
 
             float processReduction = 1 / Mathf.Lerp(Ratio, 1, Mathf.Abs(RMS / Threshold));
             float atkrls = RMS > Threshold ? Attack : Release;
-            Reduction = Mathf.MoveTowards(Reduction, Mathf.Clamp(processReduction, 0, 1), (100 / atkrls) * Time.deltaTime);
-        }
-
-        void OnAudioFilterRead(float[] data, int channels)
-        {
-            if(!initalized)
-                return;
+            Reduction = Mathf.MoveTowards(Reduction, Mathf.Clamp(processReduction, 0, 1), (100 / atkrls) * 0.02f); //OnAudioFilterRead is called every 20ms or so.
 
             for(int i = 0; i < data.Length; i++) {
                 //LookAhead Buffer
