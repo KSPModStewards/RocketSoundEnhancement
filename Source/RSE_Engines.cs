@@ -116,7 +116,7 @@ namespace RocketSoundEnhancement
                             source = Sources[sourceLayerName];
                         }
 
-                        source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
+                        source.volume = soundLayer.volume.Value(finalControl) * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
                         source.pitch = soundLayer.pitch.Value(finalControl);
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
@@ -168,7 +168,7 @@ namespace RocketSoundEnhancement
                                 Sources.Add(oneShotLayerName, source);
                             }
 
-                            float finalVolume = oneShotLayer.volume * volume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().ShipVolume;
+                            float finalVolume = oneShotLayer.volume * volume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
                             AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
                         }
                     }

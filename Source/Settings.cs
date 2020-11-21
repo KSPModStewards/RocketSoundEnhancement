@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace RocketSoundEnhancement
 {
-    public class RSESettings : GameParameters.CustomParameterNode
+    public class Settings : GameParameters.CustomParameterNode
     {
         public override string Title { get { return "Rocket Sound Enhancement Settings"; } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }

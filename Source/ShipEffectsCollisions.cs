@@ -167,7 +167,7 @@ namespace RocketSoundEnhancement
                     if(source == null)
                         return;
 
-                    finalVolume *= HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
+                    finalVolume *= HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
                     source.pitch = finalPitch;
 
                     if(oneshot) {

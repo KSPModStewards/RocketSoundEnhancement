@@ -171,7 +171,7 @@ namespace RocketSoundEnhancement
                     Sources.Add(soundLayer.name, source);
                 }
 
-                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().EffectsVolume;
+                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
                 source.pitch = finalPitch;
 
                 AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);

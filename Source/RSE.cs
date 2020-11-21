@@ -76,7 +76,7 @@ namespace RocketSoundEnhancement
             if(stageSource) {
                 stageSource.bypassListenerEffects = true;
 
-                if(HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().DisableStagingSound) {
+                if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DisableStagingSound) {
                     GameObject.Destroy(stageSource);
                 }
             }
@@ -150,7 +150,7 @@ namespace RocketSoundEnhancement
         Rect windowRect = new Rect(20, 50, 250, 400);
         void OnGUI()
         {
-            if(HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().DebugWindow) {
+            if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DebugWindow) {
                 windowRect = GUILayout.Window(0, windowRect, InfoWindow, "Rocket Sound Enhancement");
             }
         }
@@ -246,7 +246,7 @@ namespace RocketSoundEnhancement
                 GUILayout.Label("No Active Vessel");
             }
 
-            HighLogic.CurrentGame.Parameters.CustomParams<RSESettings>().DebugWindow = !GUILayout.Button("Close", GUILayout.Height(20));
+            HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DebugWindow = !GUILayout.Button("Close", GUILayout.Height(20));
 
             GUILayout.EndVertical();
             GUI.DragWindow(new Rect(0, 0, 1000, 20));
