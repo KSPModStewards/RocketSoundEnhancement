@@ -16,6 +16,7 @@ namespace RocketSoundEnhancement
         public float DryMass;
         public float Acceleration;
         public float Jerk;
+        public float ThrustAccel;
         float pastAcceleration;
 
         public bool initialized;
@@ -182,6 +183,8 @@ namespace RocketSoundEnhancement
             PhysicsControl physControl = (PhysicsControl)Enum.Parse(typeof(PhysicsControl), data, true);
 
             float controller = 0;
+
+
             switch(physControl) {
                 case PhysicsControl.Acceleration:
                     controller = Acceleration;
@@ -197,9 +200,8 @@ namespace RocketSoundEnhancement
                         controller = (float)vessel.srf_velocity.magnitude;
                     break;
                 case PhysicsControl.Thrust:
-                    var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>());
                     float totalThrust = 0;
-
+                    var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>());
                     if(engines.Count() > 0) {
                         foreach(var engine in engines) {
                             var module = engine.GetComponent<ModuleEngines>();
@@ -207,9 +209,12 @@ namespace RocketSoundEnhancement
                                 totalThrust += module.GetCurrentThrust();
                             }
                         }
+                        controller = (totalThrust * 1000) / (vessel.GetTotalMass() * 1000); //Convert to Newtons and kg
+                        ThrustAccel = controller;
+                        break;
                     }
-
-                    controller = totalThrust;
+                    controller = 0;
+                    ThrustAccel = 0;
                     break;
                 case PhysicsControl.None:
                     controller = 1;

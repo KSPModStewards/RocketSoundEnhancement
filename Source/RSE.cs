@@ -196,6 +196,7 @@ namespace RocketSoundEnhancement
                 string info = "Acceleration: " + accel.ToString("0.00") + "\r\n" +
                               "Jerk: " + jerk.ToString("0.00") + "\r\n" +
                               "Airspeed: " + ((float)vessel.indicatedAirSpeed).ToString("0.00") + "\r\n" +
+                              "Thrust Acceleration: " + seModule.ThrustAccel.ToString("0.00") + "\r\n" +
                               "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
                               "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
 
