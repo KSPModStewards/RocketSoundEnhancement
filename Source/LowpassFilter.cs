@@ -24,6 +24,9 @@ namespace RocketSoundEnhancement
         [GameParameters.CustomIntParameterUI("Vacuum", minValue = 10, maxValue = 22200)]
         public int VacuumMuffling = 300;
 
+        [GameParameters.CustomParameterUI("Muffler Chatterer", toolTip = "Muffle Chatterer when not in IVA View")]
+        public bool MuffleChatterer = true;
+
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
             return true;

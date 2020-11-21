@@ -30,6 +30,8 @@ namespace RocketSoundEnhancement
             "rbr_sstv_player"
         };
 
+        List<AudioSource> ChattererSources = new List<AudioSource>();
+
         bool gamePaused;
         void Start()
         {
@@ -79,14 +81,14 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            //Find Chatterer Players and set bypassListenerEffects to true
+            //Find Chatterer Players
             var chattererObjects = GameObject.FindObjectsOfType<GameObject>().Where(x => x.name.Contains("_player"));
             if(chattererObjects.Count() > 0) {
                 foreach(var chatterer in chattererObjects) {
                     if(ChattererPlayerNames.Contains(Regex.Replace(chatterer.name, @"\d", string.Empty))) {
-                        var sources = chatterer.GetComponents<AudioSource>();
-                        foreach(var source in sources) {
-                            source.bypassListenerEffects = true;
+                        foreach(var source in chatterer.GetComponents<AudioSource>()) {
+                            source.bypassListenerEffects = !HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer;
+                            ChattererSources.Add(source);
                         }
                     }
                 }
@@ -133,6 +135,13 @@ namespace RocketSoundEnhancement
                     lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
                 }
 
+                if(HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
+                    foreach(var source in ChattererSources) {
+                        source.bypassListenerEffects = InternalCamera.Instance.isActive;
+                    }
+                }
+
+
             } else if(lowpassFilter.enabled) {
                 lowpassFilter.enabled = false;
             }
@@ -168,6 +177,7 @@ namespace RocketSoundEnhancement
 
             if(audioLimiter != null) {
                 if(audioLimiter.enabled) {
+                    GUILayout.Label("Audio Limiter");
                     string limiterInfo = "Gain: " + audioLimiter.Gain + "\r\n" +
                         "Makeup Gain: " + audioLimiter.MakeUp + "\r\n" +
                         "WindowSize: " + audioLimiter.WindowSize + "\r\n" +
@@ -178,13 +188,11 @@ namespace RocketSoundEnhancement
                         "Release: " + audioLimiter.Release + "\r\n" +
                         "RMS: " + audioLimiter.RMS + "\r\n" +
                         "Reduction: " + audioLimiter.Reduction + "\r\n";
-
                     GUILayout.TextArea(limiterInfo, GUILayout.Height(175));
                 }
             }
 
             if(seModule != null && seModule.initialized) {
-
                 GUILayout.Label("Vessel: " + vessel.GetDisplayName());
                 GUILayout.Label("Vessel Parts: " + vessel.Parts.Count());
                 GUILayout.Label("SoundLayers: " + seModule.SoundLayers.Count);
@@ -262,6 +270,12 @@ namespace RocketSoundEnhancement
                 audioLimiter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().EnableLimiter;
                 audioLimiter.initalized = false;
                 audioLimiter.Initialize();
+            }
+
+            if(!HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
+                foreach(var source in ChattererSources) {
+                    source.bypassListenerEffects = true;
+                }
             }
         }
 
