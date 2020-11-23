@@ -91,7 +91,7 @@ namespace RocketSoundEnhancement
                                 spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, Mathf.Max(0.1f, engineModule.currentThrottle));
                             } else {
                                 float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolTime * TimeWarp.deltaTime);
+                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolSpeed * TimeWarp.deltaTime);
                                 finalControl = spools[sourceLayerName];
                             }
                         } else {

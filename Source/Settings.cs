@@ -12,10 +12,10 @@ namespace RocketSoundEnhancement
         public override int SectionOrder { get { return 1; } }
         public override bool HasPresets { get { return false; } }
 
-        [GameParameters.CustomFloatParameterUI("Effects Volume", minValue = 0f, maxValue = 2f, displayFormat = "P0")]
+        [GameParameters.CustomFloatParameterUI("Effects Volume", toolTip = "Physics and Collision Effects Volume", minValue = 0f, maxValue = 2f, displayFormat = "P0")]
         public float EffectsVolume = 1f;
 
-        [GameParameters.CustomFloatParameterUI("Ship Volume", minValue = 0f, maxValue = 2f, displayFormat = "P0")]
+        [GameParameters.CustomFloatParameterUI("Ship Volume", toolTip = "Ship Volume", minValue = 0f, maxValue = 2f, displayFormat = "P0")]
         public float ShipVolume = 1f;
 
         [GameParameters.CustomParameterUI("Disable Staging Sound", toolTip = "Requires Save and Reload")]

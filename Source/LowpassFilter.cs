@@ -15,16 +15,16 @@ namespace RocketSoundEnhancement
         [GameParameters.CustomParameterUI("Enable Muffling")]
         public bool EnableMuffling = true;
 
-        [GameParameters.CustomIntParameterUI("Interior Atmosphere", minValue = 10, maxValue = 22200)]
+        [GameParameters.CustomIntParameterUI("Internal Camera - Atmosphere Muffling", toolTip = "Amount of outside environment muffling while Internal Camera (IVA) is Active in an Atmosphere (hz)", minValue = 10, maxValue = 22200)]
         public int InteriorMufflingAtm = 3000;
 
-        [GameParameters.CustomIntParameterUI("Interior Vacuum", minValue = 10, maxValue = 22200)]
+        [GameParameters.CustomIntParameterUI("Internal Camera - Vacuum Muffling", toolTip = "Amount of outside environment muffling while the Internal Camera (IVA) is Active in a Vacuum (hz)", minValue = 10, maxValue = 22200)]
         public int InteriorMufflingVac = 1500;
 
-        [GameParameters.CustomIntParameterUI("Vacuum", minValue = 10, maxValue = 22200)]
+        [GameParameters.CustomIntParameterUI("Vacuum", toolTip = "Amount of Vacuum Muffling (hz)", minValue = 10, maxValue = 22200)]
         public int VacuumMuffling = 300;
 
-        [GameParameters.CustomParameterUI("Muffler Chatterer", toolTip = "Muffle Chatterer when not in IVA View")]
+        [GameParameters.CustomParameterUI("Muffle Chatterer", toolTip = "Muffle Chatterer when Internal Camera (IVA) is not Active")]
         public bool MuffleChatterer = false;
 
         public override bool Enabled(MemberInfo member, GameParameters parameters)

@@ -38,7 +38,7 @@ namespace RocketSoundEnhancement
         public bool loop;
         public bool loopAtRandom;
         public bool spool;
-        public float spoolTime;
+        public float spoolSpeed;
         public float spoolIdle;
         public float maxDistance;
         public float spread;
@@ -93,7 +93,9 @@ namespace RocketSoundEnhancement
             node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom);
 
             node.TryGetValue("spool", ref soundLayer.spool);
-            node.TryGetValue("spoolTime", ref soundLayer.spoolTime);
+
+            node.TryGetValue("spoolSpeed", ref soundLayer.spoolSpeed);
+
             node.TryGetValue("spoolIdle", ref soundLayer.spoolIdle);
             node.TryGetValue("spread", ref soundLayer.spread);
 
