@@ -137,6 +137,10 @@ namespace RocketSoundEnhancement
 
                 if(HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
                     foreach(var source in ChattererSources) {
+
+                        if(source == null)
+                            continue;
+
                         source.bypassListenerEffects = InternalCamera.Instance.isActive;
                     }
                 }
