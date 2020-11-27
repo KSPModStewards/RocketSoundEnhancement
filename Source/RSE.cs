@@ -87,6 +87,9 @@ namespace RocketSoundEnhancement
                 foreach(var chatterer in chattererObjects) {
                     if(ChattererPlayerNames.Contains(Regex.Replace(chatterer.name, @"\d", string.Empty))) {
                         foreach(var source in chatterer.GetComponents<AudioSource>()) {
+                            if(source == null)
+                                continue;
+
                             source.bypassListenerEffects = !HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer;
                             ChattererSources.Add(source);
                         }
@@ -278,6 +281,8 @@ namespace RocketSoundEnhancement
 
             if(!HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
                 foreach(var source in ChattererSources) {
+                    if(source == null)
+                        continue;
                     source.bypassListenerEffects = true;
                 }
             }
