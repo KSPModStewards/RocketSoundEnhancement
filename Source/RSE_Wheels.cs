@@ -100,7 +100,7 @@ namespace RocketSoundEnhancement
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerKey = soundLayerGroup.Key;
                 float control = 0;
-                float masterVolume = HighLogic.CurrentGame.Parameters.CustomParams<Settings>().ShipVolume;
+                float masterVolume = GameSettings.SHIP_VOLUME;
 
                 if(!isRetracted) {
                     switch(soundLayerGroup.Key) {
@@ -112,11 +112,11 @@ namespace RocketSoundEnhancement
                             break;
                         case "Ground":
                             control = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
-                            masterVolume = HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                            masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         case "Slip":
                             control = moduleWheel.isGrounded ? slipDisplacement : 0;
-                            masterVolume = HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                            masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         default:
                             continue;

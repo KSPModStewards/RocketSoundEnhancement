@@ -38,7 +38,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            foreach(var layerNode in RSE.SoundLayerNodes) {
+            foreach(var layerNode in Settings.SoundLayerNodes) {
                 var soundLayer = AudioUtility.CreateSoundLayer(layerNode);
                 if(soundLayer.audioClips != null && !SoundLayers.Contains(soundLayer)) {
                     SoundLayers.Add(soundLayer);
@@ -171,7 +171,7 @@ namespace RocketSoundEnhancement
                     Sources.Add(soundLayer.name, source);
                 }
 
-                source.volume = finalVolume * HighLogic.CurrentGame.Parameters.CustomParams<Settings>().EffectsVolume;
+                source.volume = finalVolume * GameSettings.SHIP_VOLUME;
                 source.pitch = finalPitch;
 
                 AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);

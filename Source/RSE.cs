@@ -10,12 +10,8 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class RSE : MonoBehaviour
     {
-        public static List<ConfigNode> SoundLayerNodes = new List<ConfigNode>();
-        public static Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
-
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
-        public AudioLimiter audioLimiter;
 
         AnimationCurve lowpassCurveExt;
         AnimationCurve lowpassCurveInt;
@@ -35,34 +31,6 @@ namespace RocketSoundEnhancement
         bool gamePaused;
         void Start()
         {
-            SoundLayerNodes.Clear();
-            CollisionData.Clear();
-
-            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
-                SoundLayerNodes.AddRange(configNode.GetNodes("SOUNDLAYER"));
-            }
-
-            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_SETTINGS")) {
-                if(configNode.HasValue("nextStageClip")) {
-                    StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
-                }
-                if(configNode.HasValue("cannotSeparateClip")) {
-                    StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("cannotSeparateClip"));
-                }
-
-                if(configNode.HasNode("Colliders")) {
-                    var colNode = configNode.GetNode("Colliders");
-                    foreach(ConfigNode.Value node in colNode.values) {
-                        CollidingObject colDataType = (CollidingObject)Enum.Parse(typeof(CollidingObject), node.value, true);
-                        if(!CollisionData.ContainsKey(node.name)) {
-                            CollisionData.Add(node.name, colDataType);
-                        } else {
-                            CollisionData[node.name] = colDataType;
-                        }
-                    }
-                }
-            }
-
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
                 if(source.name.Contains("Music") || source.name.Contains("PartActionController")) {
                     source.bypassListenerEffects = true;
@@ -76,7 +44,7 @@ namespace RocketSoundEnhancement
             if(stageSource) {
                 stageSource.bypassListenerEffects = true;
 
-                if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DisableStagingSound) {
+                if(Settings.DisableStagingSound) {
                     GameObject.Destroy(stageSource);
                 }
             }
@@ -89,7 +57,7 @@ namespace RocketSoundEnhancement
                         foreach(var source in chatterer.GetComponents<AudioSource>()) {
                             if(source == null)
                                 continue;
-
+            
                             source.bypassListenerEffects = !HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer;
                             ChattererSources.Add(source);
                         }
@@ -108,9 +76,6 @@ namespace RocketSoundEnhancement
 
             lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
             lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
-
-            audioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
-            audioLimiter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().EnableLimiter;
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnPause);
@@ -157,7 +122,7 @@ namespace RocketSoundEnhancement
         Rect windowRect = new Rect(20, 50, 250, 400);
         void OnGUI()
         {
-            if(HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DebugWindow) {
+            if(HighLogic.CurrentGame.Parameters.CustomParams<SettingsInGame>().DebugWindow) {
                 windowRect = GUILayout.Window(0, windowRect, InfoWindow, "Rocket Sound Enhancement");
             }
         }
@@ -179,23 +144,6 @@ namespace RocketSoundEnhancement
                     lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 10, 22200);
                     GUILayout.Label("Resonance Q: " + lowpassFilter.lowpassResonanceQ.ToString());
                     lowpassFilter.lowpassResonanceQ = GUILayout.HorizontalSlider(lowpassFilter.lowpassResonanceQ, 0.5f, 10);
-                }
-            }
-
-            if(audioLimiter != null) {
-                if(audioLimiter.enabled) {
-                    GUILayout.Label("Audio Limiter");
-                    string limiterInfo = "Gain: " + audioLimiter.Gain + "\r\n" +
-                        "Makeup Gain: " + audioLimiter.MakeUp + "\r\n" +
-                        "WindowSize: " + audioLimiter.WindowSize + "\r\n" +
-                        "Lookahead: " + audioLimiter.LookAhead + "\r\n" +
-                        "Threshold: " + audioLimiter.Threshold + "\r\n" +
-                        "Ratio: " + audioLimiter.Ratio + "\r\n" +
-                        "Attack: " + audioLimiter.Attack + "\r\n" +
-                        "Release: " + audioLimiter.Release + "\r\n" +
-                        "RMS: " + audioLimiter.RMS + "\r\n" +
-                        "Reduction: " + audioLimiter.Reduction + "\r\n";
-                    GUILayout.TextArea(limiterInfo, GUILayout.Height(175));
                 }
             }
 
@@ -253,7 +201,7 @@ namespace RocketSoundEnhancement
                 GUILayout.Label("No Active Vessel");
             }
 
-            HighLogic.CurrentGame.Parameters.CustomParams<Settings>().DebugWindow = !GUILayout.Button("Close", GUILayout.Height(20));
+            HighLogic.CurrentGame.Parameters.CustomParams<SettingsInGame>().DebugWindow = !GUILayout.Button("Close", GUILayout.Height(20));
 
             GUILayout.EndVertical();
             GUI.DragWindow(new Rect(0, 0, 1000, 20));
@@ -272,12 +220,6 @@ namespace RocketSoundEnhancement
 
             if(lowpassFilter != null)
                 lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;
-
-            if(audioLimiter != null) {
-                audioLimiter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<AudioLimiterSettings>().EnableLimiter;
-                audioLimiter.initalized = false;
-                audioLimiter.Initialize();
-            }
 
             if(!HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
                 foreach(var source in ChattererSources) {

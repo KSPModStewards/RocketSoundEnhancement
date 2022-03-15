@@ -267,12 +267,12 @@ namespace RocketSoundEnhancement
             }
 
             if(gameObject.tag.ToLower() != "untagged") {
-                if(RSE.CollisionData.ContainsKey(gameObject.name)) {
-                    return RSE.CollisionData[gameObject.name];
+                if(Settings.CollisionData.ContainsKey(gameObject.name)) {
+                    return Settings.CollisionData[gameObject.name];
                 }
 
-                if(RSE.CollisionData.ContainsKey("default")) {
-                    return RSE.CollisionData["default"];
+                if(Settings.CollisionData.ContainsKey("default")) {
+                    return Settings.CollisionData["default"];
                 }
             }
 

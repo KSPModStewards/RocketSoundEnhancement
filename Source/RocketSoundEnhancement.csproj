@@ -54,11 +54,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -70,50 +70,51 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.InputModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.InputModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.VehiclesModule">
-      <HintPath>..\..\..\Games\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
+      <HintPath>..\..\..\Kerbal Space Program\KSP 1.10.1\KSP_x64_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioLimiter.cs" />
     <Compile Include="LowpassFilter.cs" />
+    <Compile Include="RSE.cs" />
     <Compile Include="RSE_Coupler.cs" />
     <Compile Include="RSE_Engines.cs" />
     <Compile Include="AudioUtility.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="RSE_Wheels.cs" />
+    <Compile Include="ShipEffects.cs" />
     <Compile Include="ShipEffectsCollisions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RSE.cs" />
@@ -122,6 +123,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "D:\Games\Kerbal Space Program\KSP 1.10.1\GameData\RocketSoundEnhancement\Plugins"
-copy "$(TargetPath)" "D:\KSP Mod Projects\RocketSoundEnhancement\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
+copy "$(TargetPath)" "D:\\Games\KSP Mod Projects\RocketSoundEnhancement\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
   </PropertyGroup>
 </Project>
