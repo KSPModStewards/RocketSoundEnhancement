@@ -37,20 +37,21 @@ namespace RocketSoundEnhancement
     [RequireComponent(typeof(AudioBehaviour))]
     public class AudioLimiter : MonoBehaviour
     {
-        public float Threshold = 0f;
-        public float Bias = 70f;
-        public float Gain = 0f;
-        public int TimeConstant = 1;
-        public int LevelDetectorRMSWindow = 100;
-        public float CurrentCompressionRatio;
-        public float GainReduction;
+        public static bool EnableLimiter;
+        public static float Threshold;                     // 0f
+        public static float Bias;                          // 70f
+        public static float Ratio;                         // 20f
+        public static float Gain;                          // 0f
+        public static int TimeConstant;                    // 1
+        public static int LevelDetectorRMSWindow = 100;    // 100
+        public static float CurrentCompressionRatio;
+        public static float GainReduction;
 
         float log2db;
         float db2log;
         float attime;
         float reltime;
         float rmstime;
-        float ratio;
         float cratio;
         float rundb;
         float overdb;
@@ -71,6 +72,29 @@ namespace RocketSoundEnhancement
 
         private void Awake()
         {
+            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_AUDIOLIMITER")) {
+                bool.TryParse(configNode.GetValue("EnableLimiter"), out EnableLimiter);
+
+                if(!float.TryParse(configNode.GetValue("Threshold"), out Threshold)){
+                    Threshold = -12f;
+                }
+                if(!float.TryParse(configNode.GetValue("Bias"), out Bias)) {
+                    Bias = 70f;
+                }
+                if(!float.TryParse(configNode.GetValue("Ratio"), out Ratio)) {
+                    Ratio = 2.1f;
+                }
+                if(!float.TryParse(configNode.GetValue("Gain"), out Gain)) {
+                    Gain = 0;
+                }
+                if(!int.TryParse(configNode.GetValue("TimeConstant"), out TimeConstant)) {
+                    TimeConstant = 1;
+                }
+                if(!int.TryParse(configNode.GetValue("LevelDetectorRMSWindow"), out LevelDetectorRMSWindow)) {
+                    LevelDetectorRMSWindow = 100;
+                }
+            }
+
             SampleRate = AudioSettings.outputSampleRate;
 
             log2db = 8.6858896380650365530225783783321f; // 20 / ln(10)
@@ -78,7 +102,6 @@ namespace RocketSoundEnhancement
             attime = 0.0002f; //200us
             reltime = 0.300f; //300ms
             rmstime = 0.000050f; //50us
-            ratio = 0;
             cratio = 0;
             rundb = 0;
             overdb = 0;
@@ -95,7 +118,6 @@ namespace RocketSoundEnhancement
         {
             thresh = Threshold;
             threshv = Mathf.Exp(thresh * db2log);
-            ratio = 20;
             bias = 80 * Bias / 100;
             //cthresh = thresh - bias;
             //cthreshv = Mathf.Exp(cthresh * db2log);
@@ -127,11 +149,13 @@ namespace RocketSoundEnhancement
                 attime = 0.0004f;
                 reltime = 25.000f;
             }
+
             atcoef = Mathf.Exp(-1 / (attime * SampleRate));
             relcoef = Mathf.Exp(-1 / (reltime * SampleRate));
 
             rmstime = LevelDetectorRMSWindow / 1000000;
             rmscoef = Mathf.Exp(-1 / (rmstime * SampleRate));
+
 
             for(int i = 0; i < data.Length; i++) {
                 aspl0 = Mathf.Abs(data[i]);
@@ -152,9 +176,9 @@ namespace RocketSoundEnhancement
                 overdb = Mathf.Max(rundb, 0);
 
                 if(bias == 0) {
-                    cratio = ratio;
+                    cratio = Ratio;
                 } else {
-                    cratio = 1 + (ratio - 1) * Mathf.Sqrt((overdb + dcoffset) / (bias + dcoffset));
+                    cratio = 1 + (Ratio - 1) * Mathf.Sqrt((overdb + dcoffset) / (bias + dcoffset));
                 }
                 CurrentCompressionRatio = cratio;
 

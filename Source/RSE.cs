@@ -17,10 +17,6 @@ namespace RocketSoundEnhancement
         AnimationCurve lowpassCurveExt;
         AnimationCurve lowpassCurveInt;
 
-        int VacuumFreq => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().VacuumMuffling;
-        int InterFreqAtm => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingAtm;
-        int InterFreqVac => HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().InteriorMufflingVac;
-
         string[] ChattererPlayerNames = new string[] {
             "rbr_chatter_player",
             "rbr_beep_player_",
@@ -59,7 +55,7 @@ namespace RocketSoundEnhancement
                             if(source == null)
                                 continue;
             
-                            source.bypassListenerEffects = !HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer;
+                            source.bypassListenerEffects = !LowpassFilter.MuffleChatterer;
                             ChattererSources.Add(source);
                         }
                     }
@@ -72,14 +68,14 @@ namespace RocketSoundEnhancement
             audioListener.enabled = false;
 
             lowpassFilter = gameObject.AddOrGetComponent<LowpassFilter>();
-            lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;
+            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
             lowpassFilter.lowpassResonanceQ = 3;
 
             audioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
-            audioLimiter.enabled = true;
+            audioLimiter.enabled = AudioLimiter.EnableLimiter;
 
-            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
-            lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
+            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, LowpassFilter.VacuumMuffling);
+            lowpassCurveInt = AnimationCurve.Linear(1, LowpassFilter.InteriorMufflingAtm, 0, LowpassFilter.InteriorMufflingVac);
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnPause);
@@ -93,12 +89,8 @@ namespace RocketSoundEnhancement
             if(lowpassFilter == null)
                 return;
 
-            if(HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling) {
-                if(!lowpassFilter.enabled) {
-                    lowpassFilter.enabled = true;
-                }
-
-                if(bypassFilter)
+            if(lowpassFilter.enabled) {
+                if(bypassAutomaticFiltering)
                     return;
 
                 if(InternalCamera.Instance.isActive) {
@@ -107,7 +99,7 @@ namespace RocketSoundEnhancement
                     lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
                 }
 
-                if(HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
+                if(LowpassFilter.MuffleChatterer) {
                     foreach(var source in ChattererSources) {
 
                         if(source == null)
@@ -116,10 +108,6 @@ namespace RocketSoundEnhancement
                         source.bypassListenerEffects = InternalCamera.Instance.isActive;
                     }
                 }
-
-
-            } else if(lowpassFilter.enabled) {
-                lowpassFilter.enabled = false;
             }
         }
 
@@ -132,7 +120,7 @@ namespace RocketSoundEnhancement
         }
 
         Vector2 scrollPosition;
-        bool bypassFilter = false;
+        bool bypassAutomaticFiltering = false;
         void InfoWindow(int id)
         {
             GUILayout.BeginVertical(GUILayout.Width(250));
@@ -143,7 +131,7 @@ namespace RocketSoundEnhancement
             if(lowpassFilter != null) {
                 if(lowpassFilter.enabled) {
                     GUILayout.Label("Lowpass Filter");
-                    bypassFilter = GUILayout.Toggle(bypassFilter, "Bypass Automatic Filtering");
+                    bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Bypass Automatic Filtering");
                     GUILayout.Label("Cuttoff Frequency: " + lowpassFilter.cutoffFrequency.ToString());
                     lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 10, 22200);
                     GUILayout.Label("Resonance Q: " + lowpassFilter.lowpassResonanceQ.ToString());
@@ -154,26 +142,29 @@ namespace RocketSoundEnhancement
             if(audioLimiter != null) {
                 audioLimiter.enabled = GUILayout.Toggle(audioLimiter.enabled, "Enable Audio Limiter");
 
-                GUILayout.Label("Threshold: " + audioLimiter.Threshold.ToString());
-                audioLimiter.Threshold = GUILayout.HorizontalSlider(audioLimiter.Threshold, -60f, 0f);
+                GUILayout.Label("Threshold: " + AudioLimiter.Threshold.ToString());
+                AudioLimiter.Threshold = GUILayout.HorizontalSlider(AudioLimiter.Threshold, -60f, 0f);
 
-                GUILayout.Label("Bias: " + audioLimiter.Bias.ToString());
-                audioLimiter.Bias = GUILayout.HorizontalSlider(audioLimiter.Bias, 0.1f, 100f);
+                GUILayout.Label("Bias: " + AudioLimiter.Bias.ToString());
+                AudioLimiter.Bias = GUILayout.HorizontalSlider(AudioLimiter.Bias, 0.1f, 100f);
 
-                GUILayout.Label("Gain: " + audioLimiter.Gain.ToString());
-                audioLimiter.Gain = GUILayout.HorizontalSlider(audioLimiter.Gain, -30f, 30f);
+                GUILayout.Label("Ratio: " + AudioLimiter.Ratio.ToString());
+                AudioLimiter.Ratio = GUILayout.HorizontalSlider(AudioLimiter.Ratio, 1f, 20f);
 
-                GUILayout.Label("Time Constant: " + audioLimiter.TimeConstant.ToString());
-                audioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(audioLimiter.TimeConstant, 1, 6));
+                GUILayout.Label("Gain: " + AudioLimiter.Gain.ToString());
+                AudioLimiter.Gain = GUILayout.HorizontalSlider(AudioLimiter.Gain, -30f, 30f);
 
-                GUILayout.Label("Level Detector RMS Window: " + audioLimiter.LevelDetectorRMSWindow.ToString());
-                audioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(audioLimiter.LevelDetectorRMSWindow, 1, 1000));
+                GUILayout.Label("Time Constant: " + AudioLimiter.TimeConstant.ToString());
+                AudioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.TimeConstant, 1, 6));
 
-                GUILayout.Label("Current Compression Ratio: " + audioLimiter.CurrentCompressionRatio.ToString());
-                GUILayout.HorizontalSlider(audioLimiter.CurrentCompressionRatio, 1f, 50f);
+                GUILayout.Label("Level Detector RMS Window: " + AudioLimiter.LevelDetectorRMSWindow.ToString());
+                AudioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.LevelDetectorRMSWindow, 1, 1000));
 
-                GUILayout.Label("Gain Reduction: " + audioLimiter.GainReduction.ToString());
-                GUILayout.HorizontalSlider(audioLimiter.GainReduction, -90f, 0f);
+                GUILayout.Label("Current Compression Ratio: " + AudioLimiter.CurrentCompressionRatio.ToString());
+                GUILayout.HorizontalSlider(AudioLimiter.CurrentCompressionRatio, 1f, 50f);
+
+                GUILayout.Label("Gain Reduction: " + AudioLimiter.GainReduction.ToString());
+                GUILayout.HorizontalSlider(AudioLimiter.GainReduction, -90f, 0f);
             }
 
             if(seModule != null && seModule.initialized) {
@@ -244,13 +235,13 @@ namespace RocketSoundEnhancement
         void onGameUnPause()
         {
             gamePaused = false;
-            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
-            lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
+            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, LowpassFilter.VacuumMuffling);
+            lowpassCurveInt = AnimationCurve.Linear(1, LowpassFilter.InteriorMufflingAtm, 0, LowpassFilter.InteriorMufflingVac);
 
             if(lowpassFilter != null)
-                lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;
+                lowpassFilter.enabled = LowpassFilter.EnableMuffling;
 
-            if(!HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().MuffleChatterer) {
+            if(!LowpassFilter.MuffleChatterer) {
                 foreach(var source in ChattererSources) {
                     if(source == null)
                         continue;

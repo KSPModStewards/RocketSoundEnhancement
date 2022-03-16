@@ -3,46 +3,18 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    public class LowpassFilterSettings : GameParameters.CustomParameterNode
-    {
-        public override string Title { get { return "Audio Muffler"; } }
-        public override string Section { get { return "Rocket Sound Enhancement"; } }
-        public override string DisplaySection { get { return "Rocket Sound Enhancement"; } }
-        public override int SectionOrder { get { return 2; } }
-        public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
-        public override bool HasPresets { get { return false; } }
-
-        [GameParameters.CustomParameterUI("Enable Muffling")]
-        public bool EnableMuffling = true;
-
-        [GameParameters.CustomIntParameterUI("Internal Camera - Atmosphere Muffling", toolTip = "Amount of outside environment muffling while Internal Camera (IVA) is Active in an Atmosphere (hz)", minValue = 10, maxValue = 22200)]
-        public int InteriorMufflingAtm = 3000;
-
-        [GameParameters.CustomIntParameterUI("Internal Camera - Vacuum Muffling", toolTip = "Amount of outside environment muffling while the Internal Camera (IVA) is Active in a Vacuum (hz)", minValue = 10, maxValue = 22200)]
-        public int InteriorMufflingVac = 1500;
-
-        [GameParameters.CustomIntParameterUI("Vacuum", toolTip = "Amount of Vacuum Muffling (hz)", minValue = 10, maxValue = 22200)]
-        public int VacuumMuffling = 300;
-
-        [GameParameters.CustomParameterUI("Muffle Chatterer", toolTip = "Muffle Chatterer when Internal Camera (IVA) is not Active")]
-        public bool MuffleChatterer = false;
-
-        public override bool Enabled(MemberInfo member, GameParameters parameters)
-        {
-            return true;
-        }
-        public override bool Interactible(MemberInfo member, GameParameters parameters)
-        {
-            return true;
-        }
-    }
-
     /// <summary>
     /// Thanks to Iron-Warrior for source: https://forum.unity.com/threads/custom-low-pass-filter-using-onaudiofilterread.976326/
     /// </summary>
     [RequireComponent(typeof(AudioBehaviour))]
     public class LowpassFilter : MonoBehaviour
     {
+        public static bool EnableMuffling;
+        public static int InteriorMufflingAtm;
+        public static int InteriorMufflingVac;
+        public static int VacuumMuffling;
+        public static bool MuffleChatterer;
+
         private float[] inputHistoryLeft = new float[2];
         private float[] inputHistoryRight = new float[2];
 
@@ -55,11 +27,30 @@ namespace RocketSoundEnhancement
         public float cutoffFrequency = 22200;
         public float lowpassResonanceQ = 1;
 
-        int sampleRate;
+        int SampleRate;
 
         private void Awake()
         {
-            sampleRate = AudioSettings.outputSampleRate;
+            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_LOWPASSFILTER")) {
+
+                bool.TryParse(configNode.GetValue("EnableMuffling"), out EnableMuffling);
+
+                if(!int.TryParse(configNode.GetValue("InteriorMufflingAtm"), out InteriorMufflingAtm)) {
+                    InteriorMufflingAtm = 3000;
+                }
+                if(!int.TryParse(configNode.GetValue("InteriorMufflingVac"), out InteriorMufflingVac)) {
+                    InteriorMufflingVac = 1500;
+                }
+                if(!int.TryParse(configNode.GetValue("VacuumMuffling"), out VacuumMuffling)) {
+                    VacuumMuffling = 300;
+                }
+                if(!bool.TryParse(configNode.GetValue("MuffleChatterer"), out MuffleChatterer)) {
+                    MuffleChatterer = false;
+                }
+            }
+
+            SampleRate = AudioSettings.outputSampleRate;
+
             inputHistoryLeft[1] = 0;
             inputHistoryLeft[0] = 0;
 
@@ -87,7 +78,7 @@ namespace RocketSoundEnhancement
             float finalCutOff = Mathf.Clamp(cutoffFrequency, 10, 22200);
             float finalResonance = Mathf.Clamp(lowpassResonanceQ, 0.5f, 10);
 
-            c = 1.0f / (float)Mathf.Tan(Mathf.PI * finalCutOff / sampleRate);
+            c = 1.0f / (float)Mathf.Tan(Mathf.PI * finalCutOff / SampleRate);
             a1 = 1.0f / (1.0f + finalResonance * c + c * c);
             a2 = 2f * a1;
             a3 = a1;
