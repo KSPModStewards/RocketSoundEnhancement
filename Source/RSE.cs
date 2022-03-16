@@ -12,6 +12,7 @@ namespace RocketSoundEnhancement
     {
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
+        public AudioLimiter audioLimiter;
 
         AnimationCurve lowpassCurveExt;
         AnimationCurve lowpassCurveInt;
@@ -73,6 +74,9 @@ namespace RocketSoundEnhancement
             lowpassFilter = gameObject.AddOrGetComponent<LowpassFilter>();
             lowpassFilter.enabled = HighLogic.CurrentGame.Parameters.CustomParams<LowpassFilterSettings>().EnableMuffling;
             lowpassFilter.lowpassResonanceQ = 3;
+
+            audioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
+            audioLimiter.enabled = true;
 
             lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, VacuumFreq);
             lowpassCurveInt = AnimationCurve.Linear(1, InterFreqAtm, 0, InterFreqVac);
@@ -145,6 +149,31 @@ namespace RocketSoundEnhancement
                     GUILayout.Label("Resonance Q: " + lowpassFilter.lowpassResonanceQ.ToString());
                     lowpassFilter.lowpassResonanceQ = GUILayout.HorizontalSlider(lowpassFilter.lowpassResonanceQ, 0.5f, 10);
                 }
+            }
+
+            if(audioLimiter != null) {
+                audioLimiter.enabled = GUILayout.Toggle(audioLimiter.enabled, "Enable Audio Limiter");
+
+                GUILayout.Label("Threshold: " + audioLimiter.Threshold.ToString());
+                audioLimiter.Threshold = GUILayout.HorizontalSlider(audioLimiter.Threshold, -60f, 0f);
+
+                GUILayout.Label("Bias: " + audioLimiter.Bias.ToString());
+                audioLimiter.Bias = GUILayout.HorizontalSlider(audioLimiter.Bias, 0.1f, 100f);
+
+                GUILayout.Label("Gain: " + audioLimiter.Gain.ToString());
+                audioLimiter.Gain = GUILayout.HorizontalSlider(audioLimiter.Gain, -30f, 30f);
+
+                GUILayout.Label("Time Constant: " + audioLimiter.TimeConstant.ToString());
+                audioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(audioLimiter.TimeConstant, 1, 6));
+
+                GUILayout.Label("Level Detector RMS Window: " + audioLimiter.LevelDetectorRMSWindow.ToString());
+                audioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(audioLimiter.LevelDetectorRMSWindow, 1, 1000));
+
+                GUILayout.Label("Current Compression Ratio: " + audioLimiter.CurrentCompressionRatio.ToString());
+                GUILayout.HorizontalSlider(audioLimiter.CurrentCompressionRatio, 1f, 50f);
+
+                GUILayout.Label("Gain Reduction: " + audioLimiter.GainReduction.ToString());
+                GUILayout.HorizontalSlider(audioLimiter.GainReduction, -90f, 0f);
             }
 
             if(seModule != null && seModule.initialized) {

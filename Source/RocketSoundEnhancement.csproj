@@ -107,6 +107,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AudioLimiter.cs" />
     <Compile Include="AudioUtility.cs" />
     <Compile Include="LowpassFilter.cs" />
     <Compile Include="RSE.cs" />
