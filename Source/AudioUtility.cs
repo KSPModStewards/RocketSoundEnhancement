@@ -230,7 +230,6 @@ namespace RocketSoundEnhancement
                 source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0));
             }
 
-            source.dopplerLevel = 0;
             source.rolloffMode = AudioRolloffMode.Logarithmic;
 
             return source;
@@ -249,7 +248,6 @@ namespace RocketSoundEnhancement
                 source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, spread, 1, 0));
             }
 
-            source.dopplerLevel = 0;
             source.rolloffMode = AudioRolloffMode.Logarithmic;
             source.maxDistance = maxDistance;
 

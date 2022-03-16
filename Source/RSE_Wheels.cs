@@ -16,9 +16,6 @@ namespace RocketSoundEnhancement
         bool gamePaused;
 
         [KSPField(isPersistant = false)]
-        public float volume = 1;
-
-        [KSPField(isPersistant = false)]
         public bool invertSlip = false;
 
         ModuleWheelBase moduleWheel;
@@ -175,7 +172,7 @@ namespace RocketSoundEnhancement
                         Sources.Add(soundLayer.name, source);
                     }
 
-                    source.volume = soundLayer.volume.Value(finalControl) * volume * masterVolume;
+                    source.volume = soundLayer.volume.Value(finalControl) * masterVolume;
                     source.pitch = soundLayer.pitch.Value(finalControl);
 
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);

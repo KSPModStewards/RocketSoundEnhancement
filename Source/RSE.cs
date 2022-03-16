@@ -62,8 +62,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            //This is the easiest way to deal with multiple listeners, instead of chasing which listener is active.
-            //Lowpass filter reads from whatever listener is active.
+            //Attach our master filters to this dummy AudioListener
+            //Any Effects applied here also applies to the other listeners in game
             audioListener = gameObject.AddOrGetComponent<AudioListener>();
             audioListener.enabled = false;
 

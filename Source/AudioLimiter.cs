@@ -72,29 +72,6 @@ namespace RocketSoundEnhancement
 
         private void Awake()
         {
-            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_AUDIOLIMITER")) {
-                bool.TryParse(configNode.GetValue("EnableLimiter"), out EnableLimiter);
-
-                if(!float.TryParse(configNode.GetValue("Threshold"), out Threshold)){
-                    Threshold = -12f;
-                }
-                if(!float.TryParse(configNode.GetValue("Bias"), out Bias)) {
-                    Bias = 70f;
-                }
-                if(!float.TryParse(configNode.GetValue("Ratio"), out Ratio)) {
-                    Ratio = 2.1f;
-                }
-                if(!float.TryParse(configNode.GetValue("Gain"), out Gain)) {
-                    Gain = 0;
-                }
-                if(!int.TryParse(configNode.GetValue("TimeConstant"), out TimeConstant)) {
-                    TimeConstant = 1;
-                }
-                if(!int.TryParse(configNode.GetValue("LevelDetectorRMSWindow"), out LevelDetectorRMSWindow)) {
-                    LevelDetectorRMSWindow = 100;
-                }
-            }
-
             SampleRate = AudioSettings.outputSampleRate;
 
             log2db = 8.6858896380650365530225783783321f; // 20 / ln(10)

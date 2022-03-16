@@ -31,24 +31,6 @@ namespace RocketSoundEnhancement
 
         private void Awake()
         {
-            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_LOWPASSFILTER")) {
-
-                bool.TryParse(configNode.GetValue("EnableMuffling"), out EnableMuffling);
-
-                if(!int.TryParse(configNode.GetValue("InteriorMufflingAtm"), out InteriorMufflingAtm)) {
-                    InteriorMufflingAtm = 3000;
-                }
-                if(!int.TryParse(configNode.GetValue("InteriorMufflingVac"), out InteriorMufflingVac)) {
-                    InteriorMufflingVac = 1500;
-                }
-                if(!int.TryParse(configNode.GetValue("VacuumMuffling"), out VacuumMuffling)) {
-                    VacuumMuffling = 300;
-                }
-                if(!bool.TryParse(configNode.GetValue("MuffleChatterer"), out MuffleChatterer)) {
-                    MuffleChatterer = false;
-                }
-            }
-
             SampleRate = AudioSettings.outputSampleRate;
 
             inputHistoryLeft[1] = 0;

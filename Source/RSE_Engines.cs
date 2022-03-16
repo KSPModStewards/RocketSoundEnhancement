@@ -15,9 +15,6 @@ namespace RocketSoundEnhancement
         bool initialized;
         bool gamePaused;
 
-        [KSPField(isPersistant = false)]
-        public float volume = 1;
-
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
         GameObject audioParent;
 
@@ -116,7 +113,7 @@ namespace RocketSoundEnhancement
                             source = Sources[sourceLayerName];
                         }
 
-                        source.volume = soundLayer.volume.Value(finalControl) * volume * GameSettings.SHIP_VOLUME;
+                        source.volume = soundLayer.volume.Value(finalControl) * GameSettings.SHIP_VOLUME;
                         source.pitch = soundLayer.pitch.Value(finalControl);
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
@@ -129,7 +126,6 @@ namespace RocketSoundEnhancement
                             if(engineIgnited && !ignites[engineID]) {
                                 ignites[engineID] = true;
                             } else {
-                                ignites[engineID] = engineIgnited;
                                 continue;
                             }
                             break;
@@ -137,7 +133,6 @@ namespace RocketSoundEnhancement
                             if(!engineIgnited && ignites[engineID]) {
                                 ignites[engineID] = false;
                             } else {
-                                ignites[engineID] = engineIgnited;
                                 continue;
                             }
                             break;
@@ -152,6 +147,8 @@ namespace RocketSoundEnhancement
                         default:
                             continue;
                     }
+
+                    ignites[engineID] = engineIgnited;
 
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
@@ -168,7 +165,7 @@ namespace RocketSoundEnhancement
                                 Sources.Add(oneShotLayerName, source);
                             }
 
-                            float finalVolume = oneShotLayer.volume * volume * GameSettings.SHIP_VOLUME;
+                            float finalVolume = oneShotLayer.volume * GameSettings.SHIP_VOLUME;
                             AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
                         }
                     }
