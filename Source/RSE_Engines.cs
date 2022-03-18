@@ -18,6 +18,8 @@ namespace RocketSoundEnhancement
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
         GameObject audioParent;
 
+        float pitchVariation = 1;
+
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -56,6 +58,8 @@ namespace RocketSoundEnhancement
             }
 
             initialized = true;
+
+            pitchVariation = Random.Range(0.95f, 1.05f);
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -114,7 +118,7 @@ namespace RocketSoundEnhancement
                         }
 
                         source.volume = soundLayer.volume.Value(finalControl) * GameSettings.SHIP_VOLUME;
-                        source.pitch = soundLayer.pitch.Value(finalControl);
+                        source.pitch = soundLayer.pitch.Value(finalControl) * pitchVariation;
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                     }
@@ -126,6 +130,8 @@ namespace RocketSoundEnhancement
                             if(engineIgnited && !ignites[engineID]) {
                                 ignites[engineID] = true;
                             } else {
+                                if(!SoundLayerGroups.ContainsKey("Disengage"))
+                                    ignites[engineID] = engineIgnited;
                                 continue;
                             }
                             break;
@@ -133,6 +139,8 @@ namespace RocketSoundEnhancement
                             if(!engineIgnited && ignites[engineID]) {
                                 ignites[engineID] = false;
                             } else {
+                                if(!SoundLayerGroups.ContainsKey("Engage"))
+                                    ignites[engineID] = engineIgnited;
                                 continue;
                             }
                             break;
@@ -148,7 +156,7 @@ namespace RocketSoundEnhancement
                             continue;
                     }
 
-                    ignites[engineID] = engineIgnited;
+                    
 
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
