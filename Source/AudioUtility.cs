@@ -51,6 +51,8 @@ namespace RocketSoundEnhancement
 
     public static class AudioUtility
     {
+        public static AnimationCurve SmoothControl = AnimationCurve.EaseInOut(0f, 0.04f, 1f, 1f);
+
         public static ConfigNode GetConfigNode(string partInfoName, string moduleName, string moduleID = "")
         {
             var configs = GameDatabase.Instance.GetConfigs("PART");

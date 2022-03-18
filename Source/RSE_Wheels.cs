@@ -100,23 +100,23 @@ namespace RocketSoundEnhancement
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerKey = soundLayerGroup.Key;
-                float control = 0;
+                float rawControl = 0;
                 float masterVolume = GameSettings.SHIP_VOLUME;
 
                 if(!isRetracted) {
                     switch(soundLayerGroup.Key) {
                         case "Torque":
-                            control = running ? driveOutput / 100 : 0;
+                            rawControl = running ? driveOutput / 100 : 0;
                             break;
                         case "Speed":
-                            control = motorEnabled ? Mathf.Abs(wheelSpeed) : 0;
+                            rawControl = motorEnabled ? Mathf.Abs(wheelSpeed) : 0;
                             break;
                         case "Ground":
-                            control = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
+                            rawControl = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
                             masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         case "Slip":
-                            control = moduleWheel.isGrounded ? slipDisplacement : 0;
+                            rawControl = moduleWheel.isGrounded ? slipDisplacement : 0;
                             masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         default:
@@ -125,7 +125,7 @@ namespace RocketSoundEnhancement
                 }
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
-                    float finalControl = control;
+                    float control = rawControl;
 
                     if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
                         string layerMaskName = soundLayer.data;
@@ -133,15 +133,15 @@ namespace RocketSoundEnhancement
                             switch(colObjectType) {
                                 case CollidingObject.Vessel:
                                     if(!layerMaskName.Contains("vessel"))
-                                        finalControl = 0;
+                                        control = 0;
                                     break;
                                 case CollidingObject.Concrete:
                                     if(!layerMaskName.Contains("concrete"))
-                                        finalControl = 0;
+                                        control = 0;
                                     break;
                                 case CollidingObject.Dirt:
                                     if(!layerMaskName.Contains("dirt"))
-                                        finalControl = 0;
+                                        control = 0;
                                     break;
                             }
                         }
@@ -152,15 +152,15 @@ namespace RocketSoundEnhancement
                     }
 
                     if(soundLayer.spool) {
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], finalControl, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                        finalControl = spools[soundLayer.name];
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                        control = spools[soundLayer.name];
                     } else {
                         //fix for audiosource clicks
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, 0.1f);
-                        finalControl = spools[soundLayer.name];
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], rawControl, Mathf.Max(0.1f, rawControl));
+                        control = spools[soundLayer.name];
                     }
 
-                    if(finalControl < 0.01f) {
+                    if(control < 0.01f) {
                         if(Sources.ContainsKey(soundLayer.name)) {
                             UnityEngine.Object.Destroy(Sources[soundLayer.name]);
                             Sources.Remove(soundLayer.name);
@@ -176,8 +176,8 @@ namespace RocketSoundEnhancement
                         Sources.Add(soundLayer.name, source);
                     }
 
-                    source.volume = soundLayer.volume.Value(finalControl) * masterVolume;
-                    source.pitch = soundLayer.pitch.Value(finalControl);
+                    source.volume = soundLayer.volume.Value(control) * masterVolume;
+                    source.pitch = soundLayer.pitch.Value(control);
 
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                 }

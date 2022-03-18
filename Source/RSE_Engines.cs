@@ -99,7 +99,7 @@ namespace RocketSoundEnhancement
                             }
                         } else {
                             //fix for audiosource clicks
-                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, 0.1f);  //Mathf.Max(0.1f, rawControl)
+                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl));  //Mathf.Max(0.1f, rawControl)
                         }
 
                         float control = spools[sourceLayerName];
