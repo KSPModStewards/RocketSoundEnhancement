@@ -18,6 +18,7 @@ namespace RocketSoundEnhancement
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
         GameObject audioParent;
 
+        float volume = 1;
         float pitchVariation = 1;
 
         public override void OnStart(StartState state)
@@ -38,8 +39,10 @@ namespace RocketSoundEnhancement
 
             engineModules = part.Modules.GetModules<ModuleEngines>();
 
-            foreach(var node in configNode.GetNodes()) {
+            if(!float.TryParse(configNode.GetValue("volume"), out volume))
+                volume = 1;
 
+            foreach(var node in configNode.GetNodes()) {
                 string _engineState = node.name;
 
                 var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
@@ -75,10 +78,10 @@ namespace RocketSoundEnhancement
                 bool engineIgnited = engineModule.EngineIgnited;
                 bool engineFlameout = engineModule.flameout;
 
-                float control = engineModule.GetCurrentThrust() / engineModule.maxThrust;
+                float rawControl = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
-                    float finalControl = control;
+                    //float finalControl = control;
 
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
@@ -93,16 +96,16 @@ namespace RocketSoundEnhancement
                             } else {
                                 float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
                                 spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                                finalControl = spools[sourceLayerName];
                             }
                         } else {
                             //fix for audiosource clicks
-                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, Mathf.Max(0.1f, control));
-                            finalControl = spools[sourceLayerName];
+                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, 0.1f);  //Mathf.Max(0.1f, rawControl)
                         }
 
+                        float control = spools[sourceLayerName];
+
                         //For Looped sounds cleanup
-                        if(finalControl < float.Epsilon) {
+                        if(control < float.Epsilon) {
                             if(Sources.ContainsKey(sourceLayerName)) {
                                 Sources[sourceLayerName].Stop();
                             }
@@ -117,8 +120,8 @@ namespace RocketSoundEnhancement
                             source = Sources[sourceLayerName];
                         }
 
-                        source.volume = soundLayer.volume.Value(finalControl) * GameSettings.SHIP_VOLUME;
-                        source.pitch = soundLayer.pitch.Value(finalControl) * pitchVariation;
+                        source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
+                        source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
 
                         AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                     }
@@ -156,8 +159,6 @@ namespace RocketSoundEnhancement
                             continue;
                     }
 
-                    
-
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
                         if(oneShotLayer.audioClips != null) {
@@ -173,7 +174,7 @@ namespace RocketSoundEnhancement
                                 Sources.Add(oneShotLayerName, source);
                             }
 
-                            float finalVolume = oneShotLayer.volume * GameSettings.SHIP_VOLUME;
+                            float finalVolume = oneShotLayer.volume * GameSettings.SHIP_VOLUME * volume;
                             AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
                         }
                     }

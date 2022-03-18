@@ -22,6 +22,8 @@ namespace RocketSoundEnhancement
         ModuleWheelMotor moduleMotor;
         ModuleWheelDeployment moduleDeploy;
 
+        float volume = 1;
+
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -41,6 +43,8 @@ namespace RocketSoundEnhancement
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
+            if(!float.TryParse(configNode.GetValue("volume"), out volume))
+                volume = 1;
 
             SoundLayerGroups.Clear();
             spools.Clear();
@@ -152,7 +156,7 @@ namespace RocketSoundEnhancement
                         finalControl = spools[soundLayer.name];
                     } else {
                         //fix for audiosource clicks
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, Mathf.Max(0.1f, control));
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, 0.1f);
                         finalControl = spools[soundLayer.name];
                     }
 

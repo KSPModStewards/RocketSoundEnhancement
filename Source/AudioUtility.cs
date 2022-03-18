@@ -216,7 +216,6 @@ namespace RocketSoundEnhancement
                 if(soundLayer.audioClips.Length > 1) {
                     index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
                 }
-
                 source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
             }
 
