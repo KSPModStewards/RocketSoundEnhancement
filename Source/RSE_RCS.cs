@@ -17,11 +17,6 @@ namespace RocketSoundEnhancement
 
         float[] lastThrustControl;
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        int numAudioSources = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        float currentControl = 0;
-
         float volume = 1;
 
         public override void OnStart(StartState state)
@@ -60,8 +55,6 @@ namespace RocketSoundEnhancement
 
             var thrustTransforms = moduleRCSFX.thrusterTransforms;
             var thrustForces = moduleRCSFX.thrustForces;
-            numAudioSources = Sources.Count;
-            currentControl = lastThrustControl[0];
 
             for(int i = 0; i < thrustTransforms.Count; i++) {
 
