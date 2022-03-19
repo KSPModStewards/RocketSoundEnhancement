@@ -133,6 +133,11 @@ namespace RocketSoundEnhancement
                 return;
             }
 
+            if(RSE.MuteRSE) {
+                source.mute = true;
+                return;
+            }
+
             switch(channel) {
                 case FXChannel.ShipBoth:
                     if(loop) {

@@ -156,7 +156,7 @@ namespace RocketSoundEnhancement
                         control = spools[soundLayer.name];
                     } else {
                         //fix for audiosource clicks
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], rawControl, Mathf.Max(0.1f, rawControl));
+                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], rawControl, Mathf.Max(0.1f, rawControl) * (60 * Time.deltaTime));
                         control = spools[soundLayer.name];
                     }
 

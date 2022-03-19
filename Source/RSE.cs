@@ -10,6 +10,8 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class RSE : MonoBehaviour
     {
+        public static bool MuteRSE = false;
+
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
         public AudioLimiter audioLimiter;
@@ -112,6 +114,7 @@ namespace RocketSoundEnhancement
         }
 
         Rect windowRect = new Rect(20, 50, 250, 400);
+        Rect windowRect2 = new Rect(20, 50, 250, 400);
         void OnGUI()
         {
             if(HighLogic.CurrentGame.Parameters.CustomParams<SettingsInGame>().DebugWindow) {
@@ -127,6 +130,8 @@ namespace RocketSoundEnhancement
 
             var vessel = FlightGlobals.ActiveVessel;
             var seModule = vessel.GetComponent<ShipEffects>();
+
+            MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
 
             if(lowpassFilter != null) {
                 if(lowpassFilter.enabled) {
@@ -184,7 +189,7 @@ namespace RocketSoundEnhancement
                               "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
 
                 GUILayout.Label(info);
-                scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Height(225));
+                scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Height(150));
 
                 if(SoundLayers.Count > 0) {
                     string layerInfo = String.Empty;

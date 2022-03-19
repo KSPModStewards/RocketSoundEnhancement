@@ -62,7 +62,7 @@ namespace RocketSoundEnhancement
                 float rawControl = thrustForces[i] / moduleRCSFX.thrusterPower;
                 //smooth control to prevent clicking
                 //Doesn't work, still clicking even at slowest of rates
-                float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl));
+                float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                 lastThrustControl[i] = control;
 
                 foreach(var soundLayer in SoundLayers) {

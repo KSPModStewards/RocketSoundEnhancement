@@ -105,7 +105,7 @@ namespace RocketSoundEnhancement
     
         [GameParameters.CustomParameterUI("Debug Window")]
         public bool DebugWindow = false;
-    
+
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
             return true;
