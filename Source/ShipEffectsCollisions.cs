@@ -156,7 +156,7 @@ namespace RocketSoundEnhancement
                 if(finalVolume > float.Epsilon) {
                     if(!Sources.ContainsKey(soundLayer.name)) {
                         if(oneshot) {
-                            Sources.Add(soundLayer.name, AudioUtility.CreateOneShotSource(part.gameObject, 1, 1, soundLayer.maxDistance, soundLayer.spread));
+                            Sources.Add(soundLayer.name, AudioUtility.CreateOneShotSource(part.gameObject, 1, 1, soundLayer.spread));
                         } else {
                             Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
                         }

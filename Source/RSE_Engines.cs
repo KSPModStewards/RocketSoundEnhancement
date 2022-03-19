@@ -62,8 +62,6 @@ namespace RocketSoundEnhancement
 
             initialized = true;
 
-            pitchVariation = Random.Range(0.95f, 1.05f);
-
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
@@ -115,7 +113,11 @@ namespace RocketSoundEnhancement
                         AudioSource source;
                         if(!Sources.ContainsKey(sourceLayerName)) {
                             source = AudioUtility.CreateSource(audioParent, soundLayer);
+                            source.time = Random.Range(0, 0.05f);
                             Sources.Add(sourceLayerName, source);
+
+                            pitchVariation = Random.Range(0.90f, 1.1f);
+
                         } else {
                             source = Sources[sourceLayerName];
                         }
@@ -170,7 +172,7 @@ namespace RocketSoundEnhancement
                             if(Sources.ContainsKey(oneShotLayerName)) {
                                 source = Sources[oneShotLayerName];
                             } else {
-                                source = AudioUtility.CreateOneShotSource(audioParent, 1, oneShotLayer.pitch, oneShotLayer.maxDistance, oneShotLayer.spread);
+                                source = AudioUtility.CreateOneShotSource(audioParent, 1, oneShotLayer.pitch, oneShotLayer.spread);
                                 Sources.Add(oneShotLayerName, source);
                             }
 

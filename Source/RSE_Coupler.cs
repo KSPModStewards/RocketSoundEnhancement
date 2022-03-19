@@ -52,7 +52,6 @@ namespace RocketSoundEnhancement
                                 audioParent,
                                 soundLayer.volume * GameSettings.SHIP_VOLUME,
                                 soundLayer.pitch,
-                                soundLayer.maxDistance,
                                 soundLayer.spread);
 
                             Sources.Add(soundLayer.name, fxGroup.audio);
@@ -121,7 +120,6 @@ namespace RocketSoundEnhancement
                         audioParent,
                         soundLayer.volume * GameSettings.SHIP_VOLUME,
                         soundLayer.pitch,
-                        soundLayer.maxDistance,
                         soundLayer.spread);
                     Sources.Add(soundLayer.name, source);
                 }

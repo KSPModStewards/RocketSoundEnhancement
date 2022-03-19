@@ -40,7 +40,6 @@ namespace RocketSoundEnhancement
         public bool spool;
         public float spoolSpeed;
         public float spoolIdle;
-        public float maxDistance;
         public float spread;
         public FXCurve volume;
         public FXCurve pitch;
@@ -112,10 +111,6 @@ namespace RocketSoundEnhancement
             soundLayer.pitch.Load("pitch", node);
             soundLayer.massToVolume.Load("massToVolume", node);
             soundLayer.massToPitch.Load("massToPitch", node);
-
-            soundLayer.maxDistance = 500f;
-
-            node.TryGetValue("maxDistance", ref soundLayer.maxDistance);
 
             if(node.HasValue("data")) {
                 soundLayer.data = node.GetValue("data");
@@ -224,7 +219,6 @@ namespace RocketSoundEnhancement
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
             source.loop = soundLayer.loop;
-            source.maxDistance = soundLayer.maxDistance;
             source.spatialBlend = 1;
 
             if(soundLayer.spread != 0) {
@@ -236,7 +230,7 @@ namespace RocketSoundEnhancement
             return source;
         }
 
-        public static AudioSource CreateOneShotSource(GameObject gameObject, float volume, float pitch, float maxDistance, float spread = 0)
+        public static AudioSource CreateOneShotSource(GameObject gameObject, float volume, float pitch, float spread = 0)
         {
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
@@ -250,7 +244,6 @@ namespace RocketSoundEnhancement
             }
 
             source.rolloffMode = AudioRolloffMode.Logarithmic;
-            source.maxDistance = maxDistance;
 
             return source;
         }
