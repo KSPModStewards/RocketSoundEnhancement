@@ -18,6 +18,11 @@ namespace RocketSoundEnhancement
             CollisionData.Clear();
 
             foreach(var configNode in GameDatabase.Instance.GetConfigNodes("RSE_SETTINGS")) {
+
+                if(!bool.TryParse(configNode.GetValue("DisableStagingSound"), out DisableStagingSound)) {
+                    DisableStagingSound = false;
+                }
+
                 if(configNode.HasNode("Colliders")) {
                     var colNode = configNode.GetNode("Colliders");
                     foreach(ConfigNode.Value node in colNode.values) {
@@ -78,10 +83,6 @@ namespace RocketSoundEnhancement
             SoundLayerNodes.Clear();
             foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
                 SoundLayerNodes.AddRange(configNode.GetNodes("SOUNDLAYER"));
-
-                if(!bool.TryParse(configNode.GetValue("DisableStagingSound"), out DisableStagingSound)) {
-                    DisableStagingSound = false;
-                }
 
                 if(configNode.HasValue("nextStageClip")) {
                     StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
