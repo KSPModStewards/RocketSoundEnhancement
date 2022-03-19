@@ -18,6 +18,7 @@ namespace RocketSoundEnhancement
         float[] lastThrustControl;
 
         float volume = 1;
+        float pitchVariation = 1;
 
         public override void OnStart(StartState state)
         {
@@ -80,13 +81,16 @@ namespace RocketSoundEnhancement
 
                     if(!Sources.ContainsKey(sourceLayerName)) {
                         source = AudioUtility.CreateSource(thrustTransform, soundLayer);
+                        source.time = Random.Range(0, 0.05f);
                         Sources.Add(sourceLayerName, source);
+
+                        pitchVariation = Random.Range(0.9f, 1.1f);
                     } else {
                         source = Sources[sourceLayerName];
                     }
 
                     source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
-                    source.pitch = soundLayer.pitch.Value(control);
+                    source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
 
                     AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
 
