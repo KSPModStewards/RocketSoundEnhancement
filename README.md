@@ -1,4 +1,4 @@
-# Rocket Sound Enhancement Default Configs
+# Rocket Sound Enhancement
 Rocket Sound Enhancement (RSE) is an Audio Plugin Framework Mod that offers modders advance sound effects features not available in stock KSP. 
 It features a robust Layering System for use of multiple sounds just like in other games (eg: FMod). 
 
