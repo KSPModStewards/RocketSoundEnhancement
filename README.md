@@ -33,7 +33,7 @@ Replace and/or Add Sounds to Decouplers, Launch Clamps and Docking Ports.
 **Physics based Sound Effects System**
 - Add sounds and assign it's Pitch or Volume to any physics variable available for each Vessel
 - Add Collision Sound Effects for different surfaces to any Part
-- Replace Staging Sound Effects
+- Replace or Disable Staging Sound Effects
 
 ## Dependencies
 - [Module Manager](https://github.com/sarbian/ModuleManager)
