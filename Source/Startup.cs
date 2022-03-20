@@ -8,7 +8,7 @@ using UnityEngine;
 namespace RocketSoundEnhancement
 {
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
-    class GlobalSettings : MonoBehaviour
+    class Startup : MonoBehaviour
     {
         void Awake()
         {

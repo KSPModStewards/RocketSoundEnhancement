@@ -95,7 +95,7 @@
   <ItemGroup>
     <Compile Include="AudioLimiter.cs" />
     <Compile Include="AudioUtility.cs" />
-    <Compile Include="GlobalSettings.cs" />
+    <Compile Include="Startup.cs" />
     <Compile Include="LowpassFilter.cs" />
     <Compile Include="RSE.cs" />
     <Compile Include="RSE_Coupler.cs" />
