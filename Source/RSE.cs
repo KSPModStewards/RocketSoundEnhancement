@@ -95,7 +95,7 @@ namespace RocketSoundEnhancement
                 if(bypassAutomaticFiltering)
                     return;
 
-                if(InternalCamera.Instance.isActive) {
+                if(InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled) {
                     lowpassFilter.cutoffFrequency = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
                 } else {
                     lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
