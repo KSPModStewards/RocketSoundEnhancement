@@ -57,8 +57,14 @@ namespace RocketSoundEnhancement
 
         float AddInput(float newInput, int index)
         {
-            float finalCutOff = Mathf.Clamp(cutoffFrequency, 10, 22200);
+            float finalCutOff = Mathf.Clamp(cutoffFrequency, 0, 22200);
             float finalResonance = Mathf.Clamp(lowpassResonanceQ, 0.5f, 10);
+
+            //fadeout below 10hz;
+            if(finalCutOff <= 10) {
+                newInput *= (finalCutOff / 10f);
+                finalCutOff = 10;
+            }
 
             c = 1.0f / (float)Mathf.Tan(Mathf.PI * finalCutOff / SampleRate);
             a1 = 1.0f / (1.0f + finalResonance * c + c * c);

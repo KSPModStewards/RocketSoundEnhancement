@@ -138,7 +138,7 @@ namespace RocketSoundEnhancement
                     GUILayout.Label("Lowpass Filter");
                     bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Bypass Automatic Filtering");
                     GUILayout.Label("Cuttoff Frequency: " + lowpassFilter.cutoffFrequency.ToString());
-                    lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 10, 22200);
+                    lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
                     GUILayout.Label("Resonance Q: " + lowpassFilter.lowpassResonanceQ.ToString());
                     lowpassFilter.lowpassResonanceQ = GUILayout.HorizontalSlider(lowpassFilter.lowpassResonanceQ, 0.5f, 10);
                 }

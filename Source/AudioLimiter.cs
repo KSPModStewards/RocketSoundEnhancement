@@ -102,29 +102,35 @@ namespace RocketSoundEnhancement
             makeupv = Mathf.Exp(makeup * db2log);
 
             timeconstant = TimeConstant;
-            if(timeconstant == 1) {
-                attime = 0.0002f;
-                reltime = 0.300f;
-            }
-            if(timeconstant == 2) {
-                attime = 0.0002f;
-                reltime = 0.800f;
-            }
-            if(timeconstant == 3) {
-                attime = 0.0004f;
-                reltime = 2.000f;
-            }
-            if(timeconstant == 4) {
-                attime = 0.0008f;
-                reltime = 5.000f;
-            }
-            if(timeconstant == 5) {
-                attime = 0.0002f;
-                reltime = 10.000f;
-            }
-            if(timeconstant == 6) {
-                attime = 0.0004f;
-                reltime = 25.000f;
+            switch(timeconstant) {
+                case 1:
+                    attime = 0.0002f;
+                    reltime = 0.300f;
+                    break;
+                case 2:
+                    attime = 0.0002f;
+                    reltime = 0.800f;
+                    break;
+                case 3:
+                    attime = 0.0004f;
+                    reltime = 2.000f;
+                    break;
+                case 4:
+                    attime = 0.0008f;
+                    reltime = 5.000f;
+                    break;
+                case 5:
+                    attime = 0.0002f;
+                    reltime = 10.000f;
+                    break;
+                case 6:
+                    attime = 0.0004f;
+                    reltime = 25.000f;
+                    break;
+                default:
+                    attime = 0.0002f;
+                    reltime = 0.300f;
+                    break;
             }
 
             atcoef = Mathf.Exp(-1 / (attime * SampleRate));
