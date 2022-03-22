@@ -264,12 +264,12 @@ namespace RocketSoundEnhancement
             }
 
             if(gameObject.tag.ToLower() != "untagged") {
-                if(Settings.CollisionData.ContainsKey(gameObject.name)) {
-                    return Settings.CollisionData[gameObject.name];
+                if(Settings.Instance.CollisionData.ContainsKey(gameObject.name)) {
+                    return Settings.Instance.CollisionData[gameObject.name];
                 }
 
-                if(Settings.CollisionData.ContainsKey("default")) {
-                    return Settings.CollisionData["default"];
+                if(Settings.Instance.CollisionData.ContainsKey("default")) {
+                    return Settings.Instance.CollisionData["default"];
                 }
             }
 

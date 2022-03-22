@@ -34,18 +34,78 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
+    public struct AudioLimiterPreset
+    {
+        public float Threshold;                     // 0f
+        public float Bias;                          // 70f
+        public float Ratio;                         // 20f
+        public float Gain;                          // 0f
+        public int TimeConstant;                    // 1
+        public int LevelDetectorRMSWindow;           // 100
+    }
+
     [RequireComponent(typeof(AudioBehaviour))]
     public class AudioLimiter : MonoBehaviour
     {
-        public static bool EnableLimiter;
-        public static float Threshold;                     // 0f
-        public static float Bias;                          // 70f
-        public static float Ratio;                         // 20f
-        public static float Gain;                          // 0f
-        public static int TimeConstant;                    // 1
-        public static int LevelDetectorRMSWindow = 100;    // 100
+
+        public static AudioLimiterPreset DefaultLimiterPreset
+        {
+            get {
+                var defaultPreset = new AudioLimiterPreset {
+                    Threshold = -16f,
+                    Bias = 70f,
+                    Ratio = 2.1f,
+                    Gain = 4f,
+                    TimeConstant = 3,
+                    LevelDetectorRMSWindow = 100
+                };
+
+                return defaultPreset;
+            }
+        }
+
+        public static Dictionary<string, AudioLimiterPreset> Presets = new Dictionary<string, AudioLimiterPreset>();
+
+        public static bool EnableLimiter = true;
+        public static string Preset;
+        public static float Threshold = -16f;
+        public static float Bias = 70f;
+        public static float Ratio = 2.1f;
+        public static float Gain = 4f;
+        public static int TimeConstant = 3;
+        public static int LevelDetectorRMSWindow = 100;
         public static float CurrentCompressionRatio;
         public static float GainReduction;
+
+        public static void ApplyPreset()
+        {
+            if(Preset != string.Empty && Presets.ContainsKey(Preset)) {
+                Threshold               = Presets[Preset].Threshold;
+                Bias                    = Presets[Preset].Bias;
+                Ratio                   = Presets[Preset].Ratio;
+                Gain                    = Presets[Preset].Gain;
+                TimeConstant            = Presets[Preset].TimeConstant;
+                LevelDetectorRMSWindow  = Presets[Preset].LevelDetectorRMSWindow;
+                Debug.Log("RSE Audio Limiter: " + Preset + " Preset Applied");
+            } else {
+                Default();
+                Debug.Log("RSE Audio Limiter: Preset Not Found = " + Preset + ". Using Default Settings");
+            }
+        }
+
+        public static void Default()
+        {
+            Threshold = DefaultLimiterPreset.Threshold;
+            Bias = DefaultLimiterPreset.Bias;
+            Ratio = DefaultLimiterPreset.Ratio;
+            Gain = DefaultLimiterPreset.Gain;
+            TimeConstant = DefaultLimiterPreset.TimeConstant;
+            LevelDetectorRMSWindow = DefaultLimiterPreset.LevelDetectorRMSWindow;
+
+            if(!Presets.ContainsKey("Custom")) {
+                Presets.Add("Custom", DefaultLimiterPreset);
+            }
+        }
 
         float log2db;
         float db2log;

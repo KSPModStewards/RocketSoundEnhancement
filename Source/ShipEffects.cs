@@ -20,6 +20,7 @@ namespace RocketSoundEnhancement
         float pastAcceleration;
 
         public bool initialized;
+        public bool soundLayersExist;
         bool gamePause;
         bool ignoreVessel;
 
@@ -38,15 +39,17 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            foreach(var layerNode in Settings.SoundLayerNodes) {
-                var soundLayer = AudioUtility.CreateSoundLayer(layerNode);
-                if(soundLayer.audioClips != null && !SoundLayers.Contains(soundLayer)) {
-                    SoundLayers.Add(soundLayer);
+            if(Settings.Instance.ShipEffectsNodes().Count > 0) {
+                foreach(var layerNode in Settings.Instance.ShipEffectsNodes()) {
+                    var soundLayer = AudioUtility.CreateSoundLayer(layerNode);
+                    if(soundLayer.audioClips != null && !SoundLayers.Contains(soundLayer)) {
+                        SoundLayers.Add(soundLayer);
+                    }
                 }
+                soundLayersExist = true;
             }
 
             initialized = true;
-
             //UnityEngine.Debug.Log("ShipEffects: [" + vessel.GetDisplayName() + "] Loaded with" + " PartCount: " + vessel.Parts.Count());
         }
 
@@ -118,7 +121,7 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            if(vessel == null | !vessel.loaded || vessel.isEVA || !HighLogic.LoadedSceneIsFlight || !initialized || ignoreVessel || gamePause)
+            if(!soundLayersExist || vessel == null | !vessel.loaded || vessel.isEVA || !HighLogic.LoadedSceneIsFlight || !initialized || ignoreVessel || gamePause)
                 return;
 
             //calculate forces

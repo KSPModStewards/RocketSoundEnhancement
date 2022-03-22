@@ -10,7 +10,9 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class RSE : MonoBehaviour
     {
-        public static bool MuteRSE = false;
+        public ApplicationLauncherButton AppButton;
+        public Texture AppIcon = GameDatabase.Instance.GetTexture("RocketSoundEnhancement/Textures/RSE_Icon", false);
+        public Texture AppTitle = GameDatabase.Instance.GetTexture("RocketSoundEnhancement/Textures/RSE_Title", false);
 
         public AudioListener audioListener;
         public LowpassFilter lowpassFilter;
@@ -27,25 +29,31 @@ namespace RocketSoundEnhancement
 
         List<AudioSource> ChattererSources = new List<AudioSource>();
 
-        bool gamePaused;
+        public static bool MuteRSE = false;
+
+        Rect windowRect;
+        int windowWidth = 440;
+        int windowHeight = 244;
+        int leftWidth = 200;
+        int rightWidth = 60;
+        int smlRightWidth = 40;
+        int smlLeftWidth = 125;
         void Start()
         {
+            Settings.Instance.Load();
+
+            windowRect = new Rect(Screen.width - windowWidth - 40, 40, windowWidth, windowHeight);
+
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
                 if(source.name.Contains("Music") || source.name.Contains("PartActionController")) {
                     source.bypassListenerEffects = true;
                 }
-                if(source.name.Contains("airspeedNoise")) {
+                //if(source.name.Contains("airspeedNoise")) {
+                //    source.bypassListenerEffects = false;
+                //}
+                if(source.clip != null)
                     source.bypassListenerEffects = false;
-                }
-            }
-
-            var stageSource = StageManager.Instance.GetComponent<AudioSource>();
-            if(stageSource) {
-                stageSource.bypassListenerEffects = true;
-
-                if(Settings.DisableStagingSound) {
-                    GameObject.Destroy(stageSource);
-                }
+                    //Debug.Log("RSE: " + source.name + " of " + source.clip.name + " : isBypassed " + source.bypassListenerEffects);
             }
 
             //Find Chatterer Players
@@ -56,8 +64,6 @@ namespace RocketSoundEnhancement
                         foreach(var source in chatterer.GetComponents<AudioSource>()) {
                             if(source == null)
                                 continue;
-            
-                            source.bypassListenerEffects = !LowpassFilter.MuffleChatterer;
                             ChattererSources.Add(source);
                         }
                     }
@@ -68,109 +74,238 @@ namespace RocketSoundEnhancement
             //Any Effects applied here also applies to the other listeners in game
             audioListener = gameObject.AddOrGetComponent<AudioListener>();
             audioListener.enabled = false;
-
             lowpassFilter = gameObject.AddOrGetComponent<LowpassFilter>();
-            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
-            lowpassFilter.lowpassResonanceQ = 3;
-
             audioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
+
+            ApplySettings();
+            AddLauncher();
+        }
+
+        void ApplySettings()
+        {
+            var stageSource = StageManager.Instance.GetComponent<AudioSource>();
+            if(stageSource) {
+                stageSource.bypassListenerEffects = true;
+                stageSource.enabled = !Settings.Instance.DisableStagingSound;
+            }
+
+            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
             audioLimiter.enabled = AudioLimiter.EnableLimiter;
 
+            SetupLowpassCurves();
+
+            if(ChattererSources.Count > 0) {
+                foreach(var source in ChattererSources) {
+                    source.bypassListenerEffects = !LowpassFilter.MuffleChatterer;
+                }
+            }
+        }
+        void SetupLowpassCurves()
+        {
             lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, LowpassFilter.VacuumMuffling);
             lowpassCurveInt = AnimationCurve.Linear(1, LowpassFilter.InteriorMufflingAtm, 0, LowpassFilter.InteriorMufflingVac);
-
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnPause);
         }
 
-        void LateUpdate()
+        bool _appToggle;
+        private void AddLauncher()
         {
-            if(gamePaused)
+            if(AppButton != null)
                 return;
 
-            if(lowpassFilter == null)
-                return;
+            AppButton = ApplicationLauncher.Instance.AddModApplication(
+                    () => _appToggle = true,
+                    () => _appToggle = false,
+                    null, null,
+                    null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT, AppIcon
+                    );
 
-            if(lowpassFilter.enabled) {
-                if(bypassAutomaticFiltering)
-                    return;
-
-                if(InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled) {
-                    lowpassFilter.cutoffFrequency = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
-                } else {
-                    lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
-                }
-
-                if(LowpassFilter.MuffleChatterer) {
-                    foreach(var source in ChattererSources) {
-
-                        if(source == null)
-                            continue;
-
-                        source.bypassListenerEffects = InternalCamera.Instance.isActive;
-                    }
-                }
-            }
         }
 
-        Rect windowRect = new Rect(20, 50, 250, 400);
-        Rect windowRect2 = new Rect(20, 50, 250, 400);
         void OnGUI()
         {
-            if(HighLogic.CurrentGame.Parameters.CustomParams<SettingsInGame>().DebugWindow) {
-                windowRect = GUILayout.Window(0, windowRect, InfoWindow, "Rocket Sound Enhancement");
+            if(_appToggle) {
+                windowRect = GUILayout.Window(52534500, windowRect, SettingsWindow,"");
             }
         }
 
+        int limiterPresetIndex = 0;
+        int lowpassPresetIndex = 0;
+        bool showAdvanceLimiter = false;
+        bool showAdvanceLowpass = false;
+        string advLimiterIconUNI;
+        string advLowpassIconUNI;
+        const string downArrowUNI = "\u25BC";
+        const string upArrowUNI = "\u25B2";
+        Vector2 scrollPos;
+
+        bool bypassAutomaticFiltering;
+        void SettingsWindow(int id)
+        {
+            GUILayout.BeginVertical();
+            GUILayout.Label(AppTitle);
+            scrollPos = GUILayout.BeginScrollView(scrollPos,false, true, GUILayout.Height(windowHeight));
+            GUILayout.BeginHorizontal();
+            AudioLimiter.EnableLimiter = GUILayout.Toggle(AudioLimiter.EnableLimiter, "Sound Effects Mastering", GUILayout.Width(leftWidth));
+            audioLimiter.enabled = AudioLimiter.EnableLimiter;
+
+            if(AudioLimiter.EnableLimiter) {
+                if(GUILayout.Button(AudioLimiter.Preset)) {
+                    limiterPresetIndex++;
+
+                    if(limiterPresetIndex >= AudioLimiter.Presets.Count) {
+                        limiterPresetIndex = 0;
+                    }
+
+                    AudioLimiter.Preset = AudioLimiter.Presets.Keys.ToList()[limiterPresetIndex];
+                    AudioLimiter.ApplyPreset();
+                }
+
+                if(GUILayout.Button(advLimiterIconUNI = showAdvanceLimiter ? upArrowUNI : downArrowUNI,GUILayout.Width(smlRightWidth))) {
+                    showAdvanceLimiter = !showAdvanceLimiter;
+                }
+                GUILayout.EndHorizontal();
+                if(showAdvanceLimiter) {
+                    if(AudioLimiter.Preset == "Custom") {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Threshold", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.Threshold = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Threshold, -60f, 0f),2);
+                        GUILayout.Label(AudioLimiter.Threshold.ToString() + "db", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Bias", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.Bias = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Bias, 0.1f, 100f),2);
+                        GUILayout.Label(AudioLimiter.Bias.ToString(), GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Ratio", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.Ratio = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Ratio, 1f, 20f),2);
+                        GUILayout.Label(AudioLimiter.Ratio.ToString(),GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Gain", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.Gain = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Gain, -30f, 30f),2);
+                        GUILayout.Label(AudioLimiter.Gain.ToString() + "db", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Time Constant", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.TimeConstant, 1, 6));
+                        GUILayout.Label(AudioLimiter.TimeConstant.ToString(), GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("RMS Window", GUILayout.Width(smlLeftWidth));
+                        AudioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.LevelDetectorRMSWindow, 1, 1000));
+                        GUILayout.Label(AudioLimiter.LevelDetectorRMSWindow.ToString() + "ms", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                    }
+                    GUILayout.BeginHorizontal();
+                    if(AudioLimiter.Preset == "Custom") {
+                        if(GUILayout.Button("Reset")) {
+                            AudioLimiter.Default();
+                        }
+                    }
+                    GUILayout.Box("Compression Ratio: " + AudioLimiter.CurrentCompressionRatio.ToString("0.00"));
+                    GUILayout.Box("Gain Reduction: " + AudioLimiter.GainReduction.ToString("0.00") + "db");
+                    GUILayout.EndHorizontal();
+                }
+            } else {
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            LowpassFilter.EnableMuffling = GUILayout.Toggle(LowpassFilter.EnableMuffling, "Audio Muffler", GUILayout.Width(leftWidth));
+            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
+            if(LowpassFilter.EnableMuffling) {
+                if(GUILayout.Button(LowpassFilter.Preset)) {
+                    lowpassPresetIndex++;
+                    if(lowpassPresetIndex >= LowpassFilter.Presets.Count) {
+                        lowpassPresetIndex = 0;
+                    }
+                    LowpassFilter.Preset = LowpassFilter.Presets.Keys.ToList()[lowpassPresetIndex];
+                    LowpassFilter.ApplyPreset();
+                    SetupLowpassCurves();
+                }
+
+                if(GUILayout.Button(advLowpassIconUNI = showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth))) {
+                    showAdvanceLowpass = !showAdvanceLowpass;
+                }
+                GUILayout.EndHorizontal();
+                if(showAdvanceLowpass) {
+                    if(LowpassFilter.Preset == "Custom") {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Vacuum Muffling", GUILayout.Width(smlLeftWidth));
+                        LowpassFilter.VacuumMuffling = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.VacuumMuffling, 0, 22200),1);
+                        GUILayout.Label(LowpassFilter.VacuumMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.Label("Interior Muffling");
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("In Atmosphere", GUILayout.Width(smlLeftWidth));
+                        LowpassFilter.InteriorMufflingAtm = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.InteriorMufflingAtm, 0, 22200),1);
+                        GUILayout.Label(LowpassFilter.InteriorMufflingAtm.ToString() + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("In Vacuum", GUILayout.Width(smlLeftWidth));
+                        LowpassFilter.InteriorMufflingVac = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.InteriorMufflingVac, 0, 22200),1);
+                        GUILayout.Label(LowpassFilter.InteriorMufflingVac.ToString() + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        if(GUILayout.Button("Reset")) {
+                            LowpassFilter.Default();
+                            SetupLowpassCurves();
+                        }
+                        if(GUILayout.Button("Apply")) {
+                            SetupLowpassCurves();
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                    LowpassFilter.MuffleChatterer = GUILayout.Toggle(LowpassFilter.MuffleChatterer, "Muffle Chatterer");
+                    
+                    GUILayout.BeginHorizontal();
+                    bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
+                    lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
+                    GUILayout.Label(lowpassFilter.cutoffFrequency.ToString("#.#") + "hz", GUILayout.Width(rightWidth)); ;
+                    GUILayout.EndHorizontal();
+                }
+            } else {
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.FlexibleSpace();
+            Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound Effect");
+            MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
+            GUILayout.EndScrollView();
+            if(GUILayout.Button("Reload Settings")) {
+                limiterPresetIndex = 0;
+                lowpassPresetIndex = 0;
+                Settings.Instance.Load();
+                ApplySettings();
+            }
+            if(GUILayout.Button("Save Settings")) {
+                Settings.Instance.Save();
+                ApplySettings();
+            }
+            GUILayout.EndVertical();
+            GUI.DragWindow(new Rect(0, 0, 10000, 20));
+        }
+
+        //ShipEffects Debug Window
+
         Vector2 scrollPosition;
-        bool bypassAutomaticFiltering = false;
         void InfoWindow(int id)
         {
             GUILayout.BeginVertical(GUILayout.Width(250));
 
             var vessel = FlightGlobals.ActiveVessel;
             var seModule = vessel.GetComponent<ShipEffects>();
-
-            MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
-
-            if(lowpassFilter != null) {
-                if(lowpassFilter.enabled) {
-                    GUILayout.Label("Lowpass Filter");
-                    bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Bypass Automatic Filtering");
-                    GUILayout.Label("Cuttoff Frequency: " + lowpassFilter.cutoffFrequency.ToString());
-                    lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
-                    GUILayout.Label("Resonance Q: " + lowpassFilter.lowpassResonanceQ.ToString());
-                    lowpassFilter.lowpassResonanceQ = GUILayout.HorizontalSlider(lowpassFilter.lowpassResonanceQ, 0.5f, 10);
-                }
-            }
-
-            if(audioLimiter != null) {
-                audioLimiter.enabled = GUILayout.Toggle(audioLimiter.enabled, "Enable Audio Limiter");
-
-                GUILayout.Label("Threshold: " + AudioLimiter.Threshold.ToString());
-                AudioLimiter.Threshold = GUILayout.HorizontalSlider(AudioLimiter.Threshold, -60f, 0f);
-
-                GUILayout.Label("Bias: " + AudioLimiter.Bias.ToString());
-                AudioLimiter.Bias = GUILayout.HorizontalSlider(AudioLimiter.Bias, 0.1f, 100f);
-
-                GUILayout.Label("Ratio: " + AudioLimiter.Ratio.ToString());
-                AudioLimiter.Ratio = GUILayout.HorizontalSlider(AudioLimiter.Ratio, 1f, 20f);
-
-                GUILayout.Label("Gain: " + AudioLimiter.Gain.ToString());
-                AudioLimiter.Gain = GUILayout.HorizontalSlider(AudioLimiter.Gain, -30f, 30f);
-
-                GUILayout.Label("Time Constant: " + AudioLimiter.TimeConstant.ToString());
-                AudioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.TimeConstant, 1, 6));
-
-                GUILayout.Label("Level Detector RMS Window: " + AudioLimiter.LevelDetectorRMSWindow.ToString());
-                AudioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.LevelDetectorRMSWindow, 1, 1000));
-
-                GUILayout.Label("Current Compression Ratio: " + AudioLimiter.CurrentCompressionRatio.ToString());
-                GUILayout.HorizontalSlider(AudioLimiter.CurrentCompressionRatio, 1f, 50f);
-
-                GUILayout.Label("Gain Reduction: " + AudioLimiter.GainReduction.ToString());
-                GUILayout.HorizontalSlider(AudioLimiter.GainReduction, -90f, 0f);
-            }
 
             if(seModule != null && seModule.initialized) {
                 GUILayout.Label("Vessel: " + vessel.GetDisplayName());
@@ -226,39 +361,42 @@ namespace RocketSoundEnhancement
                 GUILayout.Label("No Active Vessel");
             }
 
-            HighLogic.CurrentGame.Parameters.CustomParams<SettingsInGame>().DebugWindow = !GUILayout.Button("Close", GUILayout.Height(20));
+            _appToggle = !GUILayout.Button("Close", GUILayout.Height(20));
 
             GUILayout.EndVertical();
-            GUI.DragWindow(new Rect(0, 0, 1000, 20));
+            GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 
-        void onGamePause()
+        void LateUpdate()
         {
-            gamePaused = true;
-        }
+            if(lowpassFilter == null)
+                return;
 
-        void onGameUnPause()
-        {
-            gamePaused = false;
-            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, LowpassFilter.VacuumMuffling);
-            lowpassCurveInt = AnimationCurve.Linear(1, LowpassFilter.InteriorMufflingAtm, 0, LowpassFilter.InteriorMufflingVac);
+            if(lowpassFilter.enabled) {
+                if(bypassAutomaticFiltering)
+                    return;
 
-            if(lowpassFilter != null)
-                lowpassFilter.enabled = LowpassFilter.EnableMuffling;
+                if(InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled) {
+                    lowpassFilter.cutoffFrequency = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                } else {
+                    lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                }
 
-            if(!LowpassFilter.MuffleChatterer) {
-                foreach(var source in ChattererSources) {
-                    if(source == null)
-                        continue;
-                    source.bypassListenerEffects = true;
+                if(LowpassFilter.MuffleChatterer) {
+                    foreach(var source in ChattererSources) {
+
+                        if(source == null)
+                            continue;
+
+                        source.bypassListenerEffects = InternalCamera.Instance.isActive;
+                    }
                 }
             }
         }
 
-        void OnDestroy()
+        public void OnDestroy()
         {
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnPause);
+            ApplicationLauncher.Instance.RemoveModApplication(AppButton);
         }
     }
 }
