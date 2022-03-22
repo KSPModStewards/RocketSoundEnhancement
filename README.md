@@ -10,14 +10,30 @@ Get the Default Config here:
 
 
 ## Features
+### Settings Window
+![Settings Window](https://i.imgur.com/uO4F1d7.png)
+
 ### Built-In Basic Audio Muffler
-- A Lightweight Lowpass Filter
-- Vacuum and Interior Muffling
-- Customizable in Settings.cfg
+A Lightweight Lowpass Filter.
+
+**Presets:**
+
+    - Interior-Only (Only Muffle sounds when the Camera is in IVA view)
+    - Muffled-Vacuum
+    - Silent-Vacuum
+    - Custom (User Customizable Preset)
+    - Add more Presets in the Settings.cfg
 
 ### Master Audio Limiter/Compressor
-- Control the Loudness of the overall game dynamically.
-- Customizable in Settings.cfg
+Control the Loudness of the overall game dynamically.
+
+**Presets:**
+
+    - Balanced (The Default Preset, Sounds are balanced with Reasonable Dynamic Range)
+    - Cinematic (Wide Dynamic Range, Loud Sounds are Louder and Quiet Sound Are Quieter than Balanced)
+    - NASA-Reels (Inspired by Real Rocket Launch Footage, This is the Loudest Preset with minimal Dynamic Range)
+    - Custom (User Customizable Preset)
+    - Add more Presets in the Settings.cfg
 
 ### Part Modules
 Apply sounds with Layering Capabilities with these part modules. 
