@@ -32,7 +32,6 @@ namespace RocketSoundEnhancement
 
         public static bool EnableMuffling = true;
         public static string Preset;
-        public static bool MuffleChatterer = false;
         public static float InteriorMufflingAtm = 3000;
         public static float InteriorMufflingVac = 1500;
         public static float VacuumMuffling = 22200;

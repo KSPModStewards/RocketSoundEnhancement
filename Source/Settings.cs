@@ -17,6 +17,7 @@ namespace RocketSoundEnhancement
         public Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
 
         public bool DisableStagingSound = false;
+        public bool AffectChatterer = false;
 
         private List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
         public List<ConfigNode> ShipEffectsNodes()
@@ -59,6 +60,14 @@ namespace RocketSoundEnhancement
                 }
             } else {
                 settingsNode.AddValue("DisableStagingSound", DisableStagingSound);
+            }
+
+            if(settingsNode.HasValue("AffectChatterer")) {
+                if(!bool.TryParse(settingsNode.GetValue("AffectChatterer"), out AffectChatterer)) {
+                    AffectChatterer = false;
+                }
+            } else {
+                settingsNode.AddValue("AffectChatterer", AffectChatterer);
             }
 
             if(settingsNode.HasNode("Colliders")) {
@@ -150,12 +159,8 @@ namespace RocketSoundEnhancement
                 if(!lowpassFilterNode.HasValue("EnableMuffling")) {
                     lowpassFilterNode.AddValue("EnableMuffling", true);
                 }
-                if(!lowpassFilterNode.HasValue("MuffleChatterer")) {
-                    lowpassFilterNode.AddValue("MuffleChatterer", true);
-                }
 
                 bool.TryParse(lowpassFilterNode.GetValue("EnableMuffling"), out LowpassFilter.EnableMuffling);
-                bool.TryParse(lowpassFilterNode.GetValue("MuffleChatterer"), out LowpassFilter.MuffleChatterer);
 
                 if(lowpassFilterNode.HasValue("Preset")) {
                     LowpassFilter.Preset = lowpassFilterNode.GetValue("Preset");
@@ -190,7 +195,6 @@ namespace RocketSoundEnhancement
             } else {
                 var defaultLowpassFilterNode = settingsNode.AddNode("LOWPASSFILTER");
                 defaultLowpassFilterNode.AddValue("EnableMuffling", LowpassFilter.EnableMuffling);
-                defaultLowpassFilterNode.AddValue("MuffleChatterer", LowpassFilter.MuffleChatterer);
                 defaultLowpassFilterNode.AddValue("Preset", "Custom");
                 LowpassFilter.Preset = "Custom";
 
@@ -208,6 +212,7 @@ namespace RocketSoundEnhancement
         {
             var settingsNode = _settings.GetNode(SettingsName);
             settingsNode.SetValue("DisableStagingSound", DisableStagingSound, true);
+            settingsNode.SetValue("AffectChatterer", AffectChatterer, true);
 
             if(settingsNode.HasNode("AUDIOLIMITER")) {
                 var limiterNode = settingsNode.GetNode("AUDIOLIMITER");
@@ -232,7 +237,6 @@ namespace RocketSoundEnhancement
 
                 lowpassFilterNode.SetValue("EnableMuffling", LowpassFilter.EnableMuffling, true);
                 lowpassFilterNode.SetValue("Preset", LowpassFilter.Preset, true);
-                lowpassFilterNode.SetValue("MuffleChatterer", LowpassFilter.MuffleChatterer, true);
 
                 if(LowpassFilter.Preset == "Custom") {
                     var customPreset = lowpassFilterNode.GetNode("Custom");

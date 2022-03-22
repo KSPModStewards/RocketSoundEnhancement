@@ -93,7 +93,7 @@ namespace RocketSoundEnhancement
 
             if(ChattererSources.Count > 0) {
                 foreach(var source in ChattererSources) {
-                    source.bypassListenerEffects = !LowpassFilter.MuffleChatterer;
+                    source.bypassListenerEffects = !Settings.Instance.AffectChatterer;
                 }
             }
         }
@@ -264,8 +264,6 @@ namespace RocketSoundEnhancement
                         }
                         GUILayout.EndHorizontal();
                     }
-                    LowpassFilter.MuffleChatterer = GUILayout.Toggle(LowpassFilter.MuffleChatterer, "Muffle Chatterer");
-                    
                     GUILayout.BeginHorizontal();
                     bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
                     lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
@@ -277,7 +275,8 @@ namespace RocketSoundEnhancement
             }
 
             GUILayout.FlexibleSpace();
-            Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound Effect");
+            Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
+            Settings.Instance.AffectChatterer = GUILayout.Toggle(Settings.Instance.AffectChatterer, "Affect Chatterer");
             MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
@@ -384,7 +383,7 @@ namespace RocketSoundEnhancement
                     lowpassFilter.cutoffFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
                 }
 
-                if(LowpassFilter.MuffleChatterer) {
+                if(Settings.Instance.AffectChatterer) {
                     foreach(var source in ChattererSources) {
 
                         if(source == null)
