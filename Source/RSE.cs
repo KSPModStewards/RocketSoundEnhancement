@@ -283,6 +283,7 @@ namespace RocketSoundEnhancement
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound Effect");
             MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
             GUILayout.EndScrollView();
+            GUILayout.BeginHorizontal();
             if(GUILayout.Button("Reload Settings")) {
                 limiterPresetIndex = 0;
                 lowpassPresetIndex = 0;
@@ -293,6 +294,7 @@ namespace RocketSoundEnhancement
                 Settings.Instance.Save();
                 ApplySettings();
             }
+            GUILayout.EndHorizontal();
             GUILayout.EndVertical();
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
