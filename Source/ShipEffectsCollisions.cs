@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ModuleWheels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -17,9 +18,7 @@ namespace RocketSoundEnhancement
         Dictionary<CollisionType, List<SoundLayer>> SoundLayerGroups = new Dictionary<CollisionType, List<SoundLayer>>();
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
 
-        public bool collided;
-
-        bool gamePaused;
+        bool collided;
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -47,7 +46,6 @@ namespace RocketSoundEnhancement
 
         private void onGameUnpause()
         {
-            gamePaused = false;
             if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
                     source.UnPause();
@@ -57,7 +55,6 @@ namespace RocketSoundEnhancement
 
         private void onGamePause()
         {
-            gamePaused = true;
             if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
                     source.Pause();
@@ -65,46 +62,48 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public override void OnUpdate()
+        public void FixedUpdate()
         {
-            if(gamePaused) return;
-
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
                 foreach(var source in sourceKeys) {
                     if(!Sources[source].isPlaying) {
                         UnityEngine.Object.Destroy(Sources[source]);
                         Sources.Remove(source);
+                    } else {
+                        if(Sources[source].loop && !collided) {
+                            Sources[source].Stop();
+                        }
                     }
                 }
             }
+            collided = false;
         }
 
         void OnDestroy()
         {
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
             if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
                     source.Stop();
                     UnityEngine.Object.Destroy(source);
                 }
             }
+
+            GameEvents.onGamePause.Remove(onGamePause);
+            GameEvents.onGameUnpause.Remove(onGameUnpause);
         }
 
         void OnCollisionEnter(Collision col)
         {
             var collisionType = AudioUtility.GetCollidingType(col.gameObject);
-
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
                 PlaySounds(CollisionType.CollisionEnter, col.relativeVelocity.magnitude, collisionType, true);
             }
-
-            collided = true;
         }
 
         void OnCollisionStay(Collision col)
         {
+            collided = true;
             var collisionType = AudioUtility.GetCollidingType(col.gameObject);
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
                 PlaySounds(CollisionType.CollisionStay, col.relativeVelocity.magnitude, collisionType);
@@ -113,6 +112,8 @@ namespace RocketSoundEnhancement
 
         void OnCollisionExit(Collision col)
         {
+            collided = false;
+
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
                 foreach(var layer in SoundLayerGroups[CollisionType.CollisionStay]) {
                     if(Sources.ContainsKey(layer.name)) {
@@ -125,7 +126,6 @@ namespace RocketSoundEnhancement
             if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
                 PlaySounds(CollisionType.CollisionExit, col.relativeVelocity.magnitude, collisionType, true);
             }
-            collided = false;
         }
 
         void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.Dirt, bool oneshot = false)

@@ -375,10 +375,13 @@ namespace RocketSoundEnhancement
                 if(bypassAutomaticFiltering)
                     return;
 
-                if(InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled) {
-                    lowpassFilter.cutoffFrequency = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
-                } else {
-                    lowpassFilter.cutoffFrequency = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                float interiorMuffling = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                float exteriorMuffling = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+
+                lowpassFilter.cutoffFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
+
+                if(MapView.MapCamera.isActiveAndEnabled) {
+                    lowpassFilter.cutoffFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
                 }
 
                 if(LowpassFilter.MuffleChatterer) {

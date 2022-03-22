@@ -160,8 +160,9 @@ namespace RocketSoundEnhancement
                         control = spools[soundLayer.name];
                     }
 
-                    if(control < 0.01f) {
+                    if(control < float.Epsilon) {
                         if(Sources.ContainsKey(soundLayer.name)) {
+                            Sources[soundLayer.name].Stop();
                             UnityEngine.Object.Destroy(Sources[soundLayer.name]);
                             Sources.Remove(soundLayer.name);
                         }
