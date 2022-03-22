@@ -1,6 +1,6 @@
 ![Rocket Sound Enhancement](https://i.imgur.com/BxRZtv1.png)
 
-Rocket Sound Enhancement (RSE) is an Audio Plugin Framework Mod that offers modders advance sound effects features not available in stock Kerbal Space Program. 
+Rocket Sound Enhancement (RSE) is an Audio Plugin Framework Mod for [Kerbal Space Program](https://www.kerbalspaceprogram.com/) that offers modders advance sound effects features not available in the base game. 
 It features a robust Layering System for use of multiple sounds just like in other games (eg: FMod). 
 
 By itself, RSE only does Sound Limiting and Muffling. You'll need to download a Config Pack Mod in order to have new sounds in your game.
