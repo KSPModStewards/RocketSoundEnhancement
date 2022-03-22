@@ -12,7 +12,7 @@ Get the Default Config here:
 
 ## Features
 ### Settings Window
-![Settings Window](https://i.imgur.com/uO4F1d7.png)
+![Settings Window](https://i.imgur.com/QlJZvNf.png)
 
 ### Built-In Basic Audio Muffler
 A Lightweight Lowpass Filter.
