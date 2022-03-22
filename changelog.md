@@ -1,10 +1,6 @@
-Current:
+CURRENT:
 - Potental Fix for Collision Loop Sound Effects Persisting after Impact
 - Tweak Orbit View Muffling
-
-Todo:
--
-
 
 0.7.1
 - Fixed Music being Muffled
