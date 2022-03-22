@@ -45,15 +45,12 @@ namespace RocketSoundEnhancement
             windowRect = new Rect(Screen.width - windowWidth - 40, 40, windowWidth, windowHeight);
 
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
+                if(source.clip != null)
+                    source.bypassListenerEffects = false;
+
                 if(source.name.Contains("Music") || source.name.Contains("PartActionController")) {
                     source.bypassListenerEffects = true;
                 }
-                //if(source.name.Contains("airspeedNoise")) {
-                //    source.bypassListenerEffects = false;
-                //}
-                if(source.clip != null)
-                    source.bypassListenerEffects = false;
-                    //Debug.Log("RSE: " + source.name + " of " + source.clip.name + " : isBypassed " + source.bypassListenerEffects);
             }
 
             //Find Chatterer Players
