@@ -23,7 +23,7 @@ A Lightweight Lowpass Filter.
     - Muffled-Vacuum
     - Silent-Vacuum
     - Custom (User Customizable Preset)
-    - Add more Presets in the Settings.cfg
+    - Add more Presets in Settings.cfg
 
 ### Master Audio Limiter/Compressor
 Control the Loudness of the overall game dynamically.
@@ -34,7 +34,7 @@ Control the Loudness of the overall game dynamically.
     - Cinematic (Wide Dynamic Range, Loud Sounds are Louder and Quiet Sound Are Quieter than Balanced)
     - NASA-Reels (Inspired by Real Rocket Launch Footage, This is the Loudest Preset with minimal Dynamic Range)
     - Custom (User Customizable Preset)
-    - Add more Presets in the Settings.cfg
+    - Add more Presets in Settings.cfg
 
 ### Part Modules
 Apply sounds with Layering Capabilities with these part modules. 
