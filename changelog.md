@@ -1,8 +1,10 @@
-CURRENT:
+0.7.2:
 - Potental Fix for Collision Loop Sound Effects Persisting after Impact
 - Tweak Orbit View Muffling
 - Removed "MuffleChatterer" from LOWPASSFILTER in Settings.cfg
 - Added "AffectChatterer" under RSE_SETTINGS in Settings.cfg
+- Code Optimization
+- Custom Audio Muffler Settings now react instantly to new settings
 
 0.7.1
 - Fixed Music being Muffled

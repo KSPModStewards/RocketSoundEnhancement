@@ -42,10 +42,10 @@ namespace RocketSoundEnhancement
                 InteriorMufflingAtm = Presets[Preset].InteriorMufflingAtm;
                 InteriorMufflingVac = Presets[Preset].InteriorMufflingVac;
                 VacuumMuffling = Presets[Preset].VacuumMuffling;
-                Debug.Log("RSE Audio Muffler: " + Preset + " Preset Applied");
+                Debug.Log("[RSE]: Audio Muffler: " + Preset + " Preset Applied");
             } else {
                 Default();
-                Debug.Log("RSE Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
+                Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
             }
         }
 

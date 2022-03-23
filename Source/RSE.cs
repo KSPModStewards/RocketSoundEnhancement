@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace RocketSoundEnhancement
 {
@@ -89,18 +90,11 @@ namespace RocketSoundEnhancement
             lowpassFilter.enabled = LowpassFilter.EnableMuffling;
             audioLimiter.enabled = AudioLimiter.EnableLimiter;
 
-            SetupLowpassCurves();
-
             if(ChattererSources.Count > 0) {
                 foreach(var source in ChattererSources) {
                     source.bypassListenerEffects = !Settings.Instance.AffectChatterer;
                 }
             }
-        }
-        void SetupLowpassCurves()
-        {
-            lowpassCurveExt = AnimationCurve.Linear(1, 22200, 0, LowpassFilter.VacuumMuffling);
-            lowpassCurveInt = AnimationCurve.Linear(1, LowpassFilter.InteriorMufflingAtm, 0, LowpassFilter.InteriorMufflingVac);
         }
 
         bool _appToggle;
@@ -126,8 +120,6 @@ namespace RocketSoundEnhancement
             }
         }
 
-        int limiterPresetIndex = 0;
-        int lowpassPresetIndex = 0;
         bool showAdvanceLimiter = false;
         bool showAdvanceLowpass = false;
         string advLimiterIconUNI;
@@ -148,12 +140,12 @@ namespace RocketSoundEnhancement
 
             if(AudioLimiter.EnableLimiter) {
                 if(GUILayout.Button(AudioLimiter.Preset)) {
-                    limiterPresetIndex++;
+                    int limiterPresetIndex = AudioLimiter.Presets.Keys.ToList().IndexOf(AudioLimiter.Preset) + 1;
 
                     if(limiterPresetIndex >= AudioLimiter.Presets.Count) {
                         limiterPresetIndex = 0;
                     }
-
+                    
                     AudioLimiter.Preset = AudioLimiter.Presets.Keys.ToList()[limiterPresetIndex];
                     AudioLimiter.ApplyPreset();
                 }
@@ -220,13 +212,12 @@ namespace RocketSoundEnhancement
             lowpassFilter.enabled = LowpassFilter.EnableMuffling;
             if(LowpassFilter.EnableMuffling) {
                 if(GUILayout.Button(LowpassFilter.Preset)) {
-                    lowpassPresetIndex++;
+                    int lowpassPresetIndex = LowpassFilter.Presets.Keys.ToList().IndexOf(LowpassFilter.Preset) + 1;
                     if(lowpassPresetIndex >= LowpassFilter.Presets.Count) {
                         lowpassPresetIndex = 0;
                     }
                     LowpassFilter.Preset = LowpassFilter.Presets.Keys.ToList()[lowpassPresetIndex];
                     LowpassFilter.ApplyPreset();
-                    SetupLowpassCurves();
                 }
 
                 if(GUILayout.Button(advLowpassIconUNI = showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth))) {
@@ -255,12 +246,8 @@ namespace RocketSoundEnhancement
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
-                        if(GUILayout.Button("Reset")) {
+                        if(GUILayout.Button("Reset",GUILayout.Width(smlLeftWidth))){
                             LowpassFilter.Default();
-                            SetupLowpassCurves();
-                        }
-                        if(GUILayout.Button("Apply")) {
-                            SetupLowpassCurves();
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -281,8 +268,6 @@ namespace RocketSoundEnhancement
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             if(GUILayout.Button("Reload Settings")) {
-                limiterPresetIndex = 0;
-                lowpassPresetIndex = 0;
                 Settings.Instance.Load();
                 ApplySettings();
             }
@@ -295,8 +280,8 @@ namespace RocketSoundEnhancement
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 
+        //ToDo
         //ShipEffects Debug Window
-
         Vector2 scrollPosition;
         void InfoWindow(int id)
         {
@@ -374,8 +359,9 @@ namespace RocketSoundEnhancement
                 if(bypassAutomaticFiltering)
                     return;
 
-                float interiorMuffling = lowpassCurveInt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
-                float exteriorMuffling = lowpassCurveExt.Evaluate((float)FlightGlobals.ActiveVessel.atmDensity);
+                float atmDensity = (float)FlightGlobals.ActiveVessel.atmDensity;
+                float interiorMuffling = Mathf.Lerp(LowpassFilter.InteriorMufflingVac, LowpassFilter.InteriorMufflingAtm, atmDensity);
+                float exteriorMuffling = Mathf.Lerp(LowpassFilter.VacuumMuffling, 22200, atmDensity);
 
                 lowpassFilter.cutoffFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
 

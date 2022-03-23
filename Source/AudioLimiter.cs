@@ -86,10 +86,10 @@ namespace RocketSoundEnhancement
                 Gain                    = Presets[Preset].Gain;
                 TimeConstant            = Presets[Preset].TimeConstant;
                 LevelDetectorRMSWindow  = Presets[Preset].LevelDetectorRMSWindow;
-                Debug.Log("RSE Audio Limiter: " + Preset + " Preset Applied");
+                Debug.Log("[RSE]: Audio Limiter: " + Preset + " Preset Applied");
             } else {
                 Default();
-                Debug.Log("RSE Audio Limiter: Preset Not Found = " + Preset + ". Using Default Settings");
+                Debug.Log("[RSE]: Audio Limiter: Preset Not Found = " + Preset + ". Using Default Settings");
             }
         }
 
