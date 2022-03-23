@@ -1,7 +1,7 @@
 0.7.2:
 - Potential Fix for Collision Loop Sound Effects Persisting after Impact
 - Custom Audio Muffler Settings now react instantly to new settings
-- Tweak Orbit View Muffling
+- Tweaked Orbit View Muffling
 - Removed "MuffleChatterer" from LOWPASSFILTER in Settings.cfg
 - Added "AffectChatterer" under RSE_SETTINGS in Settings.cfg
 - Code Optimization
