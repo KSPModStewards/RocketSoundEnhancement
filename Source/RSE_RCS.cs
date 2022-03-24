@@ -13,7 +13,6 @@ namespace RocketSoundEnhancement
         bool gamePaused;
 
         ModuleRCSFX moduleRCSFX;
-        GameObject audioParent;
 
         float[] lastThrustControl;
 
@@ -24,15 +23,6 @@ namespace RocketSoundEnhancement
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
-
-            string partParentName = part.name + "_" + this.moduleName;
-            audioParent = part.gameObject.GetChild(partParentName);
-            if(audioParent == null) {
-                audioParent = new GameObject(partParentName);
-                audioParent.transform.rotation = part.transform.rotation;
-                audioParent.transform.position = part.transform.position;
-                audioParent.transform.parent = part.transform;
-            }
 
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();
             lastThrustControl = new float[moduleRCSFX.thrustForces.Length];
@@ -51,7 +41,7 @@ namespace RocketSoundEnhancement
 
         public override void OnUpdate()
         {
-            if(audioParent == null || !HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+            if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
 
             var thrustTransforms = moduleRCSFX.thrusterTransforms;

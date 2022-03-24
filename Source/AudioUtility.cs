@@ -275,5 +275,17 @@ namespace RocketSoundEnhancement
 
             return CollidingObject.Dirt;
         }
+
+        public static GameObject CreateAudioParent(Part part, string partName)
+        {
+            var audioParent = part.gameObject.GetChild(partName);
+            if(audioParent == null) {
+                audioParent = new GameObject(partName);
+                audioParent.transform.rotation = part.transform.rotation;
+                audioParent.transform.position = part.transform.position;
+                audioParent.transform.parent = part.transform;
+            }
+            return null;
+        }
     }
 }

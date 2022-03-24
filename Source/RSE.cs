@@ -19,9 +19,6 @@ namespace RocketSoundEnhancement
         public LowpassFilter lowpassFilter;
         public AudioLimiter audioLimiter;
 
-        AnimationCurve lowpassCurveExt;
-        AnimationCurve lowpassCurveInt;
-
         string[] ChattererPlayerNames = new string[] {
             "rbr_chatter_player",
             "rbr_beep_player_",
@@ -383,7 +380,11 @@ namespace RocketSoundEnhancement
 
         public void OnDestroy()
         {
-            ApplicationLauncher.Instance.RemoveModApplication(AppButton);
+            if(AppButton != null) {
+                ApplicationLauncher.Instance.RemoveModApplication(AppButton);
+                AppButton = null;
+            }
+
         }
     }
 }
