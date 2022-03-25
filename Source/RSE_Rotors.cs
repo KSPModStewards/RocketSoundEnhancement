@@ -130,6 +130,7 @@ namespace RocketSoundEnhancement
             }
 
             if(PropellerBlades.Count > 0) {
+                float atm = Mathf.Clamp((float)vessel.atmDensity,0f,1f); //only play prop sounds in an atmosphere
                 numbOfChildren = PropellerBlades.First().Value.bladeCount;
                 if(numbOfChildren != rotorModule.part.children.Count) {
                     SetupBlades();
@@ -140,7 +141,7 @@ namespace RocketSoundEnhancement
                     propControl *= bladeMultiplier;
 
                     foreach(var soundLayer in propValues.soundLayers) {
-                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, volume, Sources, spools, false);
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, volume * atm, Sources, spools, false);
                     }
                 }
             }
