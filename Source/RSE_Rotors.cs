@@ -137,7 +137,7 @@ namespace RocketSoundEnhancement
                 }
                 foreach(var propValues in PropellerBlades.Values.ToList()) {
                     float propControl = rotorModule.transformRateOfMotion / propValues.baseRPM;
-                    float bladeMultiplier = (float)propValues.bladeCount / propValues.maxBlades;
+                    float bladeMultiplier = Mathf.Clamp((float)propValues.bladeCount / propValues.maxBlades,0,1); //dont allow more than the max blade count. SoundEffects pitched up too much doesnt sound right
                     propControl *= bladeMultiplier;
 
                     foreach(var soundLayer in propValues.soundLayers) {
