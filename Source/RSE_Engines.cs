@@ -27,16 +27,9 @@ namespace RocketSoundEnhancement
                 return;
 
             string partParentName = part.name + "_" + this.moduleName;
-            audioParent = part.gameObject.GetChild(partParentName);
-            if(audioParent == null) {
-                audioParent = new GameObject(partParentName);
-                audioParent.transform.rotation = part.transform.rotation;
-                audioParent.transform.position = part.transform.position;
-                audioParent.transform.parent = part.transform;
-            }
+            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-
             engineModules = part.Modules.GetModules<ModuleEngines>();
 
             if(!float.TryParse(configNode.GetValue("volume"), out volume))

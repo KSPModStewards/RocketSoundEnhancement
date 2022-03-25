@@ -33,8 +33,7 @@ namespace RocketSoundEnhancement
             spools.Clear();
 
             string partParentName = part.name + "_" + this.moduleName;
-            audioParent = part.gameObject.GetChild(partParentName);
-            AudioUtility.CreateAudioParent(part, partParentName);
+            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
@@ -66,7 +65,7 @@ namespace RocketSoundEnhancement
 
         public override void OnUpdate()
         {
-            if(!initialized || !moduleWheel || !moduleWheel.Wheel || !audioParent || gamePaused)
+            if(audioParent == null || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
                 return;
 
             bool running = false;

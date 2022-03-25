@@ -332,7 +332,7 @@ namespace RocketSoundEnhancement
                 audioParent.transform.position = part.transform.position;
                 audioParent.transform.parent = part.transform;
             }
-            return null;
+            return audioParent;
         }
     }
 }
