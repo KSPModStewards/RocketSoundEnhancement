@@ -17,7 +17,6 @@ namespace RocketSoundEnhancement
         float[] lastThrustControl;
 
         float volume = 1;
-        float pitchVariation = 1;
 
         public override void OnStart(StartState state)
         {
@@ -33,10 +32,10 @@ namespace RocketSoundEnhancement
 
             SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
 
-            initialized = true;
-
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
+
+            initialized = true;
         }
 
         public override void OnUpdate()
@@ -54,36 +53,12 @@ namespace RocketSoundEnhancement
                 //Doesn't work, still clicking even at slowest of rates
                 float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                 lastThrustControl[i] = control;
+                GameObject thrustTransform = thrustTransforms[i].gameObject;
 
                 foreach(var soundLayer in SoundLayers) {
                     string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
 
-                    //For Looped sounds cleanup
-                    if(control < float.Epsilon) {
-                        if(Sources.ContainsKey(sourceLayerName)) {
-                            Sources[sourceLayerName].Stop();
-                        }
-                        continue;
-                    }
-
-                    AudioSource source;
-                    GameObject thrustTransform = thrustTransforms[i].gameObject;
-
-                    if(!Sources.ContainsKey(sourceLayerName)) {
-                        source = AudioUtility.CreateSource(thrustTransform, soundLayer);
-                        source.time = Random.Range(0, 0.05f);
-                        Sources.Add(sourceLayerName, source);
-
-                        pitchVariation = Random.Range(0.9f, 1.1f);
-                    } else {
-                        source = Sources[sourceLayerName];
-                    }
-
-                    source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
-                    source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
-
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
-
+                    AudioUtility.PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, control, volume, Sources, null, true);
                 }
             }
 

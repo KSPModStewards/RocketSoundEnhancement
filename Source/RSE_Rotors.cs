@@ -19,6 +19,7 @@ namespace RocketSoundEnhancement
     class RSE_Rotors : PartModule
     {
         Dictionary<string, PropellerBladeData> PropellerBlades = new Dictionary<string, PropellerBladeData>();
+        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
         Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         Dictionary<string, float> spools = new Dictionary<string, float>();
 
@@ -28,26 +29,35 @@ namespace RocketSoundEnhancement
 
         float volume = 1;
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        int numberOfChildren = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        int audioSourceCount = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        float currentControl;
+        int numbOfChildren = 0;
 
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            SoundLayerGroups.Clear();
+            spools.Clear();
+
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
 
-            initialized = rotorModule != null;
+            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
+            if(!float.TryParse(configNode.GetValue("volume"), out volume))
+                volume = 1;
+
+            foreach(var node in configNode.GetNodes()) {
+                string soundLayerGroupName = node.name;
+                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
+                if(soundLayers.Count > 0) {
+                    if(SoundLayerGroups.ContainsKey(soundLayerGroupName)) {
+                        SoundLayerGroups[soundLayerGroupName].AddRange(soundLayers);
+                    } else {
+                        SoundLayerGroups.Add(soundLayerGroupName, soundLayers);
+                    }
+                }
+            }
 
             SetupBlades();
-
-            if(!initialized) 
-                return;
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -55,7 +65,7 @@ namespace RocketSoundEnhancement
 
         void SetupBlades()
         {
-            if(PropellerBlades.Count() > 0) {
+            if(PropellerBlades.Count > 0) {
                 foreach(var data in PropellerBlades.Keys.ToList()) {
                     var cleanData = PropellerBlades[data];
                     cleanData.bladeCount = 0;
@@ -64,7 +74,7 @@ namespace RocketSoundEnhancement
             }
 
             var blades = rotorModule.part.children;
-            numberOfChildren = blades.Count() ;
+            numbOfChildren = blades.Count ;
             foreach(var blade in blades) {
                 var configNode = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(x => x.name.Replace("_", ".") == blade.partInfo.name);
                 var propConfig = configNode.config.GetNode("RSE_Propellers");
@@ -96,6 +106,8 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
+
+            initialized = true;
         }
 
         public override void OnUpdate()
@@ -103,52 +115,33 @@ namespace RocketSoundEnhancement
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
 
-            audioSourceCount = Sources.Count();
-            numberOfChildren = PropellerBlades.First().Value.bladeCount;
+            if(SoundLayerGroups.Count > 0) {
+                foreach(var soundLayerGroup in SoundLayerGroups) {
+                    float rpmControl = rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y; //* (rotorModule.servoMotorSize / 100);
+                    if(soundLayerGroup.Key == "MotorRPM") {
+                        if(!rotorModule.servoMotorIsEngaged)
+                            rpmControl = 0;
+                    }
 
-            if(numberOfChildren != rotorModule.part.children.Count()) {
-                SetupBlades();
+                    foreach(var soundLayer in soundLayerGroup.Value) {
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, rpmControl, volume, Sources, spools, false);
+                    }
+                }
             }
 
-            foreach(var propValues in PropellerBlades.Values.ToList()) {
+            if(PropellerBlades.Count > 0) {
+                numbOfChildren = PropellerBlades.First().Value.bladeCount;
+                if(numbOfChildren != rotorModule.part.children.Count) {
+                    SetupBlades();
+                }
+                foreach(var propValues in PropellerBlades.Values.ToList()) {
+                    float propControl = rotorModule.transformRateOfMotion / propValues.baseRPM;
+                    float bladeMultiplier = (float)propValues.bladeCount / propValues.maxBlades;
+                    propControl *= bladeMultiplier;
 
-                float rawControl = rotorModule.normalizedOutput * rotorModule.rpmLimit / propValues.baseRPM;
-                float bladeMultiplier = (float)propValues.bladeCount / propValues.maxBlades;
-                rawControl *= bladeMultiplier;
-                currentControl = rawControl;
-
-                foreach(var soundLayer in propValues.soundLayers) {
-                    string sourceLayerName = rotorModule.part.partInfo.name + "_" + soundLayer.name;
-
-                    if(!spools.ContainsKey(sourceLayerName)) {
-                        spools.Add(sourceLayerName, 0);
+                    foreach(var soundLayer in propValues.soundLayers) {
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, volume, Sources, spools, false);
                     }
-
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
-                    float control = spools[sourceLayerName];
-
-                    //For Looped sounds cleanup
-                    if(control < float.Epsilon) {
-                        if(Sources.ContainsKey(sourceLayerName)) {
-                            Sources[sourceLayerName].Stop();
-                        }
-                        continue;
-                    }
-
-                    AudioSource source;
-
-                    if(!Sources.ContainsKey(sourceLayerName)) {
-                        source = AudioUtility.CreateSource(gameObject, soundLayer);
-                        Sources.Add(sourceLayerName, source);
-
-                    } else {
-                        source = Sources[sourceLayerName];
-                    }
-
-                    source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
-                    source.pitch = soundLayer.pitch.Value(control);
-
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
                 }
             }
 

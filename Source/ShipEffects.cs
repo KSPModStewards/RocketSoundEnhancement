@@ -76,7 +76,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        protected override void OnStart()
+        public override void OnStart()
         {
             if(vessel == null || vessel.isEVA || !vessel.loaded || !HighLogic.LoadedSceneIsFlight)
                 return;

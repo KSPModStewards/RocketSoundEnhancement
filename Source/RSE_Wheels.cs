@@ -29,14 +29,12 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            SoundLayerGroups.Clear();
+            spools.Clear();
+
             string partParentName = part.name + "_" + this.moduleName;
             audioParent = part.gameObject.GetChild(partParentName);
-            if(audioParent == null) {
-                audioParent = new GameObject(partParentName);
-                audioParent.transform.rotation = part.transform.rotation;
-                audioParent.transform.position = part.transform.position;
-                audioParent.transform.parent = part.transform;
-            }
+            AudioUtility.CreateAudioParent(part, partParentName);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
@@ -46,18 +44,16 @@ namespace RocketSoundEnhancement
             if(!float.TryParse(configNode.GetValue("volume"), out volume))
                 volume = 1;
 
-            SoundLayerGroups.Clear();
-            spools.Clear();
             foreach(var node in configNode.GetNodes()) {
 
-                string _wheelState = node.name;
+                string soundLayerGroupName = node.name;
 
                 var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
                 if(soundLayers.Count > 0) {
-                    if(SoundLayerGroups.ContainsKey(_wheelState)) {
-                        SoundLayerGroups[_wheelState].AddRange(soundLayers);
+                    if(SoundLayerGroups.ContainsKey(soundLayerGroupName)) {
+                        SoundLayerGroups[soundLayerGroupName].AddRange(soundLayers);
                     } else {
-                        SoundLayerGroups.Add(_wheelState, soundLayers);
+                        SoundLayerGroups.Add(soundLayerGroupName, soundLayers);
                     }
                 }
             }
@@ -101,7 +97,6 @@ namespace RocketSoundEnhancement
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerKey = soundLayerGroup.Key;
                 float rawControl = 0;
-                float masterVolume = GameSettings.SHIP_VOLUME;
 
                 if(!isRetracted) {
                     switch(soundLayerGroup.Key) {
@@ -113,11 +108,9 @@ namespace RocketSoundEnhancement
                             break;
                         case "Ground":
                             rawControl = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
-                            masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         case "Slip":
                             rawControl = moduleWheel.isGrounded ? slipDisplacement : 0;
-                            masterVolume = GameSettings.SHIP_VOLUME;
                             break;
                         default:
                             continue;
@@ -147,40 +140,7 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    if(!spools.ContainsKey(soundLayer.name)) {
-                        spools.Add(soundLayer.name, 0);
-                    }
-
-                    if(soundLayer.spool) {
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                        control = spools[soundLayer.name];
-                    } else {
-                        //fix for audiosource clicks
-                        spools[soundLayer.name] = Mathf.MoveTowards(spools[soundLayer.name], rawControl, Mathf.Max(0.1f, rawControl) * (60 * Time.deltaTime));
-                        control = spools[soundLayer.name];
-                    }
-
-                    if(control < float.Epsilon) {
-                        if(Sources.ContainsKey(soundLayer.name)) {
-                            Sources[soundLayer.name].Stop();
-                            UnityEngine.Object.Destroy(Sources[soundLayer.name]);
-                            Sources.Remove(soundLayer.name);
-                        }
-                        continue;
-                    }
-
-                    AudioSource source;
-                    if(Sources.ContainsKey(soundLayer.name)) {
-                        source = Sources[soundLayer.name];
-                    } else {
-                        source = AudioUtility.CreateSource(audioParent, soundLayer);
-                        Sources.Add(soundLayer.name, source);
-                    }
-
-                    source.volume = soundLayer.volume.Value(control) * masterVolume;
-                    source.pitch = soundLayer.pitch.Value(control);
-
-                    AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+                    AudioUtility.PlaySoundLayer(audioParent, soundLayer.name, soundLayer, control, volume, Sources, spools, false);
                 }
             }
 

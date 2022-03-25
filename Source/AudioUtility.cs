@@ -276,6 +276,53 @@ namespace RocketSoundEnhancement
             return CollidingObject.Dirt;
         }
 
+        public static void PlaySoundLayer(GameObject gameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float volume, Dictionary<string,AudioSource> Sources, Dictionary<string,float> spools = null, bool doPitchVariation = false)
+        {
+            float pitchVariation = 1;
+            float control = rawControl;
+
+            if(spools != null) {
+                if(!spools.ContainsKey(sourceLayerName)) {
+                    spools.Add(sourceLayerName, 0);
+                }
+
+                if(soundLayer.spool) {
+                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                    control = spools[sourceLayerName];
+                } else {
+                    //fix for audiosource clicks
+                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                    control = spools[sourceLayerName];
+                }
+            }
+
+            //For Looped sounds cleanup
+            if(control < float.Epsilon) {
+                if(Sources.ContainsKey(sourceLayerName)) {
+                    Sources[sourceLayerName].Stop();
+                }
+                return;
+            }
+
+            AudioSource source;
+
+            if(!Sources.ContainsKey(sourceLayerName)) {
+                source = AudioUtility.CreateSource(gameObject, soundLayer);
+                Sources.Add(sourceLayerName, source);
+                if(doPitchVariation) {
+                    pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
+                }
+
+            } else {
+                source = Sources[sourceLayerName];
+            }
+
+            source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
+            source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
+
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+        }
+
         public static GameObject CreateAudioParent(Part part, string partName)
         {
             var audioParent = part.gameObject.GetChild(partName);
