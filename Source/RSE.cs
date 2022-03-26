@@ -21,6 +21,7 @@ namespace RocketSoundEnhancement
 
         string[] ChattererPlayerNames = new string[] {
             "rbr_chatter_player",
+            "rbr_background_player_",
             "rbr_beep_player_",
             "rbr_sstv_player"
         };
@@ -62,6 +63,13 @@ namespace RocketSoundEnhancement
                             ChattererSources.Add(source);
                         }
                     }
+                }
+            }
+            //Find Other Chatterer Sources
+            var otherChattererSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => x.clip != null && x.clip.name.ToLower().Contains("chatter"));
+            if(otherChattererSources.Count() > 0) {
+                foreach(var source in otherChattererSources) {
+                    ChattererSources.Add(source);
                 }
             }
 
