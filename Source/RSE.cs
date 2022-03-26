@@ -46,7 +46,7 @@ namespace RocketSoundEnhancement
                 if(source.clip != null)
                     source.bypassListenerEffects = false;
 
-                if(source.name.Contains("Music") || source.name.Contains("PartActionController")) {
+                if(source.name.Contains("Music") || source.name.ToLower().Contains("soundtrackeditor") || source.name.Contains("PartActionController")) {
                     source.bypassListenerEffects = true;
                 }
             }
