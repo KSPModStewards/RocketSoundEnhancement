@@ -13,10 +13,11 @@ namespace RocketSoundEnhancement
         public int bladeCount;
         public float baseRPM;
         public int maxBlades;
+        public float volume;
         public List<SoundLayer> soundLayers;
     }
 
-    class RSE_Rotors : PartModule
+    class RSE_RotorEngines : PartModule
     {
         Dictionary<string, PropellerBladeData> PropellerBlades = new Dictionary<string, PropellerBladeData>();
         Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
@@ -28,6 +29,7 @@ namespace RocketSoundEnhancement
         ModuleRoboticServoRotor rotorModule;
 
         float volume = 1;
+        float maxRPM = 250;
 
         int numbOfChildren = 0;
 
@@ -44,6 +46,9 @@ namespace RocketSoundEnhancement
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
             if(!float.TryParse(configNode.GetValue("volume"), out volume))
                 volume = 1;
+
+            if(!float.TryParse(configNode.GetValue("maxRPM"), out maxRPM))
+                maxRPM = rotorModule.traverseVelocityLimits.y;
 
             foreach(var node in configNode.GetNodes()) {
                 string soundLayerGroupName = node.name;
@@ -83,6 +88,10 @@ namespace RocketSoundEnhancement
                     if(!PropellerBlades.ContainsKey(blade.partInfo.name)) {
                         var propData = new PropellerBladeData();
                         propData.soundLayers = AudioUtility.CreateSoundLayerGroup(propConfig.GetNodes("SOUNDLAYER"));
+
+                        if(!float.TryParse(propConfig.GetValue("volume"), out propData.volume)) {
+                            propData.volume = 1;
+                        }
                         
                         if(!float.TryParse(propConfig.GetValue("baseRPM"), out propData.baseRPM)) {
                             Debug.Log("[RSE]: [RSE_Propellers] baseRPM cannot be empty");
@@ -117,20 +126,28 @@ namespace RocketSoundEnhancement
 
             if(SoundLayerGroups.Count > 0) {
                 foreach(var soundLayerGroup in SoundLayerGroups) {
-                    float rpmControl = rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y; //* (rotorModule.servoMotorSize / 100);
-                    if(soundLayerGroup.Key == "MotorRPM") {
-                        if(!rotorModule.servoMotorIsEngaged)
-                            rpmControl = 0;
-                    }
-
+                    float rpmControl = rotorModule.transformRateOfMotion / maxRPM; //* (rotorModule.servoMotorSize / 100);
+                    
                     foreach(var soundLayer in soundLayerGroup.Value) {
-                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, rpmControl, volume, Sources, spools, false);
+                        float finalControl = rpmControl;
+
+                        if(soundLayer.spool) {
+                            float idle = rotorModule.servoMotorIsEngaged ? soundLayer.spoolIdle : 0;
+                            finalControl = Mathf.Max(idle, rpmControl);
+                        }
+
+                        if(soundLayerGroup.Key == "MotorRPM") {
+                            if(!rotorModule.servoMotorIsEngaged)
+                                finalControl = 0;
+                        }
+
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, finalControl, volume, Sources, spools, false);
                     }
                 }
             }
 
             if(PropellerBlades.Count > 0) {
-                float atm = Mathf.Clamp((float)vessel.atmDensity,0f,1f); //only play prop sounds in an atmosphere
+                float atm = Mathf.Clamp((float)vessel.atmDensity, 0f, 1f); //only play prop sounds in an atmosphere
                 numbOfChildren = PropellerBlades.First().Value.bladeCount;
                 if(numbOfChildren != rotorModule.part.children.Count) {
                     SetupBlades();
@@ -141,7 +158,7 @@ namespace RocketSoundEnhancement
                     propControl *= bladeMultiplier;
 
                     foreach(var soundLayer in propValues.soundLayers) {
-                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, volume * atm, Sources, spools, false);
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, propValues.volume * atm, Sources, spools, false);
                     }
                 }
             }

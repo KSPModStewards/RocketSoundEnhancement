@@ -219,7 +219,11 @@ namespace RocketSoundEnhancement
                     index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
                 }
                 source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+                
             }
+
+            if(source.clip == null)
+                return null;
 
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
@@ -291,7 +295,7 @@ namespace RocketSoundEnhancement
                     control = spools[sourceLayerName];
                 } else {
                     //fix for audiosource clicks
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
                     control = spools[sourceLayerName];
                 }
             }
