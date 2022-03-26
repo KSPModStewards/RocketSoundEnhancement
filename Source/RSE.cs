@@ -69,7 +69,9 @@ namespace RocketSoundEnhancement
             var otherChattererSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => x.clip != null && x.clip.name.ToLower().Contains("chatter"));
             if(otherChattererSources.Count() > 0) {
                 foreach(var source in otherChattererSources) {
-                    ChattererSources.Add(source);
+                    if(!ChattererSources.Contains(source)) {
+                        ChattererSources.Add(source);
+                    }
                 }
             }
 
