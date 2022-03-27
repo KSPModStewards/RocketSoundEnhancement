@@ -4,61 +4,12 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    public struct LowpassFilterPreset
-    {
-        public float InteriorMufflingAtm;
-        public float InteriorMufflingVac;
-        public float VacuumMuffling;
-    }
-
     /// <summary>
     /// Thanks to Iron-Warrior for source: https://forum.unity.com/threads/custom-low-pass-filter-using-onaudiofilterread.976326/
     /// </summary>
     [RequireComponent(typeof(AudioBehaviour))]
     public class LowpassFilter : MonoBehaviour
     {
-        public static Dictionary<string, LowpassFilterPreset> Presets = new Dictionary<string, LowpassFilterPreset>();
-        public static LowpassFilterPreset DefaultLowpassFilterPreset
-        {
-            get {
-                var defaultPreset = new LowpassFilterPreset {
-                    InteriorMufflingAtm = 3000,
-                    InteriorMufflingVac = 1500,
-                    VacuumMuffling = 22200,
-                };
-                return defaultPreset;
-            }
-        }
-
-        public static bool EnableMuffling = true;
-        public static string Preset;
-        public static float InteriorMufflingAtm = 3000;
-        public static float InteriorMufflingVac = 1500;
-        public static float VacuumMuffling = 22200;
-
-        public static void ApplyPreset()
-        {
-            if(Preset != string.Empty && Presets.ContainsKey(Preset)) {
-                InteriorMufflingAtm = Presets[Preset].InteriorMufflingAtm;
-                InteriorMufflingVac = Presets[Preset].InteriorMufflingVac;
-                VacuumMuffling = Presets[Preset].VacuumMuffling;
-                Debug.Log("[RSE]: Audio Muffler: " + Preset + " Preset Applied");
-            } else {
-                Default();
-                Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
-            }
-        }
-
-        public static void Default()
-        {
-            InteriorMufflingAtm = DefaultLowpassFilterPreset.InteriorMufflingAtm;
-            InteriorMufflingVac = DefaultLowpassFilterPreset.InteriorMufflingVac;
-            VacuumMuffling = DefaultLowpassFilterPreset.VacuumMuffling;
-
-            if(!Presets.ContainsKey("Custom")) {
-                Presets.Add("Custom", DefaultLowpassFilterPreset);
-            }
-        }
 
         private float[] inputHistoryLeft = new float[2];
         private float[] inputHistoryRight = new float[2];

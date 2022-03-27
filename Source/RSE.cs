@@ -84,7 +84,7 @@ namespace RocketSoundEnhancement
                 stageSource.enabled = !Settings.Instance.DisableStagingSound;
             }
 
-            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
+            lowpassFilter.enabled = AudioMuffler.EnableMuffling;
             audioLimiter.enabled = AudioLimiter.EnableLimiter;
 
             if(ChattererSources.Count > 0) {
@@ -205,16 +205,16 @@ namespace RocketSoundEnhancement
             }
 
             GUILayout.BeginHorizontal();
-            LowpassFilter.EnableMuffling = GUILayout.Toggle(LowpassFilter.EnableMuffling, "Audio Muffler", GUILayout.Width(leftWidth));
-            lowpassFilter.enabled = LowpassFilter.EnableMuffling;
-            if(LowpassFilter.EnableMuffling) {
-                if(GUILayout.Button(LowpassFilter.Preset)) {
-                    int lowpassPresetIndex = LowpassFilter.Presets.Keys.ToList().IndexOf(LowpassFilter.Preset) + 1;
-                    if(lowpassPresetIndex >= LowpassFilter.Presets.Count) {
+            AudioMuffler.EnableMuffling = GUILayout.Toggle(AudioMuffler.EnableMuffling, "Audio Muffler", GUILayout.Width(leftWidth));
+            lowpassFilter.enabled = AudioMuffler.EnableMuffling;
+            if(AudioMuffler.EnableMuffling) {
+                if(GUILayout.Button(AudioMuffler.Preset)) {
+                    int lowpassPresetIndex = AudioMuffler.Presets.Keys.ToList().IndexOf(AudioMuffler.Preset) + 1;
+                    if(lowpassPresetIndex >= AudioMuffler.Presets.Count) {
                         lowpassPresetIndex = 0;
                     }
-                    LowpassFilter.Preset = LowpassFilter.Presets.Keys.ToList()[lowpassPresetIndex];
-                    LowpassFilter.ApplyPreset();
+                    AudioMuffler.Preset = AudioMuffler.Presets.Keys.ToList()[lowpassPresetIndex];
+                    AudioMuffler.ApplyPreset();
                 }
 
                 if(GUILayout.Button(advLowpassIconUNI = showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth))) {
@@ -222,29 +222,29 @@ namespace RocketSoundEnhancement
                 }
                 GUILayout.EndHorizontal();
                 if(showAdvanceLowpass) {
-                    if(LowpassFilter.Preset == "Custom") {
+                    if(AudioMuffler.Preset == "Custom") {
                         GUILayout.BeginHorizontal();
                         GUILayout.Label("Vacuum Muffling", GUILayout.Width(smlLeftWidth));
-                        LowpassFilter.VacuumMuffling = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.VacuumMuffling, 0, 22200),1);
-                        GUILayout.Label(LowpassFilter.VacuumMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
+                        AudioMuffler.VacuumMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.VacuumMuffling, 0, 22200),1);
+                        GUILayout.Label(AudioMuffler.VacuumMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
                         GUILayout.EndHorizontal();
 
                         GUILayout.Label("Interior Muffling");
                         GUILayout.BeginHorizontal();
                         GUILayout.Label("In Atmosphere", GUILayout.Width(smlLeftWidth));
-                        LowpassFilter.InteriorMufflingAtm = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.InteriorMufflingAtm, 0, 22200),1);
-                        GUILayout.Label(LowpassFilter.InteriorMufflingAtm.ToString() + "hz", GUILayout.Width(rightWidth));
+                        AudioMuffler.InteriorMufflingAtm = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMufflingAtm, 0, 22200),1);
+                        GUILayout.Label(AudioMuffler.InteriorMufflingAtm.ToString() + "hz", GUILayout.Width(rightWidth));
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
                         GUILayout.Label("In Vacuum", GUILayout.Width(smlLeftWidth));
-                        LowpassFilter.InteriorMufflingVac = (float)Math.Round(GUILayout.HorizontalSlider(LowpassFilter.InteriorMufflingVac, 0, 22200),1);
-                        GUILayout.Label(LowpassFilter.InteriorMufflingVac.ToString() + "hz", GUILayout.Width(rightWidth));
+                        AudioMuffler.InteriorMufflingVac = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMufflingVac, 0, 22200),1);
+                        GUILayout.Label(AudioMuffler.InteriorMufflingVac.ToString() + "hz", GUILayout.Width(rightWidth));
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
                         if(GUILayout.Button("Reset",GUILayout.Width(smlLeftWidth))){
-                            LowpassFilter.Default();
+                            AudioMuffler.Default();
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -357,8 +357,8 @@ namespace RocketSoundEnhancement
                     return;
 
                 float atmDensity = (float)FlightGlobals.ActiveVessel.atmDensity;
-                float interiorMuffling = Mathf.Lerp(LowpassFilter.InteriorMufflingVac, LowpassFilter.InteriorMufflingAtm, atmDensity);
-                float exteriorMuffling = Mathf.Lerp(LowpassFilter.VacuumMuffling, 22200, atmDensity);
+                float interiorMuffling = Mathf.Lerp(AudioMuffler.InteriorMufflingVac, AudioMuffler.InteriorMufflingAtm, atmDensity);
+                float exteriorMuffling = Mathf.Lerp(AudioMuffler.VacuumMuffling, 22200, atmDensity);
 
                 lowpassFilter.cutoffFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
 

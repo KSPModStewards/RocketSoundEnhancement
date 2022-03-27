@@ -103,6 +103,7 @@
   <ItemGroup>
     <Compile Include="AudioLimiter.cs" />
     <Compile Include="AudioUtility.cs" />
+    <Compile Include="AudioMuffler.cs" />
     <Compile Include="RSE_RotorEngines.cs" />
     <Compile Include="RSE_RotorServos.cs" />
     <Compile Include="Startup.cs" />
