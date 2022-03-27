@@ -150,13 +150,20 @@ namespace RocketSoundEnhancement
             }
 
             if(PropellerBlades.Count > 0) {
+
+                //take into account rotors on rotors if possible
+                float realRPM = 0;
+                if(part.Rigidbody != null) {
+                    realRPM = (part.Rigidbody.angularVelocity.magnitude / 2 / Mathf.PI) * 60;
+                }
+
                 float atm = Mathf.Clamp((float)vessel.atmDensity, 0f, 1f); //only play prop sounds in an atmosphere
                 numbOfChildren = PropellerBlades.First().Value.bladeCount;
                 if(numbOfChildren != rotorModule.part.children.Count) {
                     SetupBlades();
                 }
                 foreach(var propValues in PropellerBlades.Values.ToList()) {
-                    float propControl = rotorModule.transformRateOfMotion / propValues.baseRPM;
+                    float propControl = Mathf.Abs(rotorModule.transformRateOfMotion - realRPM) / propValues.baseRPM;
                     float propOverallVolume = propValues.volume.Value(propControl) * atm;
                     float bladeMultiplier = Mathf.Clamp((float)propValues.bladeCount / propValues.maxBlades,0,1); //dont allow more than the max blade count. SoundEffects pitched up too much doesnt sound right
 
