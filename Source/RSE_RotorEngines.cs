@@ -13,7 +13,7 @@ namespace RocketSoundEnhancement
         public int bladeCount;
         public float baseRPM;
         public int maxBlades;
-        public float volume;
+        public FXCurve volume;
         public List<SoundLayer> soundLayers;
     }
 
@@ -89,9 +89,12 @@ namespace RocketSoundEnhancement
                         var propData = new PropellerBladeData();
                         propData.soundLayers = AudioUtility.CreateSoundLayerGroup(propConfig.GetNodes("SOUNDLAYER"));
 
-                        if(!float.TryParse(propConfig.GetValue("volume"), out propData.volume)) {
-                            propData.volume = 1;
-                        }
+                        propData.volume = new FXCurve("volume", 1);
+                        propData.volume.Load("volume", propConfig);
+
+                        //if(!float.TryParse(propConfig.GetValue("volume"), out propData.volume)) {
+                        //    propData.volume = 1;
+                        //}
                         
                         if(!float.TryParse(propConfig.GetValue("baseRPM"), out propData.baseRPM)) {
                             Debug.Log("[RSE]: [RSE_Propellers] baseRPM cannot be empty");
@@ -154,11 +157,11 @@ namespace RocketSoundEnhancement
                 }
                 foreach(var propValues in PropellerBlades.Values.ToList()) {
                     float propControl = rotorModule.transformRateOfMotion / propValues.baseRPM;
+                    float propOverallVolume = propValues.volume.Value(propControl) * atm;
                     float bladeMultiplier = Mathf.Clamp((float)propValues.bladeCount / propValues.maxBlades,0,1); //dont allow more than the max blade count. SoundEffects pitched up too much doesnt sound right
-                    propControl *= bladeMultiplier;
 
                     foreach(var soundLayer in propValues.soundLayers) {
-                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl, propValues.volume * atm, Sources, spools, false);
+                        AudioUtility.PlaySoundLayer(gameObject, soundLayer.name, soundLayer, propControl * bladeMultiplier, propOverallVolume, Sources, spools, false);
                     }
                 }
             }
