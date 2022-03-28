@@ -4,22 +4,12 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    class RSE_Engines : PartModule
+    public class RSE_Engines : RSE_Module
     {
-        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-        Dictionary<string, float> spools = new Dictionary<string, float>();
         Dictionary<string, bool> ignites = new Dictionary<string, bool>();
         Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
 
-        bool initialized;
-        bool gamePaused;
-
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
-        GameObject audioParent;
-
-        float volume = 1;
-        float pitchVariation = 1;
 
         public override void OnStart(StartState state)
         {
@@ -35,6 +25,8 @@ namespace RocketSoundEnhancement
             if(!float.TryParse(configNode.GetValue("volume"), out volume))
                 volume = 1;
 
+            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+            spools = new Dictionary<string, float>();
             foreach(var node in configNode.GetNodes()) {
                 string _engineState = node.name;
 
@@ -55,8 +47,7 @@ namespace RocketSoundEnhancement
 
             initialized = true;
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            base.OnStart(state);
         }
 
         public override void OnUpdate()
@@ -185,41 +176,8 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
-        }
 
-        void onGamePause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
-            gamePaused = true;
-        }
-        void onGameUnpause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
-            gamePaused = false;
-        }
-
-        void OnDestroy()
-        {
-            if(!initialized)
-                return;
-
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Stop();
-                    UnityEngine.Object.Destroy(source);
-                }
-            }
-
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            base.OnUpdate();
         }
 
     }

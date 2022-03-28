@@ -4,13 +4,9 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    public class RSE_Coupler : PartModule
+    public class RSE_Coupler : RSE_Module
     {
-        public List<SoundLayer> SoundLayers = new List<SoundLayer>();
-        public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-
         FXGroup fxGroup;
-        GameObject audioParent;
         bool isDecoupler;
 
         public override void OnStart(StartState state)
@@ -19,13 +15,7 @@ namespace RocketSoundEnhancement
                 return;
 
             string partParentName = part.name + "_" + this.moduleName;
-            audioParent = part.gameObject.GetChild(partParentName);
-            if(audioParent == null) {
-                audioParent = new GameObject(partParentName);
-                audioParent.transform.rotation = part.transform.rotation;
-                audioParent.transform.position = part.transform.position;
-                audioParent.transform.parent = part.transform;
-            }
+            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
             var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
@@ -60,7 +50,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            GameEvents.onGameUnpause.Add(UpdateVolumes);
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
         }
@@ -79,7 +69,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        private void onGameUnpause()
+        public void UpdateVolumes()
         {
             foreach(var sound in SoundLayers) {
                 if(Sources.ContainsKey(sound.name)) {
@@ -131,13 +121,13 @@ namespace RocketSoundEnhancement
             }
         }
 
-        void OnDestroy()
+        public new void OnDestroy()
         {
             foreach(var source in Sources.Keys) {
                 GameObject.Destroy(Sources[source]);
             }
 
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            GameEvents.onGameUnpause.Remove(UpdateVolumes);
             GameEvents.onDockingComplete.Remove(onDock);
             GameEvents.onPartUndockComplete.Remove(onUnDock);
         }

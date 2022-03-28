@@ -4,19 +4,11 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    class RSE_RCS : PartModule
+    public class RSE_RCS : RSE_Module
     {
-        List<SoundLayer> SoundLayers = new List<SoundLayer>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-
-        bool initialized;
-        bool gamePaused;
-
         ModuleRCSFX moduleRCSFX;
 
         float[] lastThrustControl;
-
-        float volume = 1;
 
         public override void OnStart(StartState state)
         {
@@ -62,50 +54,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        Sources.Remove(source);
-                    }
-                }
-            }
-        }
-
-        void onGamePause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
-            gamePaused = true;
-        }
-        void onGameUnpause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
-            gamePaused = false;
-        }
-
-        void OnDestroy()
-        {
-            if(!initialized)
-                return;
-
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Stop();
-                    UnityEngine.Object.Destroy(source);
-                }
-            }
-
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            base.OnUpdate();
         }
     }
 }

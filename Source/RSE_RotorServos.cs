@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RocketSoundEnhancement.Rotors
 {
-    class RSE_RotorServos : PartModule
+    class RSE_RotorServos : RSE_Module
     {
         public override void OnStart(StartState state)
         {

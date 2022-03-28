@@ -5,24 +5,11 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    class RSE_Wheels : PartModule
+    class RSE_Wheels : RSE_Module
     {
-        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-        Dictionary<string, float> spools = new Dictionary<string, float>();
-
-        GameObject audioParent;
-        bool initialized;
-        bool gamePaused;
-
-        [KSPField(isPersistant = false)]
-        public bool invertSlip = false;
-
         ModuleWheelBase moduleWheel;
         ModuleWheelMotor moduleMotor;
         ModuleWheelDeployment moduleDeploy;
-
-        float volume = 1;
 
         public override void OnStart(StartState state)
         {
@@ -43,6 +30,8 @@ namespace RocketSoundEnhancement
             if(!float.TryParse(configNode.GetValue("volume"), out volume))
                 volume = 1;
 
+            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+            spools = new Dictionary<string, float>();
             foreach(var node in configNode.GetNodes()) {
 
                 string soundLayerGroupName = node.name;
@@ -143,15 +132,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        Sources.Remove(source);
-                    }
-                }
-            }
+            base.OnUpdate();
         }
 
         //Do Slip Displacement calculations on our own because KSP's ModuleWheelBase.slipDisplacement is broken for some wheels
@@ -161,38 +142,6 @@ namespace RocketSoundEnhancement
             float y = wheelSpeed - moduleWheel.Wheel.currentState.localWheelVelocity.y;
 
             return Mathf.Sqrt(x * x + y * y) * TimeWarp.deltaTime;
-        }
-
-        private void onGameUnpause()
-        {
-            gamePaused = false;
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
-        }
-
-        private void onGamePause()
-        {
-            gamePaused = true;
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
-        }
-
-        void OnDestroy()
-        {
-            if(Sources.Count() > 0) {
-                foreach(var source in Sources.Keys) {
-                    GameObject.Destroy(Sources[source]);
-                }
-            }
-
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
         }
     }
 }

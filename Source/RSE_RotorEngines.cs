@@ -17,18 +17,11 @@ namespace RocketSoundEnhancement
         public List<SoundLayer> soundLayers;
     }
 
-    class RSE_RotorEngines : PartModule
+    public class RSE_RotorEngines : RSE_Module
     {
         Dictionary<string, PropellerBladeData> PropellerBlades = new Dictionary<string, PropellerBladeData>();
-        Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-        Dictionary<string, float> spools = new Dictionary<string, float>();
-
-        bool initialized;
-        bool gamePaused;
         ModuleRoboticServoRotor rotorModule;
 
-        float volume = 1;
         float maxRPM = 250;
 
         int numbOfChildren = 0;
@@ -37,9 +30,6 @@ namespace RocketSoundEnhancement
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
-
-            SoundLayerGroups.Clear();
-            spools.Clear();
 
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
 
@@ -50,6 +40,8 @@ namespace RocketSoundEnhancement
             if(!float.TryParse(configNode.GetValue("maxRPM"), out maxRPM))
                 maxRPM = rotorModule.traverseVelocityLimits.y;
 
+            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+            spools = new Dictionary<string, float>();
             foreach(var node in configNode.GetNodes()) {
                 string soundLayerGroupName = node.name;
                 var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
@@ -64,8 +56,7 @@ namespace RocketSoundEnhancement
 
             SetupBlades();
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            base.OnStart(state);
         }
 
         void SetupBlades()
@@ -173,50 +164,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        Sources.Remove(source);
-                    }
-                }
-            }
-        }
-
-        void onGamePause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
-            gamePaused = true;
-        }
-        void onGameUnpause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
-            gamePaused = false;
-        }
-
-        void OnDestroy()
-        {
-            if(!initialized)
-                return;
-
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Stop();
-                    UnityEngine.Object.Destroy(source);
-                }
-            }
-
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            base.OnUpdate();
         }
     }
 }
