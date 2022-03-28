@@ -16,9 +16,6 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            SoundLayerGroups.Clear();
-            spools.Clear();
-
             string partParentName = part.name + "_" + this.moduleName;
             audioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
@@ -46,10 +43,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
-
             initialized = true;
+            base.OnStart(state);
         }
 
         public override void OnUpdate()

@@ -41,6 +41,7 @@ namespace RocketSoundEnhancement
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
+        public float dopplerLevel;
         public FXCurve volume;
         public FXCurve pitch;
         public FXCurve massToVolume;
@@ -99,6 +100,7 @@ namespace RocketSoundEnhancement
 
             node.TryGetValue("spoolIdle", ref soundLayer.spoolIdle);
             node.TryGetValue("spread", ref soundLayer.spread);
+            node.TryGetValue("dopplerLevel", ref soundLayer.dopplerLevel);
 
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
@@ -323,6 +325,7 @@ namespace RocketSoundEnhancement
 
             source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
             source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
+            //source.pitch *= (RSE.CalculateDopper(gameObject) * soundLayer.dopplerLevel);
 
             AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
         }

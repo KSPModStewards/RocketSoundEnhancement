@@ -113,10 +113,14 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
+        //[KSPField(isPersistant = false, guiActive = true)]
+        //float dopplerThing;
+
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
+            //dopplerThing = RSE.CalculateDopper(gameObject);
 
             if(SoundLayerGroups.Count > 0) {
                 foreach(var soundLayerGroup in SoundLayerGroups) {

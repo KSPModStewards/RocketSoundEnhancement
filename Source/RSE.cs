@@ -396,5 +396,18 @@ namespace RocketSoundEnhancement
             }
 
         }
+
+        public static float CalculateDopper(GameObject gameObject)
+        {
+            var vessel = gameObject.GetComponentInParent<Vessel>();
+            var targetVelocity = Vector3.zero;
+            if(vessel != null) {
+                targetVelocity = vessel.rb_velocity;
+            }
+
+            float relativeVelocity = Vector3.Dot(targetVelocity, CameraManager.GetCurrentCamera().velocity);
+
+            return Mathf.Clamp(relativeVelocity + 1, 0.5f, 2f);
+        }
     }
 }
