@@ -363,7 +363,7 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
-            if(!gamePaused)
+            if(gamePaused)
                 return;
 
             if(lowpassFilter == null)
