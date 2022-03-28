@@ -82,10 +82,6 @@ namespace RocketSoundEnhancement
 
                         propData.volume = new FXCurve("volume", 1);
                         propData.volume.Load("volume", propConfig);
-
-                        //if(!float.TryParse(propConfig.GetValue("volume"), out propData.volume)) {
-                        //    propData.volume = 1;
-                        //}
                         
                         if(!float.TryParse(propConfig.GetValue("baseRPM"), out propData.baseRPM)) {
                             Debug.Log("[RSE]: [RSE_Propellers] baseRPM cannot be empty");
@@ -113,14 +109,10 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
-        //[KSPField(isPersistant = false, guiActive = true)]
-        //float dopplerThing;
-
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
-            //dopplerThing = RSE.CalculateDopper(gameObject);
 
             if(SoundLayerGroups.Count > 0) {
                 foreach(var soundLayerGroup in SoundLayerGroups) {

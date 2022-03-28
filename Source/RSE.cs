@@ -29,6 +29,7 @@ namespace RocketSoundEnhancement
         List<AudioSource> ChattererSources = new List<AudioSource>();
 
         public static bool MuteRSE = false;
+        bool gamePaused;
 
         Rect windowRect;
         int windowWidth = 440;
@@ -84,6 +85,9 @@ namespace RocketSoundEnhancement
 
             ApplySettings();
             AddLauncher();
+
+            GameEvents.onGamePause.Add(() => gamePaused = true);
+            GameEvents.onGameUnpause.Add(() => gamePaused = false);
         }
 
         void ApplySettings()
@@ -359,6 +363,9 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
+            if(!gamePaused)
+                return;
+
             if(lowpassFilter == null)
                 return;
 
@@ -394,20 +401,8 @@ namespace RocketSoundEnhancement
                 ApplicationLauncher.Instance.RemoveModApplication(AppButton);
                 AppButton = null;
             }
-
-        }
-
-        public static float CalculateDopper(GameObject gameObject)
-        {
-            var vessel = gameObject.GetComponentInParent<Vessel>();
-            var targetVelocity = Vector3.zero;
-            if(vessel != null) {
-                targetVelocity = vessel.rb_velocity;
-            }
-
-            float relativeVelocity = Vector3.Dot(targetVelocity, CameraManager.GetCurrentCamera().velocity);
-
-            return Mathf.Clamp(relativeVelocity + 1, 0.5f, 2f);
+            GameEvents.onGamePause.Remove(() => gamePaused = true);
+            GameEvents.onGameUnpause.Remove(() => gamePaused = false);
         }
     }
 }
