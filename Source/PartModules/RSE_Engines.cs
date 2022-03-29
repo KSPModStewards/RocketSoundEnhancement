@@ -69,12 +69,12 @@ namespace RocketSoundEnhancement
                         float currentControl = rawControl;
 
                         if(soundLayer.spool) {
-                            currentControl = engineModule.currentThrottle / 100;
+                            currentControl = engineModule.currentThrottle;
                             if(engineModule.flameout) {
                                 currentControl = 0;
                             } else {
                                 float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
-                                currentControl = Mathf.Max(idle, engineModule.currentThrottle / 100);
+                                currentControl = Mathf.Max(idle, engineModule.currentThrottle);
                             }
                         }
 
