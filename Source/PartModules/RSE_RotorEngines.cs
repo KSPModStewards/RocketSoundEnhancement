@@ -26,9 +26,6 @@ namespace RocketSoundEnhancement
 
         int childPartsCount = 0;
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        public int sourceCount;
-
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -116,8 +113,6 @@ namespace RocketSoundEnhancement
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
-
-            sourceCount = Sources.Count();
 
             if(SoundLayerGroups.Count > 0) {
                 foreach(var soundLayerGroup in SoundLayerGroups) {
