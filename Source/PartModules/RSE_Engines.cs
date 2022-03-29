@@ -63,53 +63,22 @@ namespace RocketSoundEnhancement
                 float rawControl = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
-                    //float finalControl = control;
 
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
-
-                        if(!spools.ContainsKey(sourceLayerName)) {
-                            spools.Add(sourceLayerName, 0);
-                        }
+                        float currentControl = rawControl;
 
                         if(soundLayer.spool) {
+                            currentControl = engineModule.currentThrottle / 100;
                             if(engineModule.flameout) {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, Mathf.Max(0.1f, engineModule.currentThrottle));
+                                currentControl = 0;
                             } else {
                                 float idle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], Mathf.Max(idle, engineModule.currentThrottle), soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                                currentControl = Mathf.Max(idle, engineModule.currentThrottle / 100);
                             }
-                        } else {
-                            //fix for audiosource clicks
-                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));  //Mathf.Max(0.1f, rawControl)
                         }
 
-                        float control = spools[sourceLayerName];
-
-                        //For Looped sounds cleanup
-                        if(control < float.Epsilon) {
-                            if(Sources.ContainsKey(sourceLayerName)) {
-                                Sources[sourceLayerName].Stop();
-                            }
-                            continue;
-                        }
-
-                        AudioSource source;
-                        if(!Sources.ContainsKey(sourceLayerName)) {
-                            source = AudioUtility.CreateSource(audioParent, soundLayer);
-                            source.time = Random.Range(0, 0.05f);
-                            Sources.Add(sourceLayerName, source);
-
-                            pitchVariation = Random.Range(0.90f, 1.1f);
-
-                        } else {
-                            source = Sources[sourceLayerName];
-                        }
-
-                        source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
-                        source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
-
-                        AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+                        AudioUtility.PlaySoundLayer(audioParent, sourceLayerName, soundLayer, currentControl, volume, Sources, spools, true);
                     }
                 }
 
@@ -151,28 +120,23 @@ namespace RocketSoundEnhancement
                             var clip = GameDatabase.Instance.GetAudioClip(oneShotLayer.audioClips[0]);
                             string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
 
+                            var go = new GameObject(oneShotLayerName);
+                            go.transform.parent = audioParent.transform;
+                            go.transform.position = audioParent.transform.position;
+                            go.transform.rotation = audioParent.transform.rotation;
+
                             AudioSource source;
 
                             if(Sources.ContainsKey(oneShotLayerName)) {
                                 source = Sources[oneShotLayerName];
                             } else {
-                                source = AudioUtility.CreateOneShotSource(audioParent, 1, oneShotLayer.pitch, oneShotLayer.spread);
+                                source = AudioUtility.CreateOneShotSource(go, 1, oneShotLayer.pitch, oneShotLayer.spread);
                                 Sources.Add(oneShotLayerName, source);
                             }
 
                             float finalVolume = oneShotLayer.volume * GameSettings.SHIP_VOLUME * volume;
                             AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
                         }
-                    }
-                }
-            }
-
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        Sources.Remove(source);
                     }
                 }
             }

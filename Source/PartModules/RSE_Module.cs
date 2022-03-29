@@ -35,8 +35,16 @@ namespace RocketSoundEnhancement
                 var sourceKeys = Sources.Keys.ToList();
                 foreach(var source in sourceKeys) {
                     if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
+
+                        // we dont want to accidentally delete the actual part
+                        if(Sources[source].gameObject.name == source) {
+                            UnityEngine.Object.Destroy(Sources[source].gameObject);
+                        } else {
+                            UnityEngine.Object.Destroy(Sources[source]);
+                        }
+                        
                         Sources.Remove(source);
+                        spools.Remove(source);
                     }
                 }
             }

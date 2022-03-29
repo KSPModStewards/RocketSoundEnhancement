@@ -138,6 +138,9 @@ namespace RocketSoundEnhancement
                 return;
             }
 
+            if(!source.isActiveAndEnabled)
+                return;
+
             switch(channel) {
                 case FXChannel.ShipBoth:
                     if(loop) {
@@ -300,6 +303,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
+            control = Mathf.Round(control * 1000.0f) * 0.001f;
+
             //For Looped sounds cleanup
             if(control < float.Epsilon) {
                 if(Sources.ContainsKey(sourceLayerName)) {
@@ -311,7 +316,12 @@ namespace RocketSoundEnhancement
             AudioSource source;
 
             if(!Sources.ContainsKey(sourceLayerName)) {
-                source = AudioUtility.CreateSource(gameObject, soundLayer);
+                var go = new GameObject(sourceLayerName);
+                go.transform.parent = gameObject.transform;
+                go.transform.position = gameObject.transform.position;
+                go.transform.rotation = gameObject.transform.rotation;
+
+                source = AudioUtility.CreateSource(go, soundLayer);
                 Sources.Add(sourceLayerName, source);
                 if(doPitchVariation) {
                     pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
