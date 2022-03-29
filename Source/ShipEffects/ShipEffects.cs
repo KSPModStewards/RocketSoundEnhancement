@@ -143,8 +143,6 @@ namespace RocketSoundEnhancement
                 DryMass -= excludedPart.prefabMass;
             }
 
-            float controlDampener = Mathf.Lerp(0.2f, 0.1f, DryMass / TotalMass);
-
             foreach(var soundLayer in SoundLayers) {
                 if(!controllers.ContainsKey(soundLayer.name)) {
                     controllers.Add(soundLayer.name, 0);
