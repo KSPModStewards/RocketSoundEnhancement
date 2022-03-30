@@ -276,6 +276,7 @@ namespace RocketSoundEnhancement
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
             Settings.Instance.AffectChatterer = GUILayout.Toggle(Settings.Instance.AffectChatterer, "Affect Chatterer");
             MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
+            Settings.Instance.RealisticMuffling = GUILayout.Toggle(Settings.Instance.RealisticMuffling, "Realistic Muffling Experiment");
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             if(GUILayout.Button("Reload Settings")) {
@@ -361,6 +362,7 @@ namespace RocketSoundEnhancement
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 
+        float lastCutoffFreq;
         void LateUpdate()
         {
             if(gamePaused)
@@ -377,11 +379,15 @@ namespace RocketSoundEnhancement
                 float interiorMuffling = Mathf.Lerp(AudioMuffler.InteriorMufflingVac, AudioMuffler.InteriorMufflingAtm, atmDensity);
                 float exteriorMuffling = Mathf.Lerp(AudioMuffler.VacuumMuffling, 22200, atmDensity);
 
-                lowpassFilter.cutoffFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
-
+                float targetFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
                 if(MapView.MapCamera.isActiveAndEnabled) {
-                    lowpassFilter.cutoffFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
+                    targetFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
                 }
+
+                float smoothCutoff = Mathf.MoveTowards(lastCutoffFreq, targetFrequency, 5000);
+                lastCutoffFreq = smoothCutoff;
+
+                lowpassFilter.cutoffFrequency = smoothCutoff;
 
                 if(Settings.Instance.AffectChatterer) {
                     foreach(var source in ChattererSources) {

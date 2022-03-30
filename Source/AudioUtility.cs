@@ -121,96 +121,6 @@ namespace RocketSoundEnhancement
             return soundLayer;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
-        {
-            if(source == null)
-                return;
-
-            if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) {
-                if(source.isPlaying) {
-                    source.Stop();
-                }
-                return;
-            }
-
-            if(RSE.MuteRSE) {
-                source.mute = true;
-                return;
-            }
-
-            if(!source.isActiveAndEnabled)
-                return;
-
-            switch(channel) {
-                case FXChannel.ShipBoth:
-                    if(loop) {
-                        if(!source.isPlaying) {
-                            if(loopAtRandom) {
-                                source.time = UnityEngine.Random.Range(0, source.clip.length);
-                            }
-                            source.Play();
-                        }
-                    } else {
-                        if(oneshot) {
-                            if(audioclip != null) {
-                                source.PlayOneShot(audioclip, volume);
-                            } else {
-                                source.PlayOneShot(source.clip, volume);
-                            }
-                        } else {
-                            source.Play();
-                        }
-                    }
-                    break;
-                case FXChannel.ShipInternal:
-                    source.mute = !InternalCamera.Instance.isActive;
-                    source.bypassListenerEffects = true;
-                    source.bypassEffects = true;
-                    if(loop) {
-                        if(!source.isPlaying) {
-                            if(loopAtRandom) {
-                                source.time = UnityEngine.Random.Range(0, source.clip.length);
-                            }
-                            source.Play();
-                        }
-                    } else {
-                        if(oneshot) {
-                            if(audioclip != null) {
-                                source.PlayOneShot(audioclip, volume);
-                            } else {
-                                source.PlayOneShot(source.clip, volume);
-                            }
-                        } else {
-                            source.Play();
-                        }
-                    }
-
-                    break;
-                case FXChannel.ShipExternal:
-                    source.mute = InternalCamera.Instance.isActive;
-                    if(loop) {
-                        if(!source.isPlaying) {
-                            if(loopAtRandom) {
-                                source.time = UnityEngine.Random.Range(0, source.clip.length);
-                            }
-                            source.Play();
-                        }
-                    } else {
-                        if(oneshot) {
-                            if(audioclip != null) {
-                                source.PlayOneShot(audioclip, volume);
-                            } else {
-                                source.PlayOneShot(source.clip, volume);
-                            }
-                        } else {
-                            source.Play();
-                        }
-                    }
-
-                    break;
-            }
-        }
-
         public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer)
         {
             var source = gameObject.AddComponent<AudioSource>();
@@ -283,60 +193,6 @@ namespace RocketSoundEnhancement
             return CollidingObject.Dirt;
         }
 
-        public static void PlaySoundLayer(GameObject gameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float volume, Dictionary<string,AudioSource> Sources, Dictionary<string,float> spools = null, bool doPitchVariation = false)
-        {
-            float pitchVariation = 1;
-            float control = rawControl;
-
-            if(spools != null) {
-                if(!spools.ContainsKey(sourceLayerName)) {
-                    spools.Add(sourceLayerName, 0);
-                }
-
-                if(soundLayer.spool) {
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                    control = spools[sourceLayerName];
-                } else {
-                    //fix for audiosource clicks
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
-                    control = spools[sourceLayerName];
-                }
-            }
-
-            control = Mathf.Round(control * 1000.0f) * 0.001f;
-
-            //For Looped sounds cleanup
-            if(control < float.Epsilon) {
-                if(Sources.ContainsKey(sourceLayerName)) {
-                    Sources[sourceLayerName].Stop();
-                }
-                return;
-            }
-
-            AudioSource source;
-
-            if(!Sources.ContainsKey(sourceLayerName)) {
-                var go = new GameObject(sourceLayerName);
-                go.transform.parent = gameObject.transform;
-                go.transform.position = gameObject.transform.position;
-                go.transform.rotation = gameObject.transform.rotation;
-
-                source = AudioUtility.CreateSource(go, soundLayer);
-                Sources.Add(sourceLayerName, source);
-                if(doPitchVariation) {
-                    pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
-                }
-
-            } else {
-                source = Sources[sourceLayerName];
-            }
-
-            source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * volume;
-            source.pitch = soundLayer.pitch.Value(control) * pitchVariation;
-
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
-        }
-
         public static GameObject CreateAudioParent(Part part, string partName)
         {
             var audioParent = part.gameObject.GetChild(partName);
@@ -348,5 +204,96 @@ namespace RocketSoundEnhancement
             }
             return audioParent;
         }
+
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
+        {
+            if(source == null)
+                return;
+
+            if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) {
+                if(source.isPlaying) {
+                    source.Stop();
+                }
+                return;
+            }
+
+            if(RSE.MuteRSE) {
+                source.mute = true;
+                return;
+            }
+
+            if(!source.isActiveAndEnabled)
+                return;
+
+            switch(channel) {
+                case FXChannel.ShipBoth:
+                    if(loop) {
+                        if(!source.isPlaying) {
+                            if(loopAtRandom) {
+                                source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
+                            }
+                            source.Play();
+                        }
+                    } else {
+                        if(oneshot) {
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
+                        } else {
+                            source.Play();
+                        }
+                    }
+                    break;
+                case FXChannel.ShipInternal:
+                    source.mute = !InternalCamera.Instance.isActive;
+                    source.bypassListenerEffects = true;
+                    source.bypassEffects = true;
+                    if(loop) {
+                        if(!source.isPlaying) {
+                            if(loopAtRandom) {
+                                source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
+                            }
+                            source.Play();
+                        }
+                    } else {
+                        if(oneshot) {
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
+                        } else {
+                            source.Play();
+                        }
+                    }
+
+                    break;
+                case FXChannel.ShipExternal:
+                    source.mute = InternalCamera.Instance.isActive;
+                    if(loop) {
+                        if(!source.isPlaying) {
+                            if(loopAtRandom) {
+                                source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
+                            }
+                            source.Play();
+                        }
+                    } else {
+                        if(oneshot) {
+                            if(audioclip != null) {
+                                source.PlayOneShot(audioclip, volume);
+                            } else {
+                                source.PlayOneShot(source.clip, volume);
+                            }
+                        } else {
+                            source.Play();
+                        }
+                    }
+
+                    break;
+            }
+        }
+
     }
 }

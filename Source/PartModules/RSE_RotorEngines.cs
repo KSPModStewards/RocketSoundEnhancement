@@ -133,7 +133,7 @@ namespace RocketSoundEnhancement
                                 finalControl = 0;
                         }
 
-                        AudioUtility.PlaySoundLayer(gameObject, sourceLayerName, soundLayer, finalControl, volume, Sources, spools, false);
+                        PlaySoundLayer(gameObject, sourceLayerName, soundLayer, finalControl, volume, false);
                     }
                 }
             }
@@ -155,7 +155,7 @@ namespace RocketSoundEnhancement
                     foreach(var soundLayer in PropellerBlades[propBlade].soundLayers) {
                         string sourceLayerName = propBlade + "_" + "_" + soundLayer.name;
 
-                        AudioUtility.PlaySoundLayer(gameObject, sourceLayerName, soundLayer, propControl * bladeMultiplier, propOverallVolume, Sources, spools, false);
+                        PlaySoundLayer(gameObject, sourceLayerName, soundLayer, propControl * bladeMultiplier, propOverallVolume, false);
                     }
                 }
             }

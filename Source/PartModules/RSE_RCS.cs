@@ -24,8 +24,7 @@ namespace RocketSoundEnhancement
 
             SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            base.OnStart(state);
 
             initialized = true;
         }
@@ -42,15 +41,14 @@ namespace RocketSoundEnhancement
 
                 float rawControl = thrustForces[i] / moduleRCSFX.thrusterPower;
                 //smooth control to prevent clicking
-                //Doesn't work, still clicking even at slowest of rates
-                float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
-                lastThrustControl[i] = control;
+                //float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                //lastThrustControl[i] = control;
                 GameObject thrustTransform = thrustTransforms[i].gameObject;
 
                 foreach(var soundLayer in SoundLayers) {
                     string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
 
-                    AudioUtility.PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, control, volume, Sources, null, true);
+                    PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume, true);
                 }
             }
 

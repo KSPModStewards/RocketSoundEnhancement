@@ -59,8 +59,6 @@ namespace RocketSoundEnhancement
                 string engineID = engineModule.engineID;
                 bool engineIgnited = engineModule.EngineIgnited;
                 bool engineFlameout = engineModule.flameout;
-
-
                 float rawControl = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
@@ -83,7 +81,7 @@ namespace RocketSoundEnhancement
                             spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                         }
 
-                        AudioUtility.PlaySoundLayer(audioParent, sourceLayerName, soundLayer, spools[sourceLayerName], volume, Sources, null, true);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, spools[sourceLayerName], volume, true, false);
                     }
                 }
 
