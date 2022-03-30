@@ -68,7 +68,7 @@ namespace RocketSoundEnhancement
                 //I don't know how accurate this is, but this works better. less wobbly.
 
                 //reduce doppler if we're near the source.
-                velocityRelativeDirection *= Mathf.Clamp(distanceToCamera / 10, 0, 1);
+                velocityRelativeDirection *= Mathf.Clamp(distanceToCamera / 100, 0, 1);
                 float doppler = 1 + (-velocityRelativeDirection * Mathf.Min(sourceVelocity.magnitude / SpeedOfSound, 1));
                 float dopplerInv = 1 + (velocityRelativeDirection * Mathf.Min(sourceVelocity.magnitude / SpeedOfSound, 1));
                 doppler *= DopplerFactor;
@@ -89,7 +89,7 @@ namespace RocketSoundEnhancement
                     if(Sources[sourceKey].isPlaying) {
 
                         Sources[sourceKey].pitch *= Mathf.Clamp(doppler, 0.5f, 1.5f);
-                        Sources[sourceKey].volume *= Mathf.Max(doppler * 2, 1f); 
+                        Sources[sourceKey].volume *= Mathf.Max(doppler, 1f); 
 
                         if(LPFilters.ContainsKey(sourceKey)) {
                             LPFilters[sourceKey].enabled = true;
