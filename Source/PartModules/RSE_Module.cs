@@ -8,7 +8,6 @@ namespace RocketSoundEnhancement
     public class RSE_Module : PartModule
     {
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-        public Dictionary<string, LowpassFilter> LPFilters = new Dictionary<string, LowpassFilter>();
         public Dictionary<string, float> spools = new Dictionary<string, float>();
 
         public Dictionary<string, List<SoundLayer>> SoundLayerGroups;
@@ -27,87 +26,9 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Distance = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Doppler = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float DopplerInv = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Mach = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float MachAngle = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float CameraAngle = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float CutOffFrequency = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float ResonanceQ = 0;
-
+        Vector3 lastSourcePosition = Vector3.zero;
         public override void OnUpdate()
         {
-            if(Settings.Instance.RealisticMuffling && LPFilters.Count > 0) {
-                //Variables
-                Vector3 sourceVelocity = part.vessel.GetSrfVelocity();
-                float atmDensity = (float)vessel.atmDensity;
-                float atmDensityClamped = Mathf.Clamp(atmDensity,0,1);
-                float staticPressurePa = (float)vessel.staticPressurekPa * 1000;
-                float atmTemperature = (float)vessel.atmosphericTemperature;
-                float maxDistance = 1000;
-                
-                float velocityRelativeDirection = Vector3.Dot(-CameraManager.GetCurrentCamera().transform.forward, sourceVelocity.normalized);
-                float cameraDistance = Vector3.Distance(gameObject.transform.position, CameraManager.GetCurrentCamera().transform.position);
-                float distanceInv = Mathf.Clamp(Mathf.Pow(2, -(cameraDistance / maxDistance * 10)), 0, 1);
-                float speedOfSound = Mathf.Sqrt(1.4f * 286f * (atmTemperature));
-                float mach = sourceVelocity.magnitude / speedOfSound;
-                float machAngle = Mathf.Asin(1 / Mathf.Max(mach, 1)) * Mathf.Rad2Deg;
-                float cameraAngle = (1 + velocityRelativeDirection) * 0.5f * 180;
-                float dopplerFactor = 0.5f * atmDensityClamped;
-
-                //Calculate Doppler
-                //Assume camera is always stationary to eliminate wobbly doppler
-                //Speed of sound formula is arranged differently to prevent dividing by zero due to going past speed of sound
-                //Reduce the Doppler effect if CameraDistance is below 100 meters to compensate for lack of Observer Velocity
-                float doppler = 1 + ((velocityRelativeDirection * Mathf.Clamp(cameraDistance / 100, 0, 1) * dopplerFactor) * Mathf.Min(mach, 1));
-                float dopplerInv = 1 + (-velocityRelativeDirection * Mathf.Min(mach, 1));
-
-                //Emulate Air Absorption and Mach Cone
-                //To-do, mach cone
-                float lowFreq = 1000f * dopplerInv;
-                float cutOffFreqLP = Mathf.Lerp(lowFreq, 22200, distanceInv);
-                float resonanceQ = Mathf.Lerp(0.75f, 3, distanceInv);
-
-                if(mach > 1) {
-                    cutOffFreqLP *= cameraAngle > machAngle ? Mathf.Lerp(1,0, Mathf.Clamp(cameraDistance / (part.vessel.vesselSize.magnitude * 2f), 0, 1)) : 1;
-                }
-
-                //Data Display
-                Distance = cameraDistance;
-                Mach = mach;
-                MachAngle = machAngle;
-                CameraAngle = cameraAngle;
-                Doppler = doppler;
-                DopplerInv = dopplerInv;
-                CutOffFrequency = cutOffFreqLP;
-                ResonanceQ = resonanceQ;
-
-                if(Sources.Count > 0) {
-                    var sourcesKeys = Sources.Keys.ToList();
-                    foreach(var sourceKey in sourcesKeys) {
-                        if(Sources[sourceKey].isPlaying) {
-
-                            Sources[sourceKey].pitch *= Mathf.Clamp(doppler, 0.5f, 1.5f);
-
-                            if(LPFilters.ContainsKey(sourceKey)) {
-                                LPFilters[sourceKey].enabled = true;
-                                LPFilters[sourceKey].cutoffFrequency = cutOffFreqLP;
-                                LPFilters[sourceKey].lowpassResonanceQ = resonanceQ;
-                            }
-                        }
-                    }
-                }
-            }
-
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
                 foreach(var source in sourceKeys) {
@@ -118,19 +39,11 @@ namespace RocketSoundEnhancement
                             UnityEngine.Object.Destroy(Sources[source].gameObject);
                         } else {
                             UnityEngine.Object.Destroy(Sources[source]);
-                            UnityEngine.Object.Destroy(LPFilters[source]);
                         }
                         
                         Sources.Remove(source);
                         spools.Remove(source);
 
-                        if(LPFilters.ContainsKey(source)) {
-                            LPFilters.Remove(source);
-                        }
-                    } else {
-                        if(LPFilters.ContainsKey(source)) {
-                            LPFilters[source].enabled = Settings.Instance.RealisticMuffling;
-                        }
                     }
                 }
             }
@@ -167,7 +80,6 @@ namespace RocketSoundEnhancement
             }
 
             AudioSource source;
-            LowpassFilter lpFilter;
 
             if(!Sources.ContainsKey(sourceLayerName)) {
                 var go = new GameObject(sourceLayerName);
@@ -182,16 +94,6 @@ namespace RocketSoundEnhancement
                     pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
                 }
 
-                lpFilter = go.AddOrGetComponent<LowpassFilter>();
-                lpFilter.enabled = Settings.Instance.RealisticMuffling;
-                lpFilter.lowpassResonanceQ = 3;
-                lpFilter.cutoffFrequency = 22200;
-
-                if(LPFilters.ContainsKey(sourceLayerName)) {
-                    LPFilters[sourceLayerName] = lpFilter;
-                } else {
-                    LPFilters.Add(sourceLayerName, lpFilter);
-                }
             } else {
                 source = Sources[sourceLayerName];
             }
