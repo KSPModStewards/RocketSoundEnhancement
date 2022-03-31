@@ -21,68 +21,54 @@ namespace RocketSoundEnhancement
 
         public float volume = 1;
 
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float distanceToCamera;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float cutOffLP;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float resQ;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float SpeedOfSound;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float SpeedofSource;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float velocityRelativeDirection;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float MachPoint;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float Doppler = 1;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float DopplerInv = 1;
-
         public override void OnStart(StartState state)
         {
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
+        [KSPField(isPersistant = false, guiActive = true)]
+        float Mach = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        float Doppler = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        float CutOffFrequency = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        float ResonanceQ = 0;
+
         public override void OnUpdate()
         {
             if(Settings.Instance.RealisticMuffling && LPFilters.Count > 0) {
                 //Variables
-                var sourceVelocity = part.vessel.GetSrfVelocity();
-                float DopplerFactor = 1f;
-
-                velocityRelativeDirection = Vector3.Dot(CameraManager.GetCurrentCamera().transform.forward, sourceVelocity.normalized);
-                distanceToCamera = Vector3.Distance(gameObject.transform.position, CameraManager.GetCurrentCamera().transform.position);
-                SpeedofSource = sourceVelocity.magnitude;
-
+                Vector3 sourceVelocity = part.vessel.GetSrfVelocity();
                 float atmDensity = (float)vessel.atmDensity;
                 float staticPressurePa = (float)vessel.staticPressurekPa * 1000;
                 float atmTemperature = (float)vessel.atmosphericTemperature;
                 float maxDistance = 1000;
-                //SpeedOfSound = Mathf.Sqrt((1.4f * staticPressurePa) / (atmDensity * 1.293f));
-                SpeedOfSound = Mathf.Sqrt(1.4f * 286f * (atmTemperature + 274.15f));
+                float DopplerFactor = 1f;
+
+                float velocityRelativeDirection = Vector3.Dot(-CameraManager.GetCurrentCamera().transform.forward, sourceVelocity.normalized);
+                float cameraDistance = Vector3.Distance(gameObject.transform.position, CameraManager.GetCurrentCamera().transform.position);
+                float distanceInv = Mathf.Clamp(Mathf.Pow(2, -(cameraDistance / maxDistance * 10)), 0, 1);
+                float speedOfSound = Mathf.Sqrt(1.4f * 286f * (atmTemperature));
+                float mach = sourceVelocity.magnitude / speedOfSound;
 
                 //Calculate Doppler (simpler way)
                 //I don't know how accurate this is, but this works better. less wobbly.
-
                 //reduce doppler if we're near the source.
-                velocityRelativeDirection *= Mathf.Clamp(distanceToCamera / 100, 0, 1);
-                float doppler = 1 + (-velocityRelativeDirection * Mathf.Min(sourceVelocity.magnitude / SpeedOfSound, 1));
-                float dopplerInv = 1 + (velocityRelativeDirection * Mathf.Min(sourceVelocity.magnitude / SpeedOfSound, 1));
+                float doppler = 1 + ((velocityRelativeDirection * Mathf.Clamp(cameraDistance / 100, 0, 1)) * Mathf.Min(mach, 1));
                 doppler *= DopplerFactor;
-                Doppler = doppler;
-                DopplerInv = dopplerInv;
 
                 //Emulate Air Absorption
                 //To-do, mach cone
-                float distanceInv = Mathf.Clamp(Mathf.Pow(2, -(distanceToCamera / maxDistance * 10)), 0, 1);
-                float cutOffFreqLP = Mathf.Lerp(1000 * dopplerInv, 22200, distanceInv);
+                float cutOffFreqLP = Mathf.Lerp(1000, 22200, distanceInv);
                 float resonanceQ = Mathf.Lerp(0.75f, 3, distanceInv);
 
-                cutOffLP = cutOffFreqLP;
-                resQ = resonanceQ;
+                //Data Display
+                Mach = mach;
+                Doppler = doppler;
+                CutOffFrequency = cutOffFreqLP;
+                ResonanceQ = resonanceQ;
 
                 var sourcesKeys = Sources.Keys.ToList();
                 foreach(var sourceKey in sourcesKeys) {
