@@ -28,7 +28,11 @@ namespace RocketSoundEnhancement
         }
 
         [KSPField(isPersistant = false, guiActive = true)]
+        public float Distance = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
         public float Doppler = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        public float DopplerInv = 0;
         [KSPField(isPersistant = false, guiActive = true)]
         public float Mach = 0;
         [KSPField(isPersistant = false, guiActive = true)]
@@ -46,11 +50,11 @@ namespace RocketSoundEnhancement
                 //Variables
                 Vector3 sourceVelocity = part.vessel.GetSrfVelocity();
                 float atmDensity = (float)vessel.atmDensity;
+                float atmDensityClamped = Mathf.Clamp(atmDensity,0,1);
                 float staticPressurePa = (float)vessel.staticPressurekPa * 1000;
                 float atmTemperature = (float)vessel.atmosphericTemperature;
                 float maxDistance = 1000;
-                float DopplerFactor = 1f;
-
+                
                 float velocityRelativeDirection = Vector3.Dot(-CameraManager.GetCurrentCamera().transform.forward, sourceVelocity.normalized);
                 float cameraDistance = Vector3.Distance(gameObject.transform.position, CameraManager.GetCurrentCamera().transform.position);
                 float distanceInv = Mathf.Clamp(Mathf.Pow(2, -(cameraDistance / maxDistance * 10)), 0, 1);
@@ -58,25 +62,32 @@ namespace RocketSoundEnhancement
                 float mach = sourceVelocity.magnitude / speedOfSound;
                 float machAngle = Mathf.Asin(1 / Mathf.Max(mach, 1)) * Mathf.Rad2Deg;
                 float cameraAngle = (1 + velocityRelativeDirection) * 0.5f * 180;
+                float dopplerFactor = 0.5f * atmDensityClamped;
 
-                //Calculate Doppler (simpler way)
-                //I don't know how accurate this is, but this works better. less wobbly.
-                //reduce doppler if we're near the source.
-                float doppler = 1 + ((velocityRelativeDirection * Mathf.Clamp(cameraDistance / 100, 0, 1)) * Mathf.Min(mach, 1));
-                doppler *= DopplerFactor;
+                //Calculate Doppler
+                //Assume camera is always stationary to eliminate wobbly doppler
+                //Speed of sound formula is arranged differently to prevent dividing by zero due to going past speed of sound
+                //Reduce the Doppler effect if CameraDistance is below 100 meters to compensate for lack of Observer Velocity
+                float doppler = 1 + ((velocityRelativeDirection * Mathf.Clamp(cameraDistance / 100, 0, 1) * dopplerFactor) * Mathf.Min(mach, 1));
+                float dopplerInv = 1 + (-velocityRelativeDirection * Mathf.Min(mach, 1));
 
                 //Emulate Air Absorption and Mach Cone
                 //To-do, mach cone
-                float lowFreq = 1000f;
-                float lowRes = 0.75f;
+                float lowFreq = 1000f * dopplerInv;
                 float cutOffFreqLP = Mathf.Lerp(lowFreq, 22200, distanceInv);
-                float resonanceQ = Mathf.Lerp(lowRes, 3, distanceInv);
+                float resonanceQ = Mathf.Lerp(0.75f, 3, distanceInv);
+
+                if(mach > 1) {
+                    cutOffFreqLP *= cameraAngle > machAngle ? Mathf.Lerp(1,0, Mathf.Clamp(cameraDistance / (part.vessel.vesselSize.magnitude * 2f), 0, 1)) : 1;
+                }
 
                 //Data Display
+                Distance = cameraDistance;
                 Mach = mach;
                 MachAngle = machAngle;
                 CameraAngle = cameraAngle;
                 Doppler = doppler;
+                DopplerInv = dopplerInv;
                 CutOffFrequency = cutOffFreqLP;
                 ResonanceQ = resonanceQ;
 
@@ -86,7 +97,6 @@ namespace RocketSoundEnhancement
                         if(Sources[sourceKey].isPlaying) {
 
                             Sources[sourceKey].pitch *= Mathf.Clamp(doppler, 0.5f, 1.5f);
-                            Sources[sourceKey].volume *= Mathf.Max(doppler, 1f);
 
                             if(LPFilters.ContainsKey(sourceKey)) {
                                 LPFilters[sourceKey].enabled = true;
