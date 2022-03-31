@@ -28,13 +28,17 @@ namespace RocketSoundEnhancement
         }
 
         [KSPField(isPersistant = false, guiActive = true)]
-        float Mach = 0;
+        public float Doppler = 0;
         [KSPField(isPersistant = false, guiActive = true)]
-        float Doppler = 0;
+        public float Mach = 0;
         [KSPField(isPersistant = false, guiActive = true)]
-        float CutOffFrequency = 0;
+        public float MachAngle = 0;
         [KSPField(isPersistant = false, guiActive = true)]
-        float ResonanceQ = 0;
+        public float CameraAngle = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        public float CutOffFrequency = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        public float ResonanceQ = 0;
 
         public override void OnUpdate()
         {
@@ -52,6 +56,8 @@ namespace RocketSoundEnhancement
                 float distanceInv = Mathf.Clamp(Mathf.Pow(2, -(cameraDistance / maxDistance * 10)), 0, 1);
                 float speedOfSound = Mathf.Sqrt(1.4f * 286f * (atmTemperature));
                 float mach = sourceVelocity.magnitude / speedOfSound;
+                float machAngle = Mathf.Asin(1 / Mathf.Max(mach, 1)) * Mathf.Rad2Deg;
+                float cameraAngle = (1 + velocityRelativeDirection) * 0.5f * 180;
 
                 //Calculate Doppler (simpler way)
                 //I don't know how accurate this is, but this works better. less wobbly.
@@ -59,28 +65,34 @@ namespace RocketSoundEnhancement
                 float doppler = 1 + ((velocityRelativeDirection * Mathf.Clamp(cameraDistance / 100, 0, 1)) * Mathf.Min(mach, 1));
                 doppler *= DopplerFactor;
 
-                //Emulate Air Absorption
+                //Emulate Air Absorption and Mach Cone
                 //To-do, mach cone
-                float cutOffFreqLP = Mathf.Lerp(1000, 22200, distanceInv);
-                float resonanceQ = Mathf.Lerp(0.75f, 3, distanceInv);
+                float lowFreq = 1000f;
+                float lowRes = 0.75f;
+                float cutOffFreqLP = Mathf.Lerp(lowFreq, 22200, distanceInv);
+                float resonanceQ = Mathf.Lerp(lowRes, 3, distanceInv);
 
                 //Data Display
                 Mach = mach;
+                MachAngle = machAngle;
+                CameraAngle = cameraAngle;
                 Doppler = doppler;
                 CutOffFrequency = cutOffFreqLP;
                 ResonanceQ = resonanceQ;
 
-                var sourcesKeys = Sources.Keys.ToList();
-                foreach(var sourceKey in sourcesKeys) {
-                    if(Sources[sourceKey].isPlaying) {
+                if(Sources.Count > 0) {
+                    var sourcesKeys = Sources.Keys.ToList();
+                    foreach(var sourceKey in sourcesKeys) {
+                        if(Sources[sourceKey].isPlaying) {
 
-                        Sources[sourceKey].pitch *= Mathf.Clamp(doppler, 0.5f, 1.5f);
-                        Sources[sourceKey].volume *= Mathf.Max(doppler, 1f); 
+                            Sources[sourceKey].pitch *= Mathf.Clamp(doppler, 0.5f, 1.5f);
+                            Sources[sourceKey].volume *= Mathf.Max(doppler, 1f);
 
-                        if(LPFilters.ContainsKey(sourceKey)) {
-                            LPFilters[sourceKey].enabled = true;
-                            LPFilters[sourceKey].cutoffFrequency = cutOffFreqLP;
-                            LPFilters[sourceKey].lowpassResonanceQ = resonanceQ;
+                            if(LPFilters.ContainsKey(sourceKey)) {
+                                LPFilters[sourceKey].enabled = true;
+                                LPFilters[sourceKey].cutoffFrequency = cutOffFreqLP;
+                                LPFilters[sourceKey].lowpassResonanceQ = resonanceQ;
+                            }
                         }
                     }
                 }
@@ -106,7 +118,9 @@ namespace RocketSoundEnhancement
                             LPFilters.Remove(source);
                         }
                     } else {
-                        LPFilters[source].enabled = Settings.Instance.RealisticMuffling;
+                        if(LPFilters.ContainsKey(source)) {
+                            LPFilters[source].enabled = Settings.Instance.RealisticMuffling;
+                        }
                     }
                 }
             }
@@ -157,17 +171,16 @@ namespace RocketSoundEnhancement
                 if(doPitchVariation) {
                     pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
                 }
-                if(LPFilters != null) {
-                    lpFilter = go.AddOrGetComponent<LowpassFilter>();
-                    lpFilter.enabled = Settings.Instance.RealisticMuffling;
-                    lpFilter.lowpassResonanceQ = 3;
-                    lpFilter.cutoffFrequency = 22200;
 
-                    if(LPFilters.ContainsKey(sourceLayerName)) {
-                        LPFilters[sourceLayerName] = lpFilter;
-                    } else {
-                        LPFilters.Add(sourceLayerName, lpFilter);
-                    }
+                lpFilter = go.AddOrGetComponent<LowpassFilter>();
+                lpFilter.enabled = Settings.Instance.RealisticMuffling;
+                lpFilter.lowpassResonanceQ = 3;
+                lpFilter.cutoffFrequency = 22200;
+
+                if(LPFilters.ContainsKey(sourceLayerName)) {
+                    LPFilters[sourceLayerName] = lpFilter;
+                } else {
+                    LPFilters.Add(sourceLayerName, lpFilter);
                 }
             } else {
                 source = Sources[sourceLayerName];
