@@ -18,7 +18,6 @@ namespace RocketSoundEnhancement
 
         public bool DisableStagingSound = false;
         public bool AffectChatterer = false;
-        public bool RealisticMuffling = false;
 
         private List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
         public List<ConfigNode> ShipEffectsNodes()

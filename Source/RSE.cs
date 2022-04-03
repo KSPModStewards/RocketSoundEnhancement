@@ -276,7 +276,6 @@ namespace RocketSoundEnhancement
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
             Settings.Instance.AffectChatterer = GUILayout.Toggle(Settings.Instance.AffectChatterer, "Affect Chatterer");
             MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
-            Settings.Instance.RealisticMuffling = GUILayout.Toggle(Settings.Instance.RealisticMuffling, "Realistic Muffling Experiment");
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             if(GUILayout.Button("Reload Settings")) {
