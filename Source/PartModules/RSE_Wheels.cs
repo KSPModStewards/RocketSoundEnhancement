@@ -123,7 +123,7 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    PlaySoundLayer(audioParent, soundLayer.name, soundLayer, control, volume, false, soundLayer.spool);
+                    PlaySoundLayer(audioParent, soundLayer.name, soundLayer, control, volume, soundLayer.spool);
                 }
             }
 

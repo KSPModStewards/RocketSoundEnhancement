@@ -50,7 +50,7 @@ namespace RocketSoundEnhancement
         }
 
         float pitchVariation = 1;
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float vol, bool doPitchVariation = false, bool spoolProccess = true)
+        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float vol, bool spoolProccess = true)
         {
             float control = rawControl;
 
@@ -90,18 +90,25 @@ namespace RocketSoundEnhancement
                 source = AudioUtility.CreateSource(go, soundLayer);
                 Sources.Add(sourceLayerName, source);
 
-                if(doPitchVariation) {
-                    pitchVariation = UnityEngine.Random.Range(0.9f, 1.1f);
+                if(soundLayer.pitchVariation) {
+                    pitchVariation = UnityEngine.Random.Range(0.95f, 1.05f);
                 }
 
             } else {
                 source = Sources[sourceLayerName];
             }
 
-            source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * vol;
-            source.pitch = soundLayer.pitch.Value(control);
+            if(soundLayer.useFloatCurve) {
+                source.volume = soundLayer.volumeFC.Evaluate(control) * GameSettings.SHIP_VOLUME * vol;
+                source.pitch = soundLayer.pitchFC.Evaluate(control);
+            } else {
 
-            if(doPitchVariation) {
+                source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * vol;
+                source.pitch = soundLayer.pitch.Value(control);
+            }
+
+
+            if(soundLayer.pitchVariation && !soundLayer.loopAtRandom) {
                 source.pitch *= pitchVariation;
             }
 

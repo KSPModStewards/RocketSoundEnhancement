@@ -48,7 +48,7 @@ namespace RocketSoundEnhancement
                 foreach(var soundLayer in SoundLayers) {
                     string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
 
-                    PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume, true);
+                    PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume);
                 }
             }
 

@@ -37,15 +37,18 @@ namespace RocketSoundEnhancement
         public FXChannel channel;
         public bool loop;
         public bool loopAtRandom;
+        public bool pitchVariation;
         public bool spool;
+        public bool useFloatCurve;
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
         public FXCurve volume;
         public FXCurve pitch;
+        public FloatCurve volumeFC;
+        public FloatCurve pitchFC;
         public FXCurve massToVolume;
         public FXCurve massToPitch;
-
     }
 
     public static class AudioUtility
@@ -92,6 +95,9 @@ namespace RocketSoundEnhancement
 
             node.TryGetValue("loop", ref soundLayer.loop);
             node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom);
+            if(!node.TryGetValue("pitchVariation", ref soundLayer.pitchVariation)) {
+                soundLayer.pitchVariation = true;
+            }
 
             node.TryGetValue("spool", ref soundLayer.spool);
 
@@ -102,6 +108,7 @@ namespace RocketSoundEnhancement
 
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
+
             soundLayer.massToVolume = new FXCurve("massToVolume", 1);
             soundLayer.massToPitch = new FXCurve("massToPitch", 1);
 
@@ -109,8 +116,21 @@ namespace RocketSoundEnhancement
 
             soundLayer.volume.Load("volume", node);
             soundLayer.pitch.Load("pitch", node);
+
+            if(node.TryGetValue("useFloatCurve", ref soundLayer.useFloatCurve)) {
+                soundLayer.volumeFC = new FloatCurve();
+                soundLayer.pitchFC = new FloatCurve();
+
+                if(node.HasNode("volumeFC"))
+                    soundLayer.volumeFC.Load(node.GetNode("volumeFC"));
+
+                if(node.HasNode("pitchFC"))
+                    soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
+            }
+
             soundLayer.massToVolume.Load("massToVolume", node);
             soundLayer.massToPitch.Load("massToPitch", node);
+
 
             if(node.HasValue("data")) {
                 soundLayer.data = node.GetValue("data");
