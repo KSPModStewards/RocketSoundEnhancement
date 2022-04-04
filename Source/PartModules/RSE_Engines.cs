@@ -69,14 +69,14 @@ namespace RocketSoundEnhancement
                         }
 
                         if(soundLayer.spool) {
-                            float spoolControl = Mathf.Clamp(engineModule.requestedThrottle,0,1);
-                            float spoolSpeed = engineModule.EngineIgnited ? soundLayer.spoolSpeed : soundLayer.spoolSpeed * 2;
+                            float spoolIdle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
+                            float spoolControl = Mathf.Lerp(spoolIdle, 1.0f, soundLayer.data.Contains("Turbine") ? engineModule.requestedThrottle : rawControl);
+                            float spoolSpeed = engineModule.EngineIgnited ? soundLayer.spoolSpeed : Mathf.Max(soundLayer.spoolSpeed, spoolControl);
+
                             if(engineModule.flameout) {
                                 spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, spoolSpeed * TimeWarp.deltaTime);
                             } else {
-                                float spoolIdle = engineModule.EngineIgnited ? Mathf.Clamp(spoolControl, soundLayer.spoolIdle, 1) : 0;
-
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolIdle, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolControl, soundLayer.spoolSpeed * TimeWarp.deltaTime);
                             }
                         } else {
                             //fix for audiosource clicks
@@ -86,8 +86,6 @@ namespace RocketSoundEnhancement
                         PlaySoundLayer(audioParent, sourceLayerName, soundLayer, spools[sourceLayerName], volume, false);
                     }
                 }
-
-                
 
                 foreach(var soundLayer in SoundLayerGroups) {
                     switch(soundLayer.Key) {
