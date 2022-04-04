@@ -72,11 +72,12 @@ namespace RocketSoundEnhancement
                             float spoolIdle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
                             float spoolControl = Mathf.Lerp(spoolIdle, 1.0f, soundLayer.data.Contains("Turbine") ? engineModule.requestedThrottle : rawControl);
                             float spoolSpeed = engineModule.EngineIgnited ? soundLayer.spoolSpeed : Mathf.Max(soundLayer.spoolSpeed, spoolControl);
+                            spoolSpeed *= TimeWarp.deltaTime;
 
                             if(engineModule.flameout) {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, spoolSpeed * TimeWarp.deltaTime);
+                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, spoolSpeed);
                             } else {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolControl, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolControl, spoolSpeed);
                             }
                         } else {
                             //fix for audiosource clicks
