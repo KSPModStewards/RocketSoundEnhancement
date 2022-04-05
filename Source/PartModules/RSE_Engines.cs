@@ -63,7 +63,7 @@ namespace RocketSoundEnhancement
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
-                        string sourceLayerName = engineID + "_" + SoundLayerGroups[engineID].IndexOf(soundLayer) + "_" + soundLayer.name;
+                        string sourceLayerName = soundLayer.name;
                         if(!spools.ContainsKey(sourceLayerName)) {
                             spools.Add(sourceLayerName, 0);
                         }
