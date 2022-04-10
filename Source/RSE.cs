@@ -133,8 +133,6 @@ namespace RocketSoundEnhancement
 
         bool showAdvanceLimiter = false;
         bool showAdvanceLowpass = false;
-        string advLimiterIconUNI;
-        string advLowpassIconUNI;
         const string downArrowUNI = "\u25BC";
         const string upArrowUNI = "\u25B2";
         Vector2 scrollPos;
@@ -161,7 +159,7 @@ namespace RocketSoundEnhancement
                     AudioLimiter.ApplyPreset();
                 }
 
-                if(GUILayout.Button(advLimiterIconUNI = showAdvanceLimiter ? upArrowUNI : downArrowUNI,GUILayout.Width(smlRightWidth))) {
+                if(GUILayout.Button(showAdvanceLimiter ? upArrowUNI : downArrowUNI,GUILayout.Width(smlRightWidth))) {
                     showAdvanceLimiter = !showAdvanceLimiter;
                 }
                 GUILayout.EndHorizontal();
@@ -231,7 +229,7 @@ namespace RocketSoundEnhancement
                     AudioMuffler.ApplyPreset();
                 }
 
-                if(GUILayout.Button(advLowpassIconUNI = showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth))) {
+                if(GUILayout.Button(showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth))) {
                     showAdvanceLowpass = !showAdvanceLowpass;
                 }
                 GUILayout.EndHorizontal();
@@ -271,6 +269,10 @@ namespace RocketSoundEnhancement
             } else {
                 GUILayout.EndHorizontal();
             }
+            GUILayout.BeginHorizontal();
+            Settings.Instance.AirSimulation = GUILayout.Toggle(Settings.Instance.AirSimulation, "Air Simulation", GUILayout.Width(leftWidth));
+            GUILayout.Label("Experimental, High CPU Usage." + "\r\n" + "Only works with RSE Enabled Parts.");
+            GUILayout.EndHorizontal();
 
             GUILayout.FlexibleSpace();
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");

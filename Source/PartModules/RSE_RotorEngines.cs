@@ -55,6 +55,9 @@ namespace RocketSoundEnhancement
             }
 
             SetupBlades();
+            UseAirSimFilters = true;
+            EnableCombFilter = true;
+            EnableLowpassFilter = true;
             base.OnStart(state);
         }
 

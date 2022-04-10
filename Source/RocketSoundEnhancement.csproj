@@ -101,6 +101,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AudioFilters\AirSimulationFilter.cs" />
     <Compile Include="AudioFilters\AudioLimiter.cs" />
     <Compile Include="AudioFilters\LowpassFilter.cs" />
     <Compile Include="PartModules\RSE_Module.cs" />

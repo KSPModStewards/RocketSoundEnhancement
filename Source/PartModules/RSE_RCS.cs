@@ -26,6 +26,9 @@ namespace RocketSoundEnhancement
 
             base.OnStart(state);
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             initialized = true;
         }
 
@@ -37,19 +40,28 @@ namespace RocketSoundEnhancement
             var thrustTransforms = moduleRCSFX.thrusterTransforms;
             var thrustForces = moduleRCSFX.thrustForces;
 
+            //for(int i = 0; i < thrustTransforms.Count; i++) {
+            //
+            //    float rawControl = thrustForces[i] / moduleRCSFX.thrusterPower;
+            //    GameObject thrustTransform = thrustTransforms[i].gameObject;
+            //
+            //    foreach(var soundLayer in SoundLayers) {
+            //        string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
+            //
+            //        PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume);
+            //    }
+            //}
+
+            //Cheaper to use one AudioSource.
+            float rawControl = 0;
             for(int i = 0; i < thrustTransforms.Count; i++) {
+                rawControl += thrustForces[i] / moduleRCSFX.thrusterPower;
+            }
 
-                float rawControl = thrustForces[i] / moduleRCSFX.thrusterPower;
-                //smooth control to prevent clicking
-                //float control = Mathf.MoveTowards(lastThrustControl[i], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
-                //lastThrustControl[i] = control;
-                GameObject thrustTransform = thrustTransforms[i].gameObject;
+            foreach(var soundLayer in SoundLayers) {
+                string sourceLayerName = soundLayer.name;
 
-                foreach(var soundLayer in SoundLayers) {
-                    string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
-
-                    PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume);
-                }
+                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, rawControl / thrustTransforms.Count, volume * thrustTransforms.Count);
             }
 
             base.OnUpdate();

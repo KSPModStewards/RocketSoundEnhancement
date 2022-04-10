@@ -43,6 +43,9 @@ namespace RocketSoundEnhancement
                 }
             }
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             initialized = true;
             base.OnStart(state);
         }

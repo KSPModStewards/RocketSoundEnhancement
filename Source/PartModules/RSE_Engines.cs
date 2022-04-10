@@ -45,8 +45,12 @@ namespace RocketSoundEnhancement
                 flameouts.Add(engineModule.engineID, engineModule.flameout);
             }
 
-            initialized = true;
+            UseAirSimFilters = true;
+            EnableCombFilter = true;
+            EnableLowpassFilter = true;
+            EnableWaveShaperFilter = true;
 
+            initialized = true;
             base.OnStart(state);
         }
 
@@ -145,8 +149,6 @@ namespace RocketSoundEnhancement
                         }
                     }
                 }
-
-
             }
 
             base.OnUpdate();

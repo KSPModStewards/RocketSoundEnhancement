@@ -18,6 +18,7 @@ namespace RocketSoundEnhancement
 
         public bool DisableStagingSound = false;
         public bool AffectChatterer = false;
+        public bool AirSimulation = false;
 
         private List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
         public List<ConfigNode> ShipEffectsNodes()
@@ -68,6 +69,14 @@ namespace RocketSoundEnhancement
                 }
             } else {
                 settingsNode.AddValue("AffectChatterer", AffectChatterer);
+            }
+
+            if(settingsNode.HasValue("AirSimulation")) {
+                if(!bool.TryParse(settingsNode.GetValue("AirSimulation"), out AirSimulation)) {
+                    AirSimulation = false;
+                }
+            } else {
+                settingsNode.AddValue("AirSimulation", AirSimulation);
             }
 
             if(settingsNode.HasNode("Colliders")) {
@@ -213,6 +222,7 @@ namespace RocketSoundEnhancement
             var settingsNode = _settings.GetNode(SettingsName);
             settingsNode.SetValue("DisableStagingSound", DisableStagingSound, true);
             settingsNode.SetValue("AffectChatterer", AffectChatterer, true);
+            settingsNode.SetValue("AirSimulation", AirSimulation, true);
 
             if(settingsNode.HasNode("AUDIOLIMITER")) {
                 var limiterNode = settingsNode.GetNode("AUDIOLIMITER");
