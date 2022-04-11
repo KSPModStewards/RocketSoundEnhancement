@@ -31,49 +31,46 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        [KSPField(isPersistant = false, guiActive = true, advancedTweakable = true)]
-        public float distance = 0;
-        [KSPField(isPersistant = false, guiActive = true, advancedTweakable = true)]
+        public float maxAirSimDistance = 2000;
+        public float FarLowpass = 1000f;
+        public float AngleHighPass = 500;
+        public float MaxCombDelay = 20;
+        public float MaxCombMix = 0.5f;
+        public float MaxDist = 0.5f;
+        public float MaxDistance = 2000f;
         public float speedOfSound = 340.29f;
-        [KSPField(isPersistant = false, guiActive = true, advancedTweakable = true)]
-        public float speed = 0;
-        [KSPField(isPersistant = false, guiActive = true, advancedTweakable = true)]
-        public float angle = 0;
-        [KSPField(isPersistant = false, guiActive = true, advancedTweakable = true)]
-        public float Doppler = 1;
         public override void OnUpdate()
         {
-            if(Settings.Instance.AirSimulation) {
-                CalculateDoppler();
-                speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
-                if(UseAirSimFilters) {
-                    distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
-                    speed = (float)vessel.srfSpeed;
-                    var cameraToSourceVector = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
-                    angle = Vector3.Dot(cameraToSourceVector, (transform.up + vessel.velocityD).normalized);
-                }
-            }
-
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
 
-                        // we dont want to accidentally delete the actual part
-                        if(Sources[source].gameObject.name == source) {
-                            UnityEngine.Object.Destroy(Sources[source].gameObject);
-                        } else {
-                            UnityEngine.Object.Destroy(Sources[source]);
-                        }
-                        
-                        Sources.Remove(source);
-                        spools.Remove(source);
+                if(Settings.Instance.AirSimulation) {
+                    speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
 
-                        if(AirSimFilters.ContainsKey(source))
-                            AirSimFilters.Remove(source);
-                    } else {
-                        if(UseAirSimFilters) {
-                            if(Settings.Instance.AirSimulation) {
+                    CalculateDoppler();
+                    
+                    //Calculate Air Simulation
+                    if(UseAirSimFilters) {
+                        float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
+                        float speed = (float)vessel.srfSpeed;
+                        var cameraToSourceVector = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+                        float angle = Vector3.Dot(cameraToSourceVector, (transform.up + vessel.velocityD).normalized);
+                        float vesselSize = vessel.vesselSize.magnitude;
+                        float atmPressure = (float)vessel.staticPressurekPa * 1000f;
+
+                        float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / maxAirSimDistance * 10)));                          //Inverse Distance
+                        float machVelocity = (speed / speedOfSound) * Mathf.Clamp01(atmPressure / 404.1f);                              //Current Mach Tapered by Pressure on Vacuum Approach.
+                        float machVelocityClamped = Mathf.Clamp01(machVelocity);
+                        float angleDegrees = (1 + angle) * 90f;                                                                         //Camera Angle
+                        float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //Mach Angle
+                        float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(distance / vesselSize);  //For Highpass when the camera is at front
+                        float machPass = 1f - Mathf.Clamp01((angleDegrees - 12.5f) / machAngle) * machVelocityClamped;                  //The Mach Cone
+
+                        machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(distance / 100)));                       //Soften Mach Cone by Distance
+                        machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(distance / vesselSize));                                       //Taper Mach Effects if Near the Vessel.
+
+                        foreach(var source in sourceKeys) {
+                            if(Sources[source].isPlaying) {
                                 AirSimulationFilter airSimFilter;
                                 if(!AirSimFilters.ContainsKey(source)) {
                                     airSimFilter = Sources[source].gameObject.AddComponent<AirSimulationFilter>();
@@ -86,12 +83,12 @@ namespace RocketSoundEnhancement
                                 } else {
                                     airSimFilter = AirSimFilters[source];
                                 }
-                                airSimFilter.Distance = distance;
-                                airSimFilter.Speed = speed;
-                                airSimFilter.SpeedOfSound = speedOfSound;
-                                airSimFilter.Angle = angle;
-                                airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                                airSimFilter.AtmPressure = (float)vessel.staticPressurekPa * 1000f;
+
+                                airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //Only make it quieter outside the Cone, don't make it silent.
+                                airSimFilter.HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
+                                airSimFilter.CombDelay = MaxCombDelay * distanceInv;
+                                airSimFilter.CombMix = Mathf.Lerp(MaxCombMix, 0, distanceInv);
+                                airSimFilter.Distortion = Mathf.Lerp(MaxDist, 0.7f * machVelocityClamped, distanceInv);
                             } else {
                                 if(AirSimFilters.ContainsKey(source)) {
                                     UnityEngine.Object.Destroy(AirSimFilters[source]);
@@ -101,9 +98,29 @@ namespace RocketSoundEnhancement
                         }
                     }
                 }
+
+                foreach(var source in sourceKeys) {
+                    if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
+                        UnityEngine.Object.Destroy(AirSimFilters[source]);
+                        AirSimFilters.Remove(source);
+                    }
+                    if(!Sources[source].isPlaying) {
+
+                        // we dont want to accidentally delete the actual part
+                        if(Sources[source].gameObject.name == source) {
+                            UnityEngine.Object.Destroy(Sources[source].gameObject);
+                        } else {
+                            UnityEngine.Object.Destroy(Sources[source]);
+                        }
+                        
+                        Sources.Remove(source);
+                        spools.Remove(source);
+                    }
+                }
             }
         }
 
+        public float Doppler = 1;
         float dopplerRaw = 1;
         float dopplerFactor = 0.2f;
 

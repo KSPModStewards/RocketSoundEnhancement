@@ -83,13 +83,45 @@ namespace RocketSoundEnhancement
             if(!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            foreach(var asource in Sources.Keys) {
-                if(asource == "decouple" || asource == "activate")
+            if(Settings.Instance.AirSimulation) {
+                float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
+                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / maxAirSimDistance * 10)));
+                foreach(var source in Sources.Keys) {
+                    if(Sources[source].isPlaying) {
+                        AirSimulationFilter airSimFilter;
+                        if(!AirSimFilters.ContainsKey(source)) {
+                            airSimFilter = Sources[source].gameObject.AddComponent<AirSimulationFilter>();
+                            AirSimFilters.Add(source, airSimFilter);
+
+                            airSimFilter.enabled = true;
+                            airSimFilter.EnableLowpassFilter = true;
+                        } else {
+                            airSimFilter = AirSimFilters[source];
+                        }
+
+                        airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv);
+                    } else {
+                        if(AirSimFilters.ContainsKey(source)) {
+                            UnityEngine.Object.Destroy(AirSimFilters[source]);
+                            AirSimFilters.Remove(source);
+                        }
+                    }
+                }
+            }
+
+
+            foreach(var source in Sources.Keys) {
+                if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
+                    UnityEngine.Object.Destroy(AirSimFilters[source]);
+                    AirSimFilters.Remove(source);
+                }
+
+                if(source == "decouple" || source == "activate")
                     continue;
 
-                if(!Sources[asource].isPlaying) {
-                    UnityEngine.Object.Destroy(Sources[asource]);
-                    Sources.Remove(asource);
+                if(!Sources[source].isPlaying) {
+                    UnityEngine.Object.Destroy(Sources[source]);
+                    Sources.Remove(source);
                 }
             }
         }
