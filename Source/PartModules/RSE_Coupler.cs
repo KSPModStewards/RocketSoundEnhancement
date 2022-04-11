@@ -83,10 +83,11 @@ namespace RocketSoundEnhancement
             if(!HighLogic.LoadedSceneIsFlight)
                 return;
 
+            var sourceKeys = Sources.Keys;
             if(Settings.Instance.AirSimulation) {
                 float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
                 float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / maxAirSimDistance * 10)));
-                foreach(var source in Sources.Keys) {
+                foreach(var source in sourceKeys) {
                     if(Sources[source].isPlaying) {
                         AirSimulationFilter airSimFilter;
                         if(!AirSimFilters.ContainsKey(source)) {
@@ -100,6 +101,7 @@ namespace RocketSoundEnhancement
                         }
 
                         airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv);
+
                     } else {
                         if(AirSimFilters.ContainsKey(source)) {
                             UnityEngine.Object.Destroy(AirSimFilters[source]);
@@ -109,8 +111,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-
-            foreach(var source in Sources.Keys) {
+            foreach(var source in sourceKeys) {
                 if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
                     UnityEngine.Object.Destroy(AirSimFilters[source]);
                     AirSimFilters.Remove(source);

@@ -64,6 +64,7 @@ namespace RocketSoundEnhancement
                         float angleDegrees = (1 + angle) * 90f;                                                                         //Camera Angle
                         float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //Mach Angle
                         float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(distance / vesselSize);  //For Highpass when the camera is at front
+                        float angleAbs = (1 - angle) * 0.5f;
                         float machPass = 1f - Mathf.Clamp01((angleDegrees - 12.5f) / machAngle) * machVelocityClamped;                  //The Mach Cone
 
                         machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(distance / 100)));                       //Soften Mach Cone by Distance
@@ -87,8 +88,13 @@ namespace RocketSoundEnhancement
                                 airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //Only make it quieter outside the Cone, don't make it silent.
                                 airSimFilter.HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
                                 airSimFilter.CombDelay = MaxCombDelay * distanceInv;
-                                airSimFilter.CombMix = Mathf.Lerp(MaxCombMix, 0, distanceInv);
+                                airSimFilter.CombMix = Mathf.Lerp(MaxCombMix, MaxCombMix * 0.5f * angleAbs, distanceInv);
                                 airSimFilter.Distortion = Mathf.Lerp(MaxDist, 0.7f * machVelocityClamped, distanceInv);
+
+                                if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
+                                    airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
+                                }
+
                             } else {
                                 if(AirSimFilters.ContainsKey(source)) {
                                     UnityEngine.Object.Destroy(AirSimFilters[source]);

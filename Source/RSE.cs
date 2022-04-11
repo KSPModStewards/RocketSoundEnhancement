@@ -38,11 +38,13 @@ namespace RocketSoundEnhancement
         int rightWidth = 60;
         int smlRightWidth = 40;
         int smlLeftWidth = 125;
+        Rect shipEffectsRect;
         void Start()
         {
             Settings.Instance.Load();
 
             windowRect = new Rect(Screen.width - windowWidth - 40, 40, windowWidth, windowHeight);
+            shipEffectsRect = new Rect(windowRect.x - 250 - 40, windowRect.y, 250, windowHeight * 2);
 
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
                 if(source.clip != null)
@@ -129,20 +131,26 @@ namespace RocketSoundEnhancement
             if(_appToggle) {
                 windowRect = GUILayout.Window(52534500, windowRect, SettingsWindow,"");
             }
+            if(_appToggle && shipEffectsInfo) {
+                shipEffectsRect = GUILayout.Window(52534501, shipEffectsRect, ShipEffectsInfo, "ShipEffects Info");
+            }
+            if(!_appToggle && shipEffectsInfo) {
+                shipEffectsInfo = false;
+            }
         }
 
         bool showAdvanceLimiter = false;
         bool showAdvanceLowpass = false;
         const string downArrowUNI = "\u25BC";
         const string upArrowUNI = "\u25B2";
-        Vector2 scrollPos;
+        Vector2 settingsScrollPos;
 
         bool bypassAutomaticFiltering;
         void SettingsWindow(int id)
         {
             GUILayout.BeginVertical();
             GUILayout.Label(AppTitle);
-            scrollPos = GUILayout.BeginScrollView(scrollPos,false, true, GUILayout.Height(windowHeight));
+            settingsScrollPos = GUILayout.BeginScrollView(settingsScrollPos,false, true, GUILayout.Height(windowHeight));
             GUILayout.BeginHorizontal();
             AudioLimiter.EnableLimiter = GUILayout.Toggle(AudioLimiter.EnableLimiter, "Sound Effects Mastering", GUILayout.Width(leftWidth));
             audioLimiter.enabled = AudioLimiter.EnableLimiter;
@@ -278,6 +286,7 @@ namespace RocketSoundEnhancement
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
             Settings.Instance.AffectChatterer = GUILayout.Toggle(Settings.Instance.AffectChatterer, "Affect Chatterer");
             MuteRSE = GUILayout.Toggle(MuteRSE, "Mute Rocket Sound Enhancement");
+            shipEffectsInfo = GUILayout.Toggle(shipEffectsInfo, "ShipEffects Info");
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             if(GUILayout.Button("Reload Settings")) {
@@ -295,8 +304,9 @@ namespace RocketSoundEnhancement
 
         //ToDo
         //ShipEffects Debug Window
-        Vector2 scrollPosition;
-        void InfoWindow(int id)
+        Vector2 shipEffectsScrollPos;
+        bool shipEffectsInfo;
+        void ShipEffectsInfo(int id)
         {
             GUILayout.BeginVertical(GUILayout.Width(250));
 
@@ -320,7 +330,7 @@ namespace RocketSoundEnhancement
                               "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
 
                 GUILayout.Label(info);
-                scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Height(150));
+                shipEffectsScrollPos = GUILayout.BeginScrollView(shipEffectsScrollPos, GUILayout.Height(windowHeight));
 
                 if(SoundLayers.Count > 0) {
                     string layerInfo = String.Empty;
@@ -357,7 +367,7 @@ namespace RocketSoundEnhancement
                 GUILayout.Label("No Active Vessel");
             }
 
-            _appToggle = !GUILayout.Button("Close", GUILayout.Height(20));
+            shipEffectsInfo = !GUILayout.Button("Close", GUILayout.Height(20));
 
             GUILayout.EndVertical();
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
