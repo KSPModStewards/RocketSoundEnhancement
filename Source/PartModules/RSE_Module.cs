@@ -207,7 +207,6 @@ namespace RocketSoundEnhancement
                 source.volume = soundLayer.volumeFC.Evaluate(control) * GameSettings.SHIP_VOLUME * vol;
                 source.pitch = soundLayer.pitchFC.Evaluate(control);
             } else {
-
                 source.volume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * vol;
                 source.pitch = soundLayer.pitch.Value(control);
             }

@@ -67,7 +67,7 @@ namespace RocketSoundEnhancement
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
-                        string sourceLayerName = engineID + "_" + SoundLayerGroups[engineID].IndexOf(soundLayer) + "_" + soundLayer.name;
+                        string sourceLayerName = engineID + "_" + soundLayer.name;
                         if(!spools.ContainsKey(sourceLayerName)) {
                             spools.Add(sourceLayerName, 0);
                         }
@@ -83,6 +83,11 @@ namespace RocketSoundEnhancement
                             } else {
                                 spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolControl, spoolSpeed);
                             }
+
+                            if(!soundLayer.data.Contains("Turbine") && (!engineIgnited || engineFlameout)) {
+                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                            }
+
                         } else {
                             //fix for audiosource clicks
                             spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
