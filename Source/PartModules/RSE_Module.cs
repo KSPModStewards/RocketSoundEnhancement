@@ -31,34 +31,32 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        public float maxAirSimDistance = 2000;
+        public float MaxAirSimDistance = 2000;
         public float FarLowpass = 1000f;
         public float AngleHighPass = 500;
         public float MaxCombDelay = 20;
         public float MaxCombMix = 0.5f;
         public float MaxDist = 0.5f;
         public float MaxDistance = 2000f;
-        public float speedOfSound = 340.29f;
+
+        float speedOfSound = 340.29f;
+        float distance = 0;
         public override void OnUpdate()
         {
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
-
                 if(Settings.Instance.AirSimulation) {
                     speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
-
-                    CalculateDoppler();
                     
                     //Calculate Air Simulation
                     if(UseAirSimFilters) {
-                        float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
                         float speed = (float)vessel.srfSpeed;
-                        var cameraToSourceVector = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
-                        float angle = Vector3.Dot(cameraToSourceVector, (transform.up + vessel.velocityD).normalized);
+                        Vector3 cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+                        float angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
                         float vesselSize = vessel.vesselSize.magnitude;
                         float atmPressure = (float)vessel.staticPressurekPa * 1000f;
 
-                        float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / maxAirSimDistance * 10)));                          //Inverse Distance
+                        float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / MaxAirSimDistance * 10)));                          //Inverse Distance
                         float machVelocity = (speed / speedOfSound) * Mathf.Clamp01(atmPressure / 404.1f);                              //Current Mach Tapered by Pressure on Vacuum Approach.
                         float machVelocityClamped = Mathf.Clamp01(machVelocity);
                         float angleDegrees = (1 + angle) * 90f;                                                                         //Camera Angle
@@ -126,32 +124,28 @@ namespace RocketSoundEnhancement
             }
         }
 
+        public override void OnFixedUpdate()
+        {
+            if(Settings.Instance.AirSimulation) {
+                distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
+                CalculateDoppler();
+            }
+        }
+
         public float Doppler = 1;
         float dopplerRaw = 1;
-        float dopplerFactor = 0.2f;
+        float dopplerFactor = 0.8f;
 
-        Vector3 pastCameraPosition = new Vector3();
-        Vector3 pastSourcePosition = new Vector3();
+        float relativeSpeed = 0;
+        float lastDistance = 0;
+
         public void CalculateDoppler()
         {
-            Vector3 sourceSpeed = (pastSourcePosition - transform.position) / TimeWarp.fixedDeltaTime;
-            pastSourcePosition = transform.position;
-            Vector3 listenerSpeed = (pastCameraPosition - FlightGlobals.camera_position) / TimeWarp.fixedDeltaTime;
-            pastCameraPosition = FlightGlobals.camera_position;
+            relativeSpeed = (lastDistance - distance) / Time.fixedDeltaTime;
+            lastDistance = distance;
+            dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * dopplerFactor)) / speedOfSound, 0.5f, 1.5f);
 
-            sourceSpeed = Vector3.ClampMagnitude(sourceSpeed, speedOfSound);
-            listenerSpeed = Vector3.ClampMagnitude(listenerSpeed, speedOfSound);
-
-            var distanceVector = ((Vector3)FlightGlobals.camera_position - transform.position);
-            float listenerRelativeSpeed = Vector3.Dot(distanceVector, listenerSpeed) / distanceVector.magnitude;
-            float emitterRelativeSpeed = Vector3.Dot(distanceVector, sourceSpeed) / distanceVector.magnitude;
-
-            listenerRelativeSpeed = Mathf.Min(listenerRelativeSpeed, speedOfSound);
-            emitterRelativeSpeed = Mathf.Min(emitterRelativeSpeed, speedOfSound);
-            dopplerRaw = Mathf.Clamp(Mathf.Abs(speedOfSound + listenerRelativeSpeed) / (speedOfSound + emitterRelativeSpeed), 0.5f, 2f);
-            dopplerRaw = (1 - dopplerFactor) + (dopplerRaw * dopplerFactor);
-
-            Doppler = Mathf.MoveTowards(Doppler, dopplerRaw, 0.5f * TimeWarp.deltaTime);
+            Doppler = Mathf.MoveTowards(Doppler, dopplerRaw, 0.5f * Time.fixedDeltaTime);
         }
 
         float pitchVariation = 1;

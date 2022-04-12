@@ -86,7 +86,7 @@ namespace RocketSoundEnhancement
             var sourceKeys = Sources.Keys;
             if(Settings.Instance.AirSimulation) {
                 float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
-                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / maxAirSimDistance * 10)));
+                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / MaxAirSimDistance * 10)));
                 foreach(var source in sourceKeys) {
                     if(Sources[source].isPlaying) {
                         AirSimulationFilter airSimFilter;
