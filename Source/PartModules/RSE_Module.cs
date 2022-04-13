@@ -9,7 +9,7 @@ namespace RocketSoundEnhancement
     {
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
-        public Dictionary<string, float> spools = new Dictionary<string, float>();
+        public Dictionary<string, float> Controls = new Dictionary<string, float>();
 
         public Dictionary<string, List<SoundLayer>> SoundLayerGroups;
         public List<SoundLayer> SoundLayers;
@@ -31,13 +31,12 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        public float MaxAirSimDistance = 2000;
-        public float FarLowpass = 1000f;
-        public float AngleHighPass = 500;
-        public float MaxCombDelay = 20;
-        public float MaxCombMix = 0.5f;
-        public float MaxDist = 0.5f;
-        public float MaxDistance = 2000f;
+        //public float MaxAirSimDistance = 2000;
+        //public float FarLowpass = 1000f;
+        //public float AngleHighPass = 500;
+        //public float MaxCombDelay = 20;
+        //public float MaxCombMix = 0.5f;
+        //public float MaxDist = 0.5f;
 
         float speedOfSound = 340.29f;
         float distance = 0;
@@ -50,23 +49,24 @@ namespace RocketSoundEnhancement
                     
                     //Calculate Air Simulation
                     if(UseAirSimFilters) {
-                        float speed = (float)vessel.srfSpeed;
                         Vector3 cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
-                        float angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
-                        float vesselSize = vessel.vesselSize.magnitude;
-                        float atmPressure = (float)vessel.staticPressurekPa * 1000f;
-
-                        float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / MaxAirSimDistance * 10)));                          //Inverse Distance
-                        float machVelocity = (speed / speedOfSound) * Mathf.Clamp01(atmPressure / 404.1f);                              //Current Mach Tapered by Pressure on Vacuum Approach.
-                        float machVelocityClamped = Mathf.Clamp01(machVelocity);
-                        float angleDegrees = (1 + angle) * 90f;                                                                         //Camera Angle
-                        float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //Mach Angle
-                        float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(distance / vesselSize);  //For Highpass when the camera is at front
-                        float angleAbs = (1 - angle) * 0.5f;
-                        float machPass = 1f - Mathf.Clamp01((angleDegrees - 12.5f) / machAngle) * machVelocityClamped;                  //The Mach Cone
-
-                        machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(distance / 100)));                       //Soften Mach Cone by Distance
-                        machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(distance / vesselSize));                                       //Taper Mach Effects if Near the Vessel.
+                        //float speed = (float)vessel.srfSpeed;
+                        //Vector3 cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+                        //float angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
+                        //float vesselSize = vessel.vesselSize.magnitude;
+                        //float atmPressure = (float)vessel.staticPressurekPa * 1000f;
+                        //
+                        //float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / MaxAirSimDistance * 10)));                          //Inverse Distance
+                        //float machVelocity = (speed / speedOfSound) * Mathf.Clamp01(atmPressure / 404.1f);                              //Current Mach Tapered by Pressure on Vacuum Approach.
+                        //float machVelocityClamped = Mathf.Clamp01(machVelocity);
+                        //float angleDegrees = (1 + angle) * 90f;                                                                         //Camera Angle
+                        //float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //Mach Angle
+                        //float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(distance / vesselSize);  //For Highpass when the camera is at front
+                        //float angleAbs = (1 - angle) * 0.5f;
+                        //float machPass = 1f - Mathf.Clamp01((angleDegrees - 12.5f) / machAngle) * machVelocityClamped;                  //The Mach Cone
+                        //
+                        //machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(distance / 100)));                       //Soften Mach Cone by Distance
+                        //machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(distance / vesselSize));                                       //Taper Mach Effects if Near the Vessel.
 
                         foreach(var source in sourceKeys) {
                             if(Sources[source].isPlaying) {
@@ -83,11 +83,18 @@ namespace RocketSoundEnhancement
                                     airSimFilter = AirSimFilters[source];
                                 }
 
-                                airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //Only make it quieter outside the Cone, don't make it silent.
-                                airSimFilter.HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
-                                airSimFilter.CombDelay = MaxCombDelay * distanceInv;
-                                airSimFilter.CombMix = Mathf.Lerp(MaxCombMix, MaxCombMix * 0.5f * angleAbs, distanceInv);
-                                airSimFilter.Distortion = Mathf.Lerp(MaxDist, 0.7f * machVelocityClamped, distanceInv);
+                                //airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //Only make it quieter outside the Cone, don't make it silent.
+                                //airSimFilter.HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
+                                //airSimFilter.CombDelay = MaxCombDelay * distanceInv;
+                                //airSimFilter.CombMix = Mathf.Lerp(MaxCombMix, MaxCombMix * 0.5f * angleAbs, distanceInv);
+                                //airSimFilter.Distortion = Mathf.Lerp(MaxDist, 0.7f * machVelocityClamped, distanceInv);
+
+                                airSimFilter.Distance = distance;
+                                airSimFilter.Velocity = (float)vessel.srfSpeed; 
+                                airSimFilter.Angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
+                                airSimFilter.VesselSize = vessel.vesselSize.magnitude;
+                                airSimFilter.SpeedOfSound = speedOfSound;
+                                airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
 
                                 if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
                                     airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
@@ -118,7 +125,7 @@ namespace RocketSoundEnhancement
                         }
                         
                         Sources.Remove(source);
-                        spools.Remove(source);
+                        Controls.Remove(source);
                     }
                 }
             }
@@ -154,17 +161,17 @@ namespace RocketSoundEnhancement
             float control = rawControl;
 
             if(spoolProccess) {
-                if(!spools.ContainsKey(sourceLayerName)) {
-                    spools.Add(sourceLayerName, 0);
+                if(!Controls.ContainsKey(sourceLayerName)) {
+                    Controls.Add(sourceLayerName, 0);
                 }
 
                 if(soundLayer.spool) {
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                    control = spools[sourceLayerName];
+                    Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                    control = Controls[sourceLayerName];
                 } else {
                     //fix for audiosource clicks
-                    spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
-                    control = spools[sourceLayerName];
+                    Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
+                    control = Controls[sourceLayerName];
                 }
             }
 

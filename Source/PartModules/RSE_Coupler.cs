@@ -86,7 +86,7 @@ namespace RocketSoundEnhancement
             var sourceKeys = Sources.Keys;
             if(Settings.Instance.AirSimulation) {
                 float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
-                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / MaxAirSimDistance * 10)));
+                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 2000 * 10)));
                 foreach(var source in sourceKeys) {
                     if(Sources[source].isPlaying) {
                         AirSimulationFilter airSimFilter;
@@ -96,11 +96,12 @@ namespace RocketSoundEnhancement
 
                             airSimFilter.enabled = true;
                             airSimFilter.EnableLowpassFilter = true;
+                            airSimFilter.EnableSimulationUpdating = false;
                         } else {
                             airSimFilter = AirSimFilters[source];
                         }
 
-                        airSimFilter.LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv);
+                        airSimFilter.LowpassFrequency = Mathf.Lerp(1000f, 22000f, distanceInv);
 
                     } else {
                         if(AirSimFilters.ContainsKey(source)) {

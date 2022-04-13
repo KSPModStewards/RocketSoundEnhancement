@@ -26,7 +26,7 @@ namespace RocketSoundEnhancement
                 volume = 1;
 
             SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-            spools = new Dictionary<string, float>();
+            Controls = new Dictionary<string, float>();
             foreach(var node in configNode.GetNodes()) {
                 string _engineState = node.name;
 
@@ -68,8 +68,8 @@ namespace RocketSoundEnhancement
                 if(SoundLayerGroups.ContainsKey(engineID)) {
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
-                        if(!spools.ContainsKey(sourceLayerName)) {
-                            spools.Add(sourceLayerName, 0);
+                        if(!Controls.ContainsKey(sourceLayerName)) {
+                            Controls.Add(sourceLayerName, 0);
                         }
 
                         if(soundLayer.spool) {
@@ -79,21 +79,21 @@ namespace RocketSoundEnhancement
                             spoolSpeed *= TimeWarp.deltaTime;
 
                             if(engineModule.flameout) {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, spoolSpeed);
+                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], 0, spoolSpeed);
                             } else {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], spoolControl, spoolSpeed);
+                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
                             }
 
                             if(!soundLayer.data.Contains("Turbine") && (!engineIgnited || engineFlameout)) {
-                                spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], 0, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], 0, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                             }
 
                         } else {
                             //fix for audiosource clicks
-                            spools[sourceLayerName] = Mathf.MoveTowards(spools[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                         }
 
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, spools[sourceLayerName], volume, false);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, Controls[sourceLayerName], volume, false);
                     }
                 }
 

@@ -195,9 +195,7 @@ namespace RocketSoundEnhancement
                         Sources[soundLayer.name].Stop();
                     }
                 }
-
             }
-
         }
     }
 }

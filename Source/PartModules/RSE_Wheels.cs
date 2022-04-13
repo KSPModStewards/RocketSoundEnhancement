@@ -28,7 +28,7 @@ namespace RocketSoundEnhancement
                 volume = 1;
 
             SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-            spools = new Dictionary<string, float>();
+            Controls = new Dictionary<string, float>();
             foreach(var node in configNode.GetNodes()) {
 
                 string soundLayerGroupName = node.name;

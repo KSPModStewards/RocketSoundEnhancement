@@ -13,6 +13,22 @@ namespace RocketSoundEnhancement
         public bool EnableCombFilter = false;
         public bool EnableLowpassFilter = false;
         public bool EnableWaveShaperFilter = false;
+        public bool EnableSimulationUpdating = true;
+
+        public float Distance = 0;
+        public float Velocity = 0;
+        public float Angle = 0;
+        public float VesselSize = 1;
+        public float SpeedOfSound = 340.29f;
+        public float AtmosphericPressurePa = 101325;
+
+        public float MaxAirSimDistance = 2000;
+        public float FarLowpass = 1000f;
+        public float AngleHighPass = 250;
+        public float MaxCombDelay = 20;
+        public float MaxCombMix = 0.5f;
+        public float FarDistortion = 0.5f;
+        public float NearDistortion = 0.7f;
 
         public float CombDelay = 0;
         public float CombMix = 0;
@@ -25,6 +41,31 @@ namespace RocketSoundEnhancement
         void Awake()
         {
             SampleRate = AudioSettings.outputSampleRate;
+
+            if(EnableSimulationUpdating) {
+                InvokeRepeating("UpdateFilters", 0, 0.02f);
+            }
+        }
+
+        public void UpdateFilters()
+        {
+            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxAirSimDistance * 10)));                          //Inverse Distance
+            float machVelocity = (Velocity / SpeedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                 //Current Mach Tapered by Pressure on Vacuum Approach.
+            float machVelocityClamped = Mathf.Clamp01(machVelocity);
+            float angleDegrees = (1 + Angle) * 90f;                                                                         //Camera Angle
+            float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //Mach Angle
+            float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(Distance / VesselSize);  //For Highpass when the camera is at front
+            float angleAbs = (1 - Angle) * 0.5f;
+            float machPass = 1f - Mathf.Clamp01((angleDegrees - 12.5f) / machAngle) * machVelocityClamped;                  //The Mach Cone
+
+            machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                       //Soften Mach Cone by Distance
+            machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                       //Taper Mach Effects if Near the Vessel.
+
+            LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //Only make it quieter outside the Cone, don't make it silent.
+            HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
+            CombDelay = MaxCombDelay * distanceInv;
+            CombMix = Mathf.Lerp(MaxCombMix, MaxCombMix * 0.5f * angleAbs, distanceInv);
+            Distortion = Mathf.Lerp(FarDistortion, NearDistortion * machVelocityClamped, distanceInv);
         }
 
         void OnAudioFilterRead(float[] data, int channels)
