@@ -52,7 +52,7 @@ namespace RocketSoundEnhancement
 
         public override void OnUpdate()
         {
-            if(audioParent == null || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
+            if(audioParent == null || !HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
                 return;
 
             bool running = false;

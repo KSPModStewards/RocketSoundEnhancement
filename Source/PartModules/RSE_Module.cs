@@ -31,61 +31,54 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-        float speedOfSound = 340.29f;
         float distance = 0;
+        float speedOfSound = 340.29f;
+        Vector3 cameraToSourceNormal = Vector3.zero;
         public override void OnUpdate()
         {
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
-                if(Settings.Instance.AirSimulation) {
-                    speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
-                    
-                    //Calculate Air Simulation
-                    if(UseAirSimFilters) {
-                        Vector3 cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
 
-                        foreach(var source in sourceKeys) {
-                            if(Sources[source].isPlaying) {
-                                AirSimulationFilter airSimFilter;
-                                if(!AirSimFilters.ContainsKey(source)) {
-                                    airSimFilter = Sources[source].gameObject.AddComponent<AirSimulationFilter>();
-                                    AirSimFilters.Add(source, airSimFilter);
+                foreach(var source in sourceKeys) {
+                    // Calculate Air Simulation
+                    if(UseAirSimFilters && Settings.Instance.AirSimulation) {
+                        if(Sources[source].isPlaying) {
+                            AirSimulationFilter airSimFilter;
+                            if(!AirSimFilters.ContainsKey(source)) {
+                                airSimFilter = Sources[source].gameObject.AddComponent<AirSimulationFilter>();
+                                AirSimFilters.Add(source, airSimFilter);
 
-                                    airSimFilter.enabled = true;
-                                    airSimFilter.EnableCombFilter = EnableCombFilter;
-                                    airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                                    airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
-                                } else {
-                                    airSimFilter = AirSimFilters[source];
-                                }
-
-                                airSimFilter.Distance = distance;
-                                airSimFilter.Velocity = (float)vessel.srfSpeed; 
-                                airSimFilter.Angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
-                                airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                                airSimFilter.SpeedOfSound = speedOfSound;
-                                airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-
-                                if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
-                                    airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
-                                }
-
+                                airSimFilter.enabled = true;
+                                airSimFilter.EnableCombFilter = EnableCombFilter;
+                                airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
+                                airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
                             } else {
-                                if(AirSimFilters.ContainsKey(source)) {
-                                    UnityEngine.Object.Destroy(AirSimFilters[source]);
-                                    AirSimFilters.Remove(source);
-                                }
+                                airSimFilter = AirSimFilters[source];
+                            }
+
+                            airSimFilter.Distance = distance;
+                            airSimFilter.Velocity = (float)vessel.srfSpeed;
+                            airSimFilter.Angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
+                            airSimFilter.VesselSize = vessel.vesselSize.magnitude;
+                            airSimFilter.SpeedOfSound = speedOfSound;
+                            airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
+
+                            if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
+                                airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
                             }
                         }
                     }
-                }
 
-                foreach(var source in sourceKeys) {
                     if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
                         UnityEngine.Object.Destroy(AirSimFilters[source]);
                         AirSimFilters.Remove(source);
                     }
+
                     if(!Sources[source].isPlaying) {
+                        if(AirSimFilters.ContainsKey(source)) {
+                            UnityEngine.Object.Destroy(AirSimFilters[source]);
+                            AirSimFilters.Remove(source);
+                        }
 
                         // we dont want to accidentally delete the actual part
                         if(Sources[source].gameObject.name == source) {
@@ -96,15 +89,19 @@ namespace RocketSoundEnhancement
                         
                         Sources.Remove(source);
                         Controls.Remove(source);
+                    } else { 
                     }
                 }
             }
         }
 
-        public override void OnFixedUpdate()
+        public virtual void FixedUpdate()
         {
             if(Settings.Instance.AirSimulation) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
+                cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+                speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
+
                 CalculateDoppler();
             }
         }
@@ -156,14 +153,14 @@ namespace RocketSoundEnhancement
             }
 
             AudioSource source;
-
+            GameObject sourceGameObject;
             if(!Sources.ContainsKey(sourceLayerName)) {
-                var go = new GameObject(sourceLayerName);
-                go.transform.parent = audioGameObject.transform;
-                go.transform.position = audioGameObject.transform.position;
-                go.transform.rotation = audioGameObject.transform.rotation;
+                sourceGameObject = new GameObject(sourceLayerName);
+                sourceGameObject.transform.parent = audioGameObject.transform;
+                sourceGameObject.transform.position = audioGameObject.transform.position;
+                sourceGameObject.transform.rotation = audioGameObject.transform.rotation;
 
-                source = AudioUtility.CreateSource(go, soundLayer);
+                source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                 Sources.Add(sourceLayerName, source);
 
                 if(soundLayer.pitchVariation) {
@@ -172,6 +169,7 @@ namespace RocketSoundEnhancement
 
             } else {
                 source = Sources[sourceLayerName];
+                sourceGameObject = Sources[sourceLayerName].gameObject;
             }
 
             if(soundLayer.useFloatCurve) {

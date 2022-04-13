@@ -40,18 +40,6 @@ namespace RocketSoundEnhancement
             var thrustTransforms = moduleRCSFX.thrusterTransforms;
             var thrustForces = moduleRCSFX.thrustForces;
 
-            //for(int i = 0; i < thrustTransforms.Count; i++) {
-            //
-            //    float rawControl = thrustForces[i] / moduleRCSFX.thrusterPower;
-            //    GameObject thrustTransform = thrustTransforms[i].gameObject;
-            //
-            //    foreach(var soundLayer in SoundLayers) {
-            //        string sourceLayerName = moduleRCSFX.thrusterTransformName + "_" + i + "_" + soundLayer.name;
-            //
-            //        PlaySoundLayer(thrustTransform, sourceLayerName, soundLayer, rawControl, volume);
-            //    }
-            //}
-
             //Cheaper to use one AudioSource.
             float rawControl = 0;
             for(int i = 0; i < thrustTransforms.Count; i++) {
