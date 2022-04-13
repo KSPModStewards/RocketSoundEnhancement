@@ -89,7 +89,6 @@ namespace RocketSoundEnhancement
                         
                         Sources.Remove(source);
                         Controls.Remove(source);
-                    } else { 
                     }
                 }
             }
@@ -108,7 +107,7 @@ namespace RocketSoundEnhancement
 
         public float Doppler = 1;
         float dopplerRaw = 1;
-        float dopplerFactor = 0.8f;
+        float dopplerFactor = 0.5f;
 
         float relativeSpeed = 0;
         float lastDistance = 0;
@@ -123,7 +122,7 @@ namespace RocketSoundEnhancement
         }
 
         float pitchVariation = 1;
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float vol, bool spoolProccess = true)
+        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float vol, bool spoolProccess = true, bool oneShot = false, bool rndOneShotVol = false)
         {
             float control = rawControl;
 
@@ -153,14 +152,14 @@ namespace RocketSoundEnhancement
             }
 
             AudioSource source;
-            GameObject sourceGameObject;
             if(!Sources.ContainsKey(sourceLayerName)) {
-                sourceGameObject = new GameObject(sourceLayerName);
+                GameObject sourceGameObject = new GameObject(sourceLayerName);
                 sourceGameObject.transform.parent = audioGameObject.transform;
                 sourceGameObject.transform.position = audioGameObject.transform.position;
                 sourceGameObject.transform.rotation = audioGameObject.transform.rotation;
 
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
+
                 Sources.Add(sourceLayerName, source);
 
                 if(soundLayer.pitchVariation) {
@@ -169,7 +168,6 @@ namespace RocketSoundEnhancement
 
             } else {
                 source = Sources[sourceLayerName];
-                sourceGameObject = Sources[sourceLayerName].gameObject;
             }
 
             if(soundLayer.useFloatCurve) {
@@ -188,7 +186,20 @@ namespace RocketSoundEnhancement
                 source.pitch *= Doppler;
             }
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+            if(oneShot) {
+                int index = 0;
+                if(soundLayer.audioClips.Length > 1) {
+                    index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+                }
+                AudioClip clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+                float volumeScale = rndOneShotVol ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
+
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false,true, volumeScale, clip);
+
+            } else {
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+            }
+            
         }
 
         public void onGamePause()

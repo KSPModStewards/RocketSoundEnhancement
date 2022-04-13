@@ -131,27 +131,8 @@ namespace RocketSoundEnhancement
 
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
-                        if(oneShotLayer.audioClips != null) {
-                            var clip = GameDatabase.Instance.GetAudioClip(oneShotLayer.audioClips[0]);
-                            string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
-
-                            var go = new GameObject(oneShotLayerName);
-                            go.transform.parent = audioParent.transform;
-                            go.transform.position = audioParent.transform.position;
-                            go.transform.rotation = audioParent.transform.rotation;
-
-                            AudioSource source;
-
-                            if(Sources.ContainsKey(oneShotLayerName)) {
-                                source = Sources[oneShotLayerName];
-                            } else {
-                                source = AudioUtility.CreateOneShotSource(go, 1, oneShotLayer.pitch, oneShotLayer.spread);
-                                Sources.Add(oneShotLayerName, source);
-                            }
-
-                            float finalVolume = oneShotLayer.volume * GameSettings.SHIP_VOLUME * volume;
-                            AudioUtility.PlayAtChannel(source, oneShotLayer.channel, false, false, true, finalVolume, clip);
-                        }
+                        string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
+                        PlaySoundLayer(audioParent, oneShotLayerName, oneShotLayer, 1, volume, false, true);
                     }
                 }
             }

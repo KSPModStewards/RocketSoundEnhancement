@@ -50,6 +50,7 @@ namespace RocketSoundEnhancement
             base.OnStart(state);
         }
 
+        bool retracted = false;
         public override void OnUpdate()
         {
             if(audioParent == null || !HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
@@ -75,16 +76,15 @@ namespace RocketSoundEnhancement
                 driveOutput = moduleMotor.driveOutput;
             }
 
-            bool isRetracted = false;
             if(moduleDeploy) {
-                isRetracted = moduleDeploy.stateString == "Retracted";
+                retracted = moduleDeploy.stateString == "Retracted";
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
-                string soundLayerKey = soundLayerGroup.Key;
+                string soundLayerGroupKey = soundLayerGroup.Key;
                 float rawControl = 0;
 
-                if(!isRetracted) {
+                if(!retracted) {
                     switch(soundLayerGroup.Key) {
                         case "Torque":
                             rawControl = running ? driveOutput / 100 : 0;
@@ -105,8 +105,9 @@ namespace RocketSoundEnhancement
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     float control = rawControl;
+                    string sourceLayerName = soundLayerGroupKey + "_" + soundLayer.name;
 
-                    if(soundLayerKey == "Ground" || soundLayerKey == "Slip") {
+                    if(soundLayerGroupKey == "Ground" || soundLayerGroupKey == "Slip") {
                         string layerMaskName = soundLayer.data;
                         if(layerMaskName != "") {
                             switch(colObjectType) {
@@ -126,7 +127,7 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    PlaySoundLayer(audioParent, soundLayer.name, soundLayer, control, volume, soundLayer.spool);
+                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, volume, soundLayer.spool);
                 }
             }
 

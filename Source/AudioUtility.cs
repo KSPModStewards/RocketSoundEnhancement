@@ -141,22 +141,24 @@ namespace RocketSoundEnhancement
             return soundLayer;
         }
 
-        public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer)
+        public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer,bool oneShot = false)
         {
             var source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
 
-            if(soundLayer.audioClips != null) {
-                int index = 0;
-                if(soundLayer.audioClips.Length > 1) {
-                    index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
-                }
-                source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-                
-            }
+            if(!oneShot) {
+                if(soundLayer.audioClips != null) {
+                    int index = 0;
+                    if(soundLayer.audioClips.Length > 1) {
+                        index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+                    }
+                    source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-            if(source.clip == null)
-                return null;
+                }
+
+                if(source.clip == null)
+                    return null;
+            }
 
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
