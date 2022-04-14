@@ -67,6 +67,7 @@ namespace RocketSoundEnhancement
                             airSimFilter.VesselSize = vessel.vesselSize.magnitude;
                             airSimFilter.SpeedOfSound = speedOfSound;
                             airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
+                            airSimFilter.ActiveInternalVessel = part.vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
 
                             if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
                                 airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
@@ -193,7 +194,7 @@ namespace RocketSoundEnhancement
             }
 
             if(soundLayer.massToVolume != null) {
-                source.pitch *= soundLayer.massToVolume.Value((float)part.physicsMass);
+                source.volume *= soundLayer.massToVolume.Value((float)part.physicsMass);
             }
 
             if(soundLayer.massToPitch != null) {

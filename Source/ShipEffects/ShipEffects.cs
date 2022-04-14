@@ -17,11 +17,12 @@ namespace RocketSoundEnhancement
         public float Acceleration;
         public float Jerk;
         public float ThrustAccel;
+        public float DynamicPressure;
         public float MachAngle;
         public float MachPass;
         public float SpeedOfSound = 340.29f;
         public Vector3 MachOriginCameraNormal = new Vector3();
-        public bool SonicBooming;
+        public bool SonicBoomed;
         float pastAcceleration;
 
         public bool initialized;
@@ -131,7 +132,6 @@ namespace RocketSoundEnhancement
         }
 
         int timeOut;
-        bool sonicBoomed;
         public void FixedUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePause || noPhysics)
@@ -140,6 +140,7 @@ namespace RocketSoundEnhancement
             Acceleration = (float)vessel.geeForce * 9.81f;
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
             pastAcceleration = Acceleration;
+            DynamicPressure = (float)vessel.dynamicPressurekPa;
 
             if(Settings.Instance.AirSimulation) {
                 SpeedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
@@ -158,27 +159,23 @@ namespace RocketSoundEnhancement
                     MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
                     MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
 
-                    if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !sonicBoomed) {
+                    if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !SonicBoomed) {
+                        SonicBoomed = true;
 
-                        SonicBooming = true;
-                        sonicBoomed = true;
-
-                        foreach(var soundLayer in SoundLayerGroups[PhysicsControl.SONICBOOM]) {
-                            string sourceLayerName = PhysicsControl.SONICBOOM.ToString() + "_" + soundLayer.name;
-                            PlaySoundLayer(gameObject, sourceLayerName, soundLayer, Mathf.Min(machVelocity, 4), false, true);
+                        if(!(InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)) {
+                            foreach(var soundLayer in SoundLayerGroups[PhysicsControl.SONICBOOM]) {
+                                string sourceLayerName = PhysicsControl.SONICBOOM.ToString() + "_" + soundLayer.name;
+                                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, Mathf.Min(machVelocity, 10), false, true);
+                            }
                         }
                     }
 
-                    SonicBooming = false;
                     if(MachPass == 0) {
-                        sonicBoomed = false;
+                        SonicBoomed = false;
                     }
 
                 } else {
-                    if(SonicBooming || sonicBoomed) {
-                        SonicBooming = false;
-                        sonicBoomed = false;
-                    }
+                    SonicBoomed = false;
                 }
             }
         }
@@ -239,7 +236,7 @@ namespace RocketSoundEnhancement
                 if(!Controls.ContainsKey(sourceLayerName)) {
                     Controls.Add(sourceLayerName, 0);
                 }
-                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 0.04f) * (60 * Time.deltaTime));
+                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 1f) * (60 * TimeWarp.deltaTime));
                 control = Controls[sourceLayerName];
             }
 
@@ -277,7 +274,7 @@ namespace RocketSoundEnhancement
             }
 
             if(soundLayer.massToVolume != null) {
-                source.pitch *= soundLayer.massToVolume.Value(TotalMass);
+                source.volume *= soundLayer.massToVolume.Value(TotalMass);
             }
 
             if(soundLayer.massToPitch != null) {
@@ -314,6 +311,9 @@ namespace RocketSoundEnhancement
                     if(vessel.Landed)
                         controller = (float)vessel.srf_velocity.magnitude;
                     break;
+                case PhysicsControl.DYNAMICPRESSURE:
+                    controller = (float)vessel.dynamicPressurekPa;
+                    break;
                 case PhysicsControl.THRUST:
                     float totalThrust = 0;
                     var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>());
@@ -324,7 +324,7 @@ namespace RocketSoundEnhancement
                                 totalThrust += module.GetCurrentThrust();
                             }
                         }
-                        controller = (totalThrust * 1000) / (vessel.GetTotalMass() * 1000); //Convert to Newtons and kg
+                        controller = (totalThrust * 1000) / (vessel.GetTotalMass() * 1000);
                         ThrustAccel = controller;
                         break;
                     }

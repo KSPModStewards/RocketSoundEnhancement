@@ -21,6 +21,7 @@ namespace RocketSoundEnhancement
         public float VesselSize = 1;
         public float SpeedOfSound = 340.29f;
         public float AtmosphericPressurePa = 101325;
+        public bool ActiveInternalVessel;
 
         public float MaxDistance = 2000;
         public float FarLowpass = 1000f;
@@ -59,7 +60,7 @@ namespace RocketSoundEnhancement
                 //CombDelay = soundDelay;
 
                 CombDelay = MaxCombDelay * distanceInv;
-                CombMix = Mathf.Lerp(MaxCombMix, MaxCombMix * 0.5f * angleAbs, distanceInv);
+                CombMix = Mathf.Lerp(MaxCombMix, ActiveInternalVessel ? 0 : MaxCombMix * 0.5f * angleAbs, distanceInv);
             }
 
             if(EnableLowpassFilter) {
@@ -75,7 +76,7 @@ namespace RocketSoundEnhancement
             }
 
             if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, MaxDistortion * machVelocityClamped, distanceInv);
+                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv);
             }
         }
 

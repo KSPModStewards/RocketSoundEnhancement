@@ -320,12 +320,14 @@ namespace RocketSoundEnhancement
                 string info = "Acceleration: " + accel.ToString("0.00") + "\r\n" +
                               "Jerk: " + jerk.ToString("0.00") + "\r\n" +
                               "Airspeed: " + ((float)vessel.indicatedAirSpeed).ToString("0.00") + "\r\n" +
+                              "Dynamic Pressure (kPa): " + ((float)vessel.dynamicPressurekPa).ToString("0.00") + "\r\n" +
+                              "Speed Of Sound: " + ((float)vessel.speedOfSound).ToString("0.00") + "\r\n" +
                               "Thrust Acceleration: " + seModule.ThrustAccel.ToString("0.00") + "\r\n" +
                               "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
                               "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n" +
                               "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
                               "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
-                              "SonicBoom: " + seModule.SonicBooming + "\r\n";
+                              "SonicBoom: " + seModule.SonicBoomed + "\r\n";
 
                 GUILayout.Label(info);
                 shipEffectsScrollPos = GUILayout.BeginScrollView(shipEffectsScrollPos, GUILayout.Height(windowHeight));

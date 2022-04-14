@@ -25,8 +25,9 @@ namespace RocketSoundEnhancement
         JERK,
         AIRSPEED,
         GROUNDSPEED,
-        THRUST,
         SONICBOOM,
+        DYNAMICPRESSURE,
+        THRUST,
         None
     }
 
