@@ -131,11 +131,8 @@ namespace RocketSoundEnhancement
             if(_appToggle) {
                 windowRect = GUILayout.Window(52534500, windowRect, SettingsWindow,"");
             }
-            if(_appToggle && shipEffectsInfo) {
+            if(shipEffectsInfo) {
                 shipEffectsRect = GUILayout.Window(52534501, shipEffectsRect, ShipEffectsInfo, "ShipEffects Info");
-            }
-            if(!_appToggle && shipEffectsInfo) {
-                shipEffectsInfo = false;
             }
         }
 
@@ -316,48 +313,55 @@ namespace RocketSoundEnhancement
             if(seModule != null && seModule.initialized) {
                 GUILayout.Label("Vessel: " + vessel.GetDisplayName());
                 GUILayout.Label("Vessel Parts: " + vessel.Parts.Count());
-                GUILayout.Label("SoundLayers: " + seModule.SoundLayers.Count);
 
                 float accel = seModule.Acceleration;
                 float jerk = seModule.Jerk;
-                var SoundLayers = seModule.SoundLayers;
 
                 string info = "Acceleration: " + accel.ToString("0.00") + "\r\n" +
                               "Jerk: " + jerk.ToString("0.00") + "\r\n" +
                               "Airspeed: " + ((float)vessel.indicatedAirSpeed).ToString("0.00") + "\r\n" +
                               "Thrust Acceleration: " + seModule.ThrustAccel.ToString("0.00") + "\r\n" +
                               "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
-                              "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
+                              "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n" +
+                              "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
+                              "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
+                              "SonicBoom: " + seModule.SonicBooming + "\r\n";
 
                 GUILayout.Label(info);
                 shipEffectsScrollPos = GUILayout.BeginScrollView(shipEffectsScrollPos, GUILayout.Height(windowHeight));
 
-                if(SoundLayers.Count > 0) {
+                if(seModule.SoundLayerGroups.Count > 0) {
                     string layerInfo = String.Empty;
                     layerInfo += "Sources: " + seModule.Sources.Count + "\r\n";
-                    foreach(var soundLayer in SoundLayers) {
-                        layerInfo +=
-                            "SoundLayer: " + soundLayer.name + "\r\n" +
-                            "Control: " + soundLayer.data + "\r\n";
-                        if(soundLayer.audioClips != null) {
-                            layerInfo += "AudioClips: " + soundLayer.audioClips.Length.ToString() + "\r\n";
-                        } else {
-                            layerInfo += "No AudioClips \r\n";
-                        }
 
-                        if(seModule.Sources.ContainsKey(soundLayer.name)) {
-                            var source = seModule.Sources[soundLayer.name];
-                            if(source != null) {
-                                layerInfo +=
-                                    "Volume: " + source.volume + "\r\n" +
-                                    "Pitch: " + source.pitch + "\r\n\r\n";
+                    foreach(var soundLayerGroup in seModule.SoundLayerGroups) {
+                        layerInfo +=
+                            "Group Name: " + soundLayerGroup.Key.ToString() + "\r\n";
+
+                        foreach(var soundLayer in soundLayerGroup.Value) {
+                            string sourceLayerName = soundLayerGroup.Key.ToString() + "_" + soundLayer.name;
+
+                            layerInfo += "SoundLayer: " + soundLayer.name + "\r\n";
+                            if(soundLayer.audioClips != null) {
+                                layerInfo += "AudioClips: " + soundLayer.audioClips.Length.ToString() + "\r\n";
+                            } else {
+                                layerInfo += "No AudioClips \r\n";
                             }
-                        } else {
-                            layerInfo += "Source Null or Inactive" + "\r\n\r\n\r\n";
+
+                            if(seModule.Sources.ContainsKey(sourceLayerName)) {
+                                var source = seModule.Sources[sourceLayerName];
+                                if(source != null) {
+                                    layerInfo +=
+                                        "Volume: " + source.volume + "\r\n" +
+                                        "Pitch: " + source.pitch + "\r\n\r\n";
+                                }
+                            } else {
+                                layerInfo += "Source Null or Inactive" + "\r\n\r\n\r\n";
+                            }
                         }
                     }
-                    GUILayout.Label(layerInfo);
 
+                    GUILayout.Label(layerInfo);
                 } else {
                     GUILayout.Label("No SoundLayers");
                 }

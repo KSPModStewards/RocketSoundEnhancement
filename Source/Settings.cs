@@ -25,7 +25,7 @@ namespace RocketSoundEnhancement
         {
             if(_shipEffectsNodes.Count == 0) {
                 foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
-                    _shipEffectsNodes.AddRange(configNode.GetNodes("SOUNDLAYER"));
+                    _shipEffectsNodes.AddRange(configNode.GetNodes());
 
                     if(configNode.HasValue("nextStageClip")) {
                         StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));

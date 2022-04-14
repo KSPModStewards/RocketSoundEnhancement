@@ -21,11 +21,12 @@ namespace RocketSoundEnhancement
 
     public enum PhysicsControl
     {
-        Acceleration,
-        Jerk,
-        AirSpeed,
-        GroundSpeed,
-        Thrust,
+        ACCELERATION,
+        JERK,
+        AIRSPEED,
+        GROUNDSPEED,
+        THRUST,
+        SONICBOOM,
         None
     }
 

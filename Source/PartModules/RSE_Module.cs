@@ -35,7 +35,7 @@ namespace RocketSoundEnhancement
 
         float distance = 0;
         float speedOfSound = 340.29f;
-        Vector3 cameraToSourceNormal = Vector3.zero;
+        Vector3 machOriginCameraNormal = Vector3.zero;
         public override void OnUpdate()
         {
             if(!initialized)
@@ -63,7 +63,7 @@ namespace RocketSoundEnhancement
 
                             airSimFilter.Distance = distance;
                             airSimFilter.Velocity = (float)vessel.srfSpeed;
-                            airSimFilter.Angle = Vector3.Dot(cameraToSourceNormal, (transform.up + vessel.velocityD).normalized);
+                            airSimFilter.Angle = Vector3.Dot(machOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
                             airSimFilter.VesselSize = vessel.vesselSize.magnitude;
                             airSimFilter.SpeedOfSound = speedOfSound;
                             airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
@@ -106,7 +106,13 @@ namespace RocketSoundEnhancement
 
             if(Settings.Instance.AirSimulation) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-                cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+
+                if(vessel.GetComponent<ShipEffects>() != null) {
+                    machOriginCameraNormal = vessel.GetComponent<ShipEffects>().MachOriginCameraNormal;
+                } else {
+                    machOriginCameraNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
+                }
+
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
 
                 CalculateDoppler();
