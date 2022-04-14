@@ -109,9 +109,6 @@ namespace RocketSoundEnhancement
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
 
-            soundLayer.massToVolume = new FXCurve("massToVolume", 1);
-            soundLayer.massToPitch = new FXCurve("massToPitch", 1);
-
             node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.ShipBoth);
 
             soundLayer.volume.Load("volume", node);
@@ -128,9 +125,16 @@ namespace RocketSoundEnhancement
                     soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
             }
 
-            soundLayer.massToVolume.Load("massToVolume", node);
-            soundLayer.massToPitch.Load("massToPitch", node);
+            if(node.HasNode("massToVolume")) {
+                soundLayer.massToVolume = new FXCurve("massToVolume", 1);
+                soundLayer.massToVolume.Load("massToVolume", node);
+            }
 
+            if(node.HasNode("massToPitch")) {
+                soundLayer.massToPitch = new FXCurve("massToPitch", 1);
+                soundLayer.massToPitch.Load("massToPitch", node);
+
+            }
 
             if(node.HasValue("data")) {
                 soundLayer.data = node.GetValue("data");
@@ -192,7 +196,7 @@ namespace RocketSoundEnhancement
             return source;
         }
 
-        public static CollidingObject GetCollidingType(GameObject gameObject)
+        public static CollidingObject GetCollidingObject(GameObject gameObject)
         {
             var part = Part.FromGO(gameObject);
             if(part) {

@@ -18,7 +18,6 @@ namespace RocketSoundEnhancement
 
             servoModule = part.GetComponent<BaseServo>();
 
-            initialized = true;
             base.OnStart(state);
         }
 

@@ -46,7 +46,6 @@ namespace RocketSoundEnhancement
             UseAirSimFilters = true;
             EnableLowpassFilter = true;
 
-            initialized = true;
             base.OnStart(state);
         }
 
@@ -67,7 +66,7 @@ namespace RocketSoundEnhancement
             //ISSUES: it wont detect Vessels :(
             CollidingObject colObjectType = CollidingObject.Dirt;
             if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
-                colObjectType = AudioUtility.GetCollidingType(hit.collider.gameObject);
+                colObjectType = AudioUtility.GetCollidingObject(hit.collider.gameObject);
             }
 
             if(moduleMotor) {

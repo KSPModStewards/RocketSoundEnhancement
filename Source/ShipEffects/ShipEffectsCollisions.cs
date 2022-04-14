@@ -13,12 +13,10 @@ namespace RocketSoundEnhancement
         CollisionExit
     }
 
-    public class ShipEffectsCollisions : PartModule
+    public class ShipEffectsCollisions : RSE_Module
     {
-        Dictionary<CollisionType, List<SoundLayer>> SoundLayerGroups = new Dictionary<CollisionType, List<SoundLayer>>();
-        Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
+        Dictionary<CollisionType, List<SoundLayer>> SoundLayerColGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
-        bool collided;
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -32,170 +30,108 @@ namespace RocketSoundEnhancement
 
                 if(Enum.TryParse(groupNode.name, out collisionType)) {
                     var soundLayers = AudioUtility.CreateSoundLayerGroup(soundLayerNodes);
-                    if(SoundLayerGroups.ContainsKey(collisionType)) {
-                        SoundLayerGroups[collisionType].AddRange(soundLayers);
+                    if(SoundLayerColGroups.ContainsKey(collisionType)) {
+                        SoundLayerColGroups[collisionType].AddRange(soundLayers);
                     } else {
-                        SoundLayerGroups.Add(collisionType, soundLayers);
+                        SoundLayerColGroups.Add(collisionType, soundLayers);
                     }
                 }
             }
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+            DopplerFactor = 0.25f;
+            base.OnStart(state);
         }
 
-        private void onGameUnpause()
+        Collision collision;
+        CollidingObject collidingObject;
+        CollisionType collisionType;
+        bool collided;
+        public override void OnUpdate()
         {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
-        }
+            if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+                return;
 
-        private void onGamePause()
-        {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
-        }
+            if(collided) {
+                if(SoundLayerColGroups.ContainsKey(collisionType)) {
+                    foreach(var soundLayer in SoundLayerColGroups[collisionType]) {
+                        string soundLayerName = collisionType + "_" + soundLayer.name;
+                        float control = 0;
 
-        public void FixedUpdate()
-        {
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-                foreach(var source in sourceKeys) {
-                    if(!Sources[source].isPlaying) {
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        Sources.Remove(source);
-                    } else {
-                        if(Sources[source].loop && !collided) {
-                            Sources[source].Stop();
+                        if(collision != null) {
+                            control = collision.relativeVelocity.magnitude;
                         }
+
+                        if(collisionType == CollisionType.CollisionExit) {
+                            control = collision.relativeVelocity.magnitude;
+                        }
+
+                        var layerMaskName = soundLayer.data.ToLower();
+                        if(layerMaskName != "") {
+                            switch(collidingObject) {
+                                case CollidingObject.Vessel:
+                                    if(!layerMaskName.Contains("vessel"))
+                                        control = 0;
+                                    break;
+                                case CollidingObject.Concrete:
+                                    if(!layerMaskName.Contains("concrete"))
+                                        control = 0;
+                                    break;
+                                case CollidingObject.Dirt:
+                                    if(!layerMaskName.Contains("dirt"))
+                                        control = 0;
+                                    break;
+                            }
+                        }
+
+                        bool isOneshot = collisionType != CollisionType.CollisionStay;
+                        PlaySoundLayer(gameObject, soundLayerName, soundLayer, control, volume, false, isOneshot, isOneshot);
+                    }
+                }
+            } else {
+                foreach(var source in Sources.Values) {
+                    if(source.isPlaying && source.loop) {
+                        source.Stop();
                     }
                 }
             }
-            collided = false;
+            
+            base.OnUpdate();
         }
 
-        void OnDestroy()
+        public override void FixedUpdate()
         {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Stop();
-                    UnityEngine.Object.Destroy(source);
-                }
-            }
+            if(!initialized)
+                return;
 
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            collided = false;
+            collisionType = CollisionType.CollisionStay;
+            base.FixedUpdate();
         }
 
         void OnCollisionEnter(Collision col)
         {
-            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
-            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionEnter)) {
-                PlaySounds(CollisionType.CollisionEnter, col.relativeVelocity.magnitude, collisionType, true);
-            }
+            collided = true;
+            collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
+            collisionType = CollisionType.CollisionEnter;
+            collision = col;
         }
 
         void OnCollisionStay(Collision col)
         {
             collided = true;
-            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
-            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
-                PlaySounds(CollisionType.CollisionStay, col.relativeVelocity.magnitude, collisionType);
-            }
+            collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
+            collisionType = CollisionType.CollisionStay;
+            collision = col;
         }
 
         void OnCollisionExit(Collision col)
         {
             collided = false;
-
-            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionStay)) {
-                foreach(var layer in SoundLayerGroups[CollisionType.CollisionStay]) {
-                    if(Sources.ContainsKey(layer.name)) {
-                        Sources[layer.name].Stop();
-                    }
-                }
-            }
-
-            var collisionType = AudioUtility.GetCollidingType(col.gameObject);
-            if(SoundLayerGroups.ContainsKey(CollisionType.CollisionExit)) {
-                PlaySounds(CollisionType.CollisionExit, col.relativeVelocity.magnitude, collisionType, true);
-            }
-        }
-
-        void PlaySounds(CollisionType collisionType, float control, CollidingObject collidingObjectType = CollidingObject.Dirt, bool oneshot = false)
-        {
-            foreach(var soundLayer in SoundLayerGroups[collisionType]) {
-
-                float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value((float)part.physicsMass);
-                float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value((float)part.physicsMass);
-
-                var layerMaskName = soundLayer.data.ToLower();
-                if(layerMaskName != "") {
-                    switch(collidingObjectType) {
-                        case CollidingObject.Vessel:
-                            if(!layerMaskName.Contains("vessel"))
-                                finalVolume = 0;
-                            break;
-                        case CollidingObject.Concrete:
-                            if(!layerMaskName.Contains("concrete"))
-                                finalVolume = 0;
-                            break;
-                        case CollidingObject.Dirt:
-                            if(!layerMaskName.Contains("dirt"))
-                                finalVolume = 0;
-                            break;
-                    }
-                }
-
-                if(finalVolume > float.Epsilon) {
-                    if(!Sources.ContainsKey(soundLayer.name)) {
-                        if(oneshot) {
-                            Sources.Add(soundLayer.name, AudioUtility.CreateOneShotSource(part.gameObject, 1, 1, soundLayer.spread));
-                        } else {
-                            Sources.Add(soundLayer.name, AudioUtility.CreateSource(part.gameObject, soundLayer));
-                        }
-                    }
-
-                    var source = Sources[soundLayer.name];
-
-                    if(source == null)
-                        return;
-
-                    finalVolume *= GameSettings.SHIP_VOLUME;
-                    source.pitch = finalPitch;
-
-                    if(oneshot) {
-                        var audioClips = soundLayer.audioClips;
-                        if(audioClips == null)
-                            continue;
-
-                        int index = 0;
-                        if(audioClips.Length > 1)
-                            index = UnityEngine.Random.Range(0, audioClips.Length);
-
-                        var clip = GameDatabase.Instance.GetAudioClip(audioClips[index]);
-
-                        source.volume = 1;
-                        finalVolume *= UnityEngine.Random.Range(0.9f, 1.0f);
-                        AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false, true, finalVolume, clip);
-
-                    } else {
-                        source.volume = finalVolume;
-                        AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
-                    }
-
-                } else {
-                    if(Sources.ContainsKey(soundLayer.name) && Sources[soundLayer.name].isPlaying) {
-                        Sources[soundLayer.name].Stop();
-                    }
-                }
-            }
+            collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
+            collisionType = CollisionType.CollisionExit;
+            collision = col;
         }
     }
 }

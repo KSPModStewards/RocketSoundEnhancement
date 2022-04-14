@@ -53,6 +53,7 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(UpdateVolumes);
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
+            initialized = true;
         }
 
         private void onUnDock(Part data)

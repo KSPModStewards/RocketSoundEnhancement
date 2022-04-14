@@ -29,6 +29,8 @@ namespace RocketSoundEnhancement
         {
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
+
+            initialized = true;
         }
 
         float distance = 0;
@@ -36,6 +38,9 @@ namespace RocketSoundEnhancement
         Vector3 cameraToSourceNormal = Vector3.zero;
         public override void OnUpdate()
         {
+            if(!initialized)
+                return;
+
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
 
@@ -96,6 +101,9 @@ namespace RocketSoundEnhancement
 
         public virtual void FixedUpdate()
         {
+            if(!initialized)
+                return;
+
             if(Settings.Instance.AirSimulation) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 cameraToSourceNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
@@ -106,8 +114,8 @@ namespace RocketSoundEnhancement
         }
 
         public float Doppler = 1;
+        public float DopplerFactor = 0.5f;
         float dopplerRaw = 1;
-        float dopplerFactor = 0.5f;
 
         float relativeSpeed = 0;
         float lastDistance = 0;
@@ -116,7 +124,7 @@ namespace RocketSoundEnhancement
         {
             relativeSpeed = (lastDistance - distance) / Time.fixedDeltaTime;
             lastDistance = distance;
-            dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * dopplerFactor)) / speedOfSound, 0.5f, 1.5f);
+            dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 0.5f, 1.5f);
 
             Doppler = Mathf.MoveTowards(Doppler, dopplerRaw, 0.5f * Time.fixedDeltaTime);
         }
@@ -178,6 +186,14 @@ namespace RocketSoundEnhancement
                 source.pitch = soundLayer.pitch.Value(control);
             }
 
+            if(soundLayer.massToVolume != null) {
+                source.pitch *= soundLayer.massToVolume.Value((float)part.physicsMass);
+            }
+
+            if(soundLayer.massToPitch != null) {
+                source.pitch *= soundLayer.massToPitch.Value((float)part.physicsMass);
+            }
+
             if(soundLayer.pitchVariation && !soundLayer.loopAtRandom) {
                 source.pitch *= pitchVariation;
             }
@@ -185,6 +201,7 @@ namespace RocketSoundEnhancement
             if(Settings.Instance.AirSimulation) {
                 source.pitch *= Doppler;
             }
+
 
             if(oneShot) {
                 int index = 0;

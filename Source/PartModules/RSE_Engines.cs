@@ -50,7 +50,6 @@ namespace RocketSoundEnhancement
             EnableLowpassFilter = true;
             EnableWaveShaperFilter = true;
 
-            initialized = true;
             base.OnStart(state);
         }
 

@@ -151,8 +151,16 @@ namespace RocketSoundEnhancement
                 float control = Mathf.MoveTowards(controllers[soundLayer.name], controller, Mathf.Max(1, Mathf.Abs(controllers[soundLayer.name] - controller)) * TimeWarp.deltaTime);
                 controllers[soundLayer.name] = control;
 
-                float finalVolume = soundLayer.volume.Value(control) * soundLayer.massToVolume.Value(TotalMass);
-                float finalPitch = soundLayer.pitch.Value(control) * soundLayer.massToPitch.Value(TotalMass);
+                float finalVolume = soundLayer.volume.Value(control);
+                float finalPitch = soundLayer.pitch.Value(control);
+
+                if(soundLayer.massToVolume != null) {
+                    finalVolume *= soundLayer.massToVolume.Value(TotalMass);
+                }
+
+                if(soundLayer.massToPitch != null) {
+                    finalPitch *= soundLayer.massToPitch.Value(TotalMass);
+                }
 
                 bool skip = (soundLayer.channel == FXChannel.ShipInternal && vessel != FlightGlobals.ActiveVessel);
 

@@ -24,12 +24,9 @@ namespace RocketSoundEnhancement
 
             SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
 
-            base.OnStart(state);
-
             UseAirSimFilters = true;
             EnableLowpassFilter = true;
-
-            initialized = true;
+            base.OnStart(state);
         }
 
         public override void OnUpdate()
