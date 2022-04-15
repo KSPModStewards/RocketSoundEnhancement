@@ -471,11 +471,11 @@ namespace RocketSoundEnhancement
                 Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 20, 22200));
 
                 if(MufflingFrequency < 20) {
-                    Mixer.SetFloat("ExternalVolume", Mathf.Lerp(0, -80, (MufflingFrequency / 20)));
+                    Mixer.SetFloat("ExternalVolume", Mathf.Lerp(-80, 0, (MufflingFrequency / 20)));
                 }
 
                 if(FocusMufflingFrequency < 20) {
-                    Mixer.SetFloat("FocusVolume", Mathf.Lerp(0, -80, (FocusMufflingFrequency / 20)));
+                    Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, (FocusMufflingFrequency / 20)));
                 }
 
                 if(AudioMuffler.AffectChatterer) {
