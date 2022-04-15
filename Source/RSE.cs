@@ -433,22 +433,19 @@ namespace RocketSoundEnhancement
         bool bypassAutomaticFiltering;
 
         private AudioMixer mixer;
+
         public AudioMixer Mixer
         {
             get {
                 if(mixer == null) {
-                    string path = KSPUtil.ApplicationRootPath + "GameData/RocketSoundEnhancement/Plugins";
-                    AssetBundle assetBundle = AssetBundle.LoadFromFile(path + "/rse_bundle");
-                    if(assetBundle != null) {
-                        mixer = assetBundle.LoadAsset("RSE_Mixer") as AudioMixer;
-                    }
+                    mixer = Startup.RSE_Bundle.LoadAsset("RSE_Mixer") as AudioMixer;
                 }
                 return mixer;
             }
         }
 
         float lastCutoffFreq;
-        float lastIntCutoffFreq;
+        float lastInteriorCutoffFreq;
         void LateUpdate()
         {
             if(gamePaused || !AudioMuffler.EnableMuffling)
@@ -469,8 +466,8 @@ namespace RocketSoundEnhancement
                         interiorMuffling = interiorMuffling < atmCutOff ? interiorMuffling : atmCutOff;
                     }
 
-                    FocusMufflingFrequency = Mathf.MoveTowards(lastIntCutoffFreq, interiorMuffling, 5000);
-                    lastIntCutoffFreq = FocusMufflingFrequency;
+                    FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, interiorMuffling, 5000);
+                    lastInteriorCutoffFreq = FocusMufflingFrequency;
 
                 } else {
                     FocusMufflingFrequency = MufflingFrequency;

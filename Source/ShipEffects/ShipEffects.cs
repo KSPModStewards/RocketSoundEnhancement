@@ -10,7 +10,6 @@ namespace RocketSoundEnhancement
     {
         public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
-        public Dictionary<AudioSource, float> StockSources = new Dictionary<AudioSource, float>();
         Dictionary<string, float> Controls = new Dictionary<string, float>();
 
         public float TotalMass;
@@ -25,6 +24,7 @@ namespace RocketSoundEnhancement
         public Vector3 MachOriginCameraNormal = new Vector3();
         public bool SonicBoomed;
         float pastAcceleration;
+        float machPassVolume;
 
         public bool initialized;
         bool gamePause;
@@ -36,7 +36,6 @@ namespace RocketSoundEnhancement
             SoundLayerGroups.Clear();
             Sources.Clear();
             Controls.Clear();
-            StockSources.Clear();
 
             if(vessel.Parts.Count <= 1) {
                 if(vessel.Parts[0].PhysicsSignificance == 1 || vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
@@ -156,11 +155,11 @@ namespace RocketSoundEnhancement
                 MachOriginCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
                 float machVelocity = ((float)vessel.srfSpeed / SpeedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 float angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
-                
-                if(vessel.atmDensity > 0) {
-                    MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
-                    MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
+                MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
+                MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
+                machPassVolume = 1f - Mathf.Clamp01(angle / MachAngle) * Mathf.Clamp01(machVelocity);
 
+                if(vessel.atmDensity > 0) {
                     if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !SonicBoomed) {
                         SonicBoomed = true;
 
@@ -177,11 +176,15 @@ namespace RocketSoundEnhancement
                     if(MachPass == 0) {
                         SonicBoomed = false;
                     }
-
                 } else {
                     SonicBoomed = false;
                 }
             }
+        }
+
+        public void GetStockSources()
+        {
+
         }
 
         public void LateUpdate()
@@ -196,13 +199,17 @@ namespace RocketSoundEnhancement
                     sources = sources.Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
 
                     foreach(var source in sources) {
+                        if(source == null)
+                            continue;
 
-                        if(source.outputAudioMixerGroup == null && !StockSources.ContainsKey(source)) {
-                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                            StockSources.Add(source, source.volume);
+                        source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+
+                        if(source.isPlaying) {
+                            float originalVol = source.volume;
+                            float distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, part.transform.position);
+                            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 5000 * 10)));
+                            source.volume = originalVol * machPassVolume * distanceInv;
                         }
-
-                        StockSources[source] = source.volume;
                     }
                 }
             }
@@ -215,9 +222,11 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || ignoreVessel || SoundLayerGroups.Count() == 0 || noPhysics)
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
                 return;
 
+            if(ignoreVessel || SoundLayerGroups.Count() == 0)
+                return;
 
             if(timeOut != 60) {
                 timeOut++;
