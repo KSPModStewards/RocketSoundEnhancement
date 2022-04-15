@@ -247,7 +247,7 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            if(RSE.MuteRSE) {
+            if(RSE.Instance.MuteRSE) {
                 source.mute = true;
                 return;
             }

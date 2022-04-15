@@ -11,6 +11,9 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class RSE : MonoBehaviour
     {
+        public static RSE _instance = null;
+        public static RSE Instance { get { return _instance; } }
+
         public ApplicationLauncherButton AppButton;
         public Texture AppIcon = GameDatabase.Instance.GetTexture("RocketSoundEnhancement/Textures/RSE_Icon", false);
         public Texture AppTitle = GameDatabase.Instance.GetTexture("RocketSoundEnhancement/Textures/RSE_Title", false);
@@ -29,7 +32,7 @@ namespace RocketSoundEnhancement
         List<AudioSource> ChattererSources = new List<AudioSource>();
         List<AudioSource> StockSources = new List<AudioSource>();
 
-        public static bool MuteRSE = false;
+        public bool MuteRSE = false;
         bool gamePaused;
 
         Rect windowRect;
@@ -40,6 +43,12 @@ namespace RocketSoundEnhancement
         int smlRightWidth = 40;
         int smlLeftWidth = 125;
         Rect shipEffectsRect;
+
+        void Awake()
+        {
+            _instance = this;
+        }
+
         void Start()
         {
             Settings.Instance.Load();
@@ -119,11 +128,11 @@ namespace RocketSoundEnhancement
 
             if(ChattererSources.Count > 0) {
                 foreach(var source in ChattererSources) {
-                    if(AudioMuffler.AirSimulation) {
+                    if(AudioMuffler.AirSimulation && AudioMuffler.AffectChatterer) {
                         source.outputAudioMixerGroup = InternalMixer;
                     } else {
                         source.bypassListenerEffects = !AudioMuffler.AffectChatterer;
-                        source.outputAudioMixerGroup = MasterMixer;
+                        source.outputAudioMixerGroup = null;
                     }
                 }
             }
@@ -413,18 +422,18 @@ namespace RocketSoundEnhancement
         }
 
 
-        public static AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
-        public static AudioMixerGroup AirSimMixer { get { return Mixer.FindMatchingGroups("AIRSIM")[0]; } }
-        public static AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
-        public static AudioMixerGroup InternalMixer { get { return Mixer.FindMatchingGroups("INTERNAL")[0]; } }
-        public static AudioMixerGroup ExternalMixer { get { return Mixer.FindMatchingGroups("EXTERNAL")[0]; } }
+        public AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
+        public AudioMixerGroup AirSimMixer { get { return Mixer.FindMatchingGroups("AIRSIM")[0]; } }
+        public AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
+        public AudioMixerGroup InternalMixer { get { return Mixer.FindMatchingGroups("INTERNAL")[0]; } }
+        public AudioMixerGroup ExternalMixer { get { return Mixer.FindMatchingGroups("EXTERNAL")[0]; } }
 
-        public static float MufflingFrequency = 22200;
-        public static float FocusMufflingFrequency = 22200;
+        public float MufflingFrequency = 22200;
+        public float FocusMufflingFrequency = 22200;
         bool bypassAutomaticFiltering;
 
-        private static AudioMixer mixer;
-        public static AudioMixer Mixer
+        private AudioMixer mixer;
+        public AudioMixer Mixer
         {
             get {
                 if(mixer == null) {
@@ -460,23 +469,15 @@ namespace RocketSoundEnhancement
                         interiorMuffling = interiorMuffling < atmCutOff ? interiorMuffling : atmCutOff;
                     }
 
-                    FocusMufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, interiorMuffling, 5000);
+                    FocusMufflingFrequency = Mathf.MoveTowards(lastIntCutoffFreq, interiorMuffling, 5000);
                     lastIntCutoffFreq = FocusMufflingFrequency;
 
                 } else {
                     FocusMufflingFrequency = MufflingFrequency;
                 }
 
-                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 20, 22200));
-                Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 20, 22200));
-
-                if(MufflingFrequency < 20) {
-                    Mixer.SetFloat("ExternalVolume", Mathf.Lerp(-80, 0, (MufflingFrequency / 20)));
-                }
-
-                if(FocusMufflingFrequency < 20) {
-                    Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, (FocusMufflingFrequency / 20)));
-                }
+                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 0, 22200));
+                Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 0, 22200));
 
                 if(AudioMuffler.AffectChatterer) {
                     foreach(var source in ChattererSources) {

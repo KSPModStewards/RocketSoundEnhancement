@@ -102,7 +102,7 @@ namespace RocketSoundEnhancement
                             airSimFilter = AirSimFilters[source];
                         }
 
-                        float muffling = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMufflingFrequency : RSE.MufflingFrequency;
+                        float muffling = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
 
                         airSimFilter.LowpassFrequency = Mathf.Lerp(muffling * 0.05f, muffling, distanceInv);
 

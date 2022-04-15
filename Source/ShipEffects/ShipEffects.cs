@@ -145,6 +145,7 @@ namespace RocketSoundEnhancement
             DynamicPressure = (float)vessel.dynamicPressurekPa;
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                
                 SpeedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
@@ -184,7 +185,12 @@ namespace RocketSoundEnhancement
                 float volMachPass = Mathf.Lerp(1, MachPass, Mathf.Clamp01(machVelocity));
                 var stockSources = StockSources.Keys.ToList().Where(x => x != null);
                 foreach(var source in stockSources) {
-                    source.volume = StockSources[source] * Mathf.Max(MachPass, 0.1f);
+                    source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+
+                    float distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                    float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 2000 * 10)));
+
+                    source.volume = StockSources[source] * MachPass * distanceInv;
                 }
             }
         }
@@ -203,7 +209,7 @@ namespace RocketSoundEnhancement
                     foreach(var source in sources) {
 
                         if(source.outputAudioMixerGroup == null && !StockSources.ContainsKey(source)) {
-                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMixer : RSE.ExternalMixer;
+                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             StockSources.Add(source, source.volume);
                         }
 
@@ -293,18 +299,18 @@ namespace RocketSoundEnhancement
 
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
 
-                if(AudioMuffler.AirSimulation) {
-                    if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
-                        source.outputAudioMixerGroup = RSE.InternalMixer;
-                    } else {
-                        source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMixer : RSE.ExternalMixer;
-                    }
-                }
-
                 Sources.Add(sourceLayerName, source);
 
             } else {
                 source = Sources[sourceLayerName];
+            }
+
+            if(AudioMuffler.AirSimulation) {
+                if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
+                    source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
+                } else {
+                    source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                }
             }
 
             if(soundLayer.useFloatCurve) {
