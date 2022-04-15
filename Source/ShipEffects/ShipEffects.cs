@@ -159,7 +159,7 @@ namespace RocketSoundEnhancement
                 
                 if(vessel.atmDensity > 0) {
                     MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
-                    MachPass = 1f - Mathf.Clamp01(angle - 12.5f / MachAngle);
+                    MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
 
                     if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !SonicBoomed) {
                         SonicBoomed = true;
@@ -180,17 +180,6 @@ namespace RocketSoundEnhancement
 
                 } else {
                     SonicBoomed = false;
-                }
-
-                float volMachPass = Mathf.Lerp(1, MachPass, Mathf.Clamp01(machVelocity));
-                var stockSources = StockSources.Keys.ToList().Where(x => x != null);
-                foreach(var source in stockSources) {
-                    source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-
-                    float distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                    float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 2000 * 10)));
-
-                    source.volume = StockSources[source] * MachPass * distanceInv;
                 }
             }
         }
@@ -276,7 +265,7 @@ namespace RocketSoundEnhancement
                 if(!Controls.ContainsKey(sourceLayerName)) {
                     Controls.Add(sourceLayerName, 0);
                 }
-                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 1f) * (30 * TimeWarp.deltaTime));
+                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 20) * TimeWarp.deltaTime);
                 control = Controls[sourceLayerName];
             }
 
