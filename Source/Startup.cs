@@ -16,12 +16,12 @@ namespace RocketSoundEnhancement
             audioConfig.numRealVoices = 64;
 
             if(UnityEngine.AudioSettings.Reset(audioConfig)) {
-                Debug.Log("RSE: Audio Settings Applied");
-                Debug.Log("RSE: DSP Buffer Size : " +  UnityEngine.AudioSettings.GetConfiguration().dspBufferSize);
-                Debug.Log("RSE: Real Voices : " +      UnityEngine.AudioSettings.GetConfiguration().numRealVoices);
-                Debug.Log("RSE: Virtual Voices : " +   UnityEngine.AudioSettings.GetConfiguration().numVirtualVoices);
-                Debug.Log("RSE: Samplerate : " +       UnityEngine.AudioSettings.GetConfiguration().sampleRate);
-                Debug.Log("RSE: Spearker Mode : " +    UnityEngine.AudioSettings.GetConfiguration().speakerMode);
+                Debug.Log("[RSE]: Audio Settings Applied");
+                Debug.Log("[RSE]: DSP Buffer Size : " +  UnityEngine.AudioSettings.GetConfiguration().dspBufferSize);
+                Debug.Log("[RSE]: Real Voices : " +      UnityEngine.AudioSettings.GetConfiguration().numRealVoices);
+                Debug.Log("[RSE]: Virtual Voices : " +   UnityEngine.AudioSettings.GetConfiguration().numVirtualVoices);
+                Debug.Log("[RSE]: Samplerate : " +       UnityEngine.AudioSettings.GetConfiguration().sampleRate);
+                Debug.Log("[RSE]: Spearker Mode : " +    UnityEngine.AudioSettings.GetConfiguration().speakerMode);
             }
 
         }

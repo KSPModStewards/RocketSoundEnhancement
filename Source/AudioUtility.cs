@@ -15,7 +15,6 @@ namespace RocketSoundEnhancement
     public enum FXChannel
     {
         ShipInternal,
-        ShipExternal,
         ShipBoth
     }
 
@@ -56,6 +55,7 @@ namespace RocketSoundEnhancement
     public static class AudioUtility
     {
         public static AnimationCurve SmoothControl = AnimationCurve.EaseInOut(0f, 0.04f, 1f, 1f);
+        public static string RSETag = "RSE";
 
         public static ConfigNode GetConfigNode(string partInfoName, string moduleName, string moduleID = "")
         {
@@ -150,6 +150,7 @@ namespace RocketSoundEnhancement
         public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer,bool oneShot = false)
         {
             var source = gameObject.AddComponent<AudioSource>();
+            source.name = RSETag + "_" + gameObject.name;
             source.playOnAwake = false;
 
             if(!oneShot) {
@@ -183,6 +184,7 @@ namespace RocketSoundEnhancement
         public static AudioSource CreateOneShotSource(GameObject gameObject, float volume, float pitch, float spread = 0)
         {
             var source = gameObject.AddComponent<AudioSource>();
+            source.name = RSETag + "_" + gameObject.name;
             source.playOnAwake = false;
             source.volume = volume;
             source.pitch = pitch;
@@ -233,7 +235,7 @@ namespace RocketSoundEnhancement
             return audioParent;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel,Vessel vessel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
         {
             if(source == null)
                 return;
@@ -275,31 +277,18 @@ namespace RocketSoundEnhancement
                     }
                     break;
                 case FXChannel.ShipInternal:
-                    source.mute = !InternalCamera.Instance.isActive;
-                    source.bypassListenerEffects = true;
-                    source.bypassEffects = true;
-                    if(loop) {
-                        if(!source.isPlaying) {
-                            if(loopAtRandom) {
-                                source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
-                            }
-                            source.Play();
-                        }
+                    if(vessel != null) {
+                        source.mute = vessel == FlightGlobals.ActiveVessel ? !InternalCamera.Instance.isActive : true;
+
                     } else {
-                        if(oneshot) {
-                            if(audioclip != null) {
-                                source.PlayOneShot(audioclip, volume);
-                            } else {
-                                source.PlayOneShot(source.clip, volume);
-                            }
-                        } else {
-                            source.Play();
-                        }
+                        source.mute = !InternalCamera.Instance.isActive;
+                    }
+                    
+                    if(!AudioMuffler.AirSimulation) {
+                        source.bypassListenerEffects = true;
+                        source.bypassEffects = true;
                     }
 
-                    break;
-                case FXChannel.ShipExternal:
-                    source.mute = InternalCamera.Instance.isActive;
                     if(loop) {
                         if(!source.isPlaying) {
                             if(loopAtRandom) {

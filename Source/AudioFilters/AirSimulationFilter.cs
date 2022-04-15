@@ -33,6 +33,7 @@ namespace RocketSoundEnhancement
         public float CombDelay = 0;
         public float CombMix = 0;
         public float LowpassFrequency = 22200;
+        public float MaxLowpassFrequency = 22200;
         public float HighPassFrequency = 0;
         public float ResonanceQ = 0.1f;
         public float Distortion = 0;
@@ -71,7 +72,7 @@ namespace RocketSoundEnhancement
                 machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                       //  Soften Mach Cone by Distance
                 machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                       //  Taper Mach Effects if Near the Vessel.
 
-                LowpassFrequency = Mathf.Lerp(FarLowpass, 22000f, distanceInv) * Mathf.Max(machPass, 0.05f);                    //  Only make it quieter outside the Cone, don't make it silent.
+                LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv) * Mathf.Max(machPass, 0.05f);       //  Only make it quieter outside the Cone, don't make it silent.
                 HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
             }
 

@@ -46,7 +46,7 @@ namespace RocketSoundEnhancement
 
                 foreach(var source in sourceKeys) {
                     // Calculate Air Simulation
-                    if(UseAirSimFilters && Settings.Instance.AirSimulation) {
+                    if(UseAirSimFilters && AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                         if(Sources[source].isPlaying) {
                             AirSimulationFilter airSimFilter;
                             if(!AirSimFilters.ContainsKey(source)) {
@@ -67,15 +67,13 @@ namespace RocketSoundEnhancement
                             airSimFilter.VesselSize = vessel.vesselSize.magnitude;
                             airSimFilter.SpeedOfSound = speedOfSound;
                             airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-                            airSimFilter.ActiveInternalVessel = part.vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                            airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
 
-                            if(AudioMuffler.VacuumMuffling == 0 && vessel != FlightGlobals.ActiveVessel) {
-                                airSimFilter.LowpassFrequency *= Mathf.Clamp01((float)vessel.atmDensity);
-                            }
+                            airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMufflingFrequency : RSE.MufflingFrequency;
                         }
                     }
 
-                    if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
+                    if(AirSimFilters.ContainsKey(source) && !AudioMuffler.AirSimulation) {
                         UnityEngine.Object.Destroy(AirSimFilters[source]);
                         AirSimFilters.Remove(source);
                     }
@@ -105,7 +103,7 @@ namespace RocketSoundEnhancement
             if(!initialized)
                 return;
 
-            if(Settings.Instance.AirSimulation) {
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
 
                 if(vessel.GetComponent<ShipEffects>() != null) {
@@ -175,6 +173,18 @@ namespace RocketSoundEnhancement
 
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
 
+                if(AudioMuffler.AirSimulation) {
+                    if(UseAirSimFilters) {
+                        source.outputAudioMixerGroup = RSE.AirSimMixer;
+                    } else {
+                        if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
+                            source.outputAudioMixerGroup = RSE.InternalMixer;
+                        } else {
+                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMixer : RSE.ExternalMixer;
+                        }
+                    }
+                }
+
                 Sources.Add(sourceLayerName, source);
 
                 if(soundLayer.pitchVariation) {
@@ -205,7 +215,7 @@ namespace RocketSoundEnhancement
                 source.pitch *= pitchVariation;
             }
 
-            if(Settings.Instance.AirSimulation) {
+            if(AudioMuffler.AirSimulation) {
                 source.pitch *= Doppler;
             }
 
@@ -218,10 +228,10 @@ namespace RocketSoundEnhancement
                 AudioClip clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
                 float volumeScale = rndOneShotVol ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
 
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, false, false,true, volumeScale, clip);
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, false, false,true, volumeScale, clip);
 
             } else {
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, soundLayer.loop, soundLayer.loopAtRandom);
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
             }
             
         }

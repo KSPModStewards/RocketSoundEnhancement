@@ -85,7 +85,7 @@ namespace RocketSoundEnhancement
                 return;
 
             var sourceKeys = Sources.Keys;
-            if(Settings.Instance.AirSimulation) {
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                 float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
                 float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 2000 * 10)));
                 foreach(var source in sourceKeys) {
@@ -102,7 +102,9 @@ namespace RocketSoundEnhancement
                             airSimFilter = AirSimFilters[source];
                         }
 
-                        airSimFilter.LowpassFrequency = Mathf.Lerp(1000f, 22000f, distanceInv);
+                        float muffling = vessel == FlightGlobals.ActiveVessel ? RSE.FocusMufflingFrequency : RSE.MufflingFrequency;
+
+                        airSimFilter.LowpassFrequency = Mathf.Lerp(muffling * 0.05f, muffling, distanceInv);
 
                     } else {
                         if(AirSimFilters.ContainsKey(source)) {
@@ -114,7 +116,7 @@ namespace RocketSoundEnhancement
             }
 
             foreach(var source in sourceKeys) {
-                if(AirSimFilters.ContainsKey(source) && !Settings.Instance.AirSimulation) {
+                if(AirSimFilters.ContainsKey(source) && !AudioMuffler.AirSimulation) {
                     UnityEngine.Object.Destroy(AirSimFilters[source]);
                     AirSimFilters.Remove(source);
                 }
