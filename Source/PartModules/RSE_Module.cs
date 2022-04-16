@@ -77,13 +77,6 @@ namespace RocketSoundEnhancement
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-
-                if(vessel.GetComponent<ShipEffects>() != null) {
-                    machOriginCameraNormal = vessel.GetComponent<ShipEffects>().MachOriginCameraNormal;
-                } else {
-                    machOriginCameraNormal = (CameraManager.GetCurrentCamera().transform.position - transform.position).normalized;
-                }
-
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
 
                 CalculateDoppler();
@@ -200,15 +193,14 @@ namespace RocketSoundEnhancement
                     
                     airSimFilter.Distance = distance;
                     airSimFilter.Velocity = (float)vessel.srfSpeed;
-                    airSimFilter.Angle = Vector3.Dot(machOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
+                    airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
                     airSimFilter.VesselSize = vessel.vesselSize.magnitude;
                     airSimFilter.SpeedOfSound = speedOfSound;
                     airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
                     airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
                     airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-
                 } else {
-                    if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
+                    if(soundLayer.channel == FXChannel.ShipInternal) {
                         source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                     } else {
                         source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;

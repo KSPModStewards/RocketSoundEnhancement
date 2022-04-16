@@ -50,8 +50,9 @@ namespace RocketSoundEnhancement
 
         public void UpdateFilters()
         {
+            float speedOfSound = SpeedOfSound > 0 ? SpeedOfSound : 340.29f;
             float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
-            float machVelocity = (Velocity / SpeedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                     //  Current Mach Tapered by Pressure on Vacuum Approach.
+            float machVelocity = (Velocity / speedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                     //  Current Mach Tapered by Pressure on Vacuum Approach.
             float machVelocityClamped = Mathf.Clamp01(machVelocity);
             float angleAbs = (1 - Angle) * 0.5f;
 

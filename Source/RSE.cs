@@ -445,15 +445,43 @@ namespace RocketSoundEnhancement
         float lastCutoffFreq;
         float lastInteriorCutoffFreq;
 
+        List<AudioSource> cachSources = new List<AudioSource>();
+
         void LateUpdate()
         {
+            if(!AudioMuffler.AirSimulation) {
+                if(cachSources.Count > 0) {
+                    foreach(var source in cachSources.ToList()) {
+                        if(source != null) {
+                            source.outputAudioMixerGroup = null;
+                        }
+                        cachSources.Remove(source);
+                    }
+                }
+            }
+
             if(gamePaused || !AudioMuffler.EnableMuffling) {
-                if(!AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation)
+                if(!AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                     AudioMuffler.AirSimulation = false;
+                }
                 return;
             }
 
             if(AudioMuffler.AirSimulation && Mixer != null) {
+                var soundSources = GameObject.FindObjectsOfType<AudioSource>().ToList();
+                foreach(var soundSource in soundSources) {
+                    if(soundSource == null || StockSources.Contains(soundSource) || ChattererSources.Contains(soundSource))
+                        continue;
+
+                    if(soundSource.outputAudioMixerGroup == null) {
+                        soundSource.outputAudioMixerGroup = ExternalMixer;
+                        if(!cachSources.Contains(soundSource)) {
+                            cachSources.Add(soundSource);
+                        }
+                    }
+                }
+
+
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
                     float interiorMuffling = AudioMuffler.InteriorMuffling;

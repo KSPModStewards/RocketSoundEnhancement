@@ -40,6 +40,9 @@ namespace RocketSoundEnhancement
                 Default();
                 Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
             }
+            if(AirSimulation) {
+                Debug.Log("[RSE]: Audio Muffler: Air Simulation Enabled");
+            }
         }
 
         public static void Default()

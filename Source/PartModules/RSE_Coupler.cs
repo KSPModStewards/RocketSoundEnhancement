@@ -45,12 +45,16 @@ namespace RocketSoundEnhancement
                                 soundLayer.spread);
 
                             Sources.Add(soundLayer.name, fxGroup.audio);
+
+                            var airSimFilter = Sources[soundLayer.name].gameObject.AddComponent<AirSimulationFilter>();
+                            AirSimFilters.Add(soundLayer.name, airSimFilter);
+                            airSimFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation;
+                            airSimFilter.EnableLowpassFilter = true;
                         }
                     }
                 }
             }
 
-            GameEvents.onGameUnpause.Add(UpdateVolumes);
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
             initialized = true;
@@ -70,11 +74,30 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void UpdateVolumes()
+        void LateUpdate()
         {
-            foreach(var sound in SoundLayers) {
-                if(Sources.ContainsKey(sound.name)) {
-                    Sources[sound.name].volume = sound.volume * GameSettings.SHIP_VOLUME;
+            if(!HighLogic.LoadedSceneIsFlight)
+                return;
+
+            var sourceKeys = Sources.Keys;
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
+                foreach(var source in sourceKeys) {
+                    if(AirSimFilters.ContainsKey(source)) {
+                        AirSimulationFilter airSimFilter = AirSimFilters[source];
+                        if(Sources[source].isPlaying) {
+                            airSimFilter.enabled = true;
+                            airSimFilter.Distance = distance;
+                            airSimFilter.Velocity = (float)vessel.srfSpeed;
+                            airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, vessel.velocityD.normalized);
+                            airSimFilter.VesselSize = vessel.vesselSize.magnitude;
+                            airSimFilter.SpeedOfSound = (float)vessel.speedOfSound;
+                            airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
+                            airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                        } else {
+                            airSimFilter.enabled = false;
+                        }
+                    }
                 }
             }
         }
@@ -85,44 +108,18 @@ namespace RocketSoundEnhancement
                 return;
 
             var sourceKeys = Sources.Keys;
-            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
-                float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
-                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 2000 * 10)));
-                foreach(var source in sourceKeys) {
-                    if(Sources[source].isPlaying) {
-                        AirSimulationFilter airSimFilter;
-                        if(!AirSimFilters.ContainsKey(source)) {
-                            airSimFilter = Sources[source].gameObject.AddComponent<AirSimulationFilter>();
-                            AirSimFilters.Add(source, airSimFilter);
-
-                            airSimFilter.enabled = true;
-                            airSimFilter.EnableLowpassFilter = true;
-                            airSimFilter.EnableSimulationUpdating = false;
-                        } else {
-                            airSimFilter = AirSimFilters[source];
-                        }
-
-                        float muffling = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-
-                        airSimFilter.LowpassFrequency = Mathf.Lerp(muffling * 0.05f, muffling, distanceInv);
-
+            foreach(var source in sourceKeys) {
+                if(source == "decouple" || source == "activate") {
+                    if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                        Sources[source].outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                     } else {
-                        if(AirSimFilters.ContainsKey(source)) {
-                            UnityEngine.Object.Destroy(AirSimFilters[source]);
-                            AirSimFilters.Remove(source);
+                        AirSimFilters[source].enabled = false;
+                        if(Sources[source].outputAudioMixerGroup != null) {
+                            Sources[source].outputAudioMixerGroup = null;
                         }
                     }
-                }
-            }
-
-            foreach(var source in sourceKeys) {
-                if(AirSimFilters.ContainsKey(source) && !AudioMuffler.AirSimulation) {
-                    UnityEngine.Object.Destroy(AirSimFilters[source]);
-                    AirSimFilters.Remove(source);
-                }
-
-                if(source == "decouple" || source == "activate")
                     continue;
+                }
 
                 if(!Sources[source].isPlaying) {
                     UnityEngine.Object.Destroy(Sources[source]);
@@ -151,6 +148,10 @@ namespace RocketSoundEnhancement
                     Sources.Add(soundLayer.name, source);
                 }
 
+                if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                    source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                }
+                
                 var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[0]);
                 if(clip != null) {
                     source.PlayOneShot(clip);
@@ -164,7 +165,6 @@ namespace RocketSoundEnhancement
                 GameObject.Destroy(Sources[source]);
             }
 
-            GameEvents.onGameUnpause.Remove(UpdateVolumes);
             GameEvents.onDockingComplete.Remove(onDock);
             GameEvents.onPartUndockComplete.Remove(onUnDock);
         }

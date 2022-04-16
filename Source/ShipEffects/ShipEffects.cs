@@ -11,7 +11,8 @@ namespace RocketSoundEnhancement
         public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
-        Dictionary<string, float> Controls = new Dictionary<string, float>();
+        Dictionary<string, float> VolumeControls = new Dictionary<string, float>();
+        Dictionary<string, float> PitchControls = new Dictionary<string, float>();
 
         public float TotalMass;
         public float DryMass;
@@ -37,7 +38,8 @@ namespace RocketSoundEnhancement
         {
             SoundLayerGroups.Clear();
             Sources.Clear();
-            Controls.Clear();
+            VolumeControls.Clear();
+            PitchControls.Clear();
 
             if(vessel.Parts.Count <= 1) {
                 if(vessel.Parts[0].PhysicsSignificance == 1 || vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
@@ -217,6 +219,9 @@ namespace RocketSoundEnhancement
 
                 float rawControl = GetController(soundLayerGroup.Key);
                 foreach(var soundLayer in soundLayerGroup.Value) {
+                    if(vessel.crewableParts == 0 && soundLayer.channel == FXChannel.ShipInternal)
+                        continue;
+
                     string sourceLayerName = soundLayerGroup.Key.ToString() + "_" + soundLayer.name;
 
                     PlaySoundLayer(gameObject, sourceLayerName, soundLayer, rawControl);
@@ -240,7 +245,7 @@ namespace RocketSoundEnhancement
 
                         UnityEngine.Object.Destroy(Sources[source].gameObject);
                         Sources.Remove(source);
-                        Controls.Remove(source);
+                        VolumeControls.Remove(source);
                     }
                 }
             }
@@ -279,19 +284,8 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, bool smoothControl = true, bool oneShot = false)
+        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control, bool smoothControl = true, bool oneShot = false)
         {
-            float control = rawControl;
-
-            if(smoothControl) {
-                if(!Controls.ContainsKey(sourceLayerName)) {
-                    Controls.Add(sourceLayerName, 0);
-                }
-                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 0.4f) * (60 * TimeWarp.deltaTime));
-                control = Controls[sourceLayerName];
-            }
-
-            control = Mathf.Round(control * 1000.0f) * 0.001f;
             float finalVolume;
             float finalPitch;
             if(soundLayer.useFloatCurve) {
@@ -308,6 +302,21 @@ namespace RocketSoundEnhancement
 
             if(soundLayer.massToPitch != null) {
                 finalPitch *= soundLayer.massToPitch.Value(TotalMass);
+            }
+
+            if(smoothControl) {
+                if(!VolumeControls.ContainsKey(sourceLayerName)) {
+                    VolumeControls.Add(sourceLayerName, 0);
+                }
+                if(!PitchControls.ContainsKey(sourceLayerName)) {
+                    PitchControls.Add(sourceLayerName, 1);
+                }
+
+                VolumeControls[sourceLayerName] = Mathf.MoveTowards(VolumeControls[sourceLayerName], finalVolume, AudioUtility.SmoothControl.Evaluate(finalVolume) * (10 * Time.deltaTime));
+                PitchControls[sourceLayerName] = Mathf.MoveTowards(PitchControls[sourceLayerName], finalPitch, AudioUtility.SmoothControl.Evaluate(finalVolume) * (10 * Time.deltaTime));
+                finalVolume = VolumeControls[sourceLayerName];
+                finalPitch = PitchControls[sourceLayerName];
+
             }
 
             //For Looped sounds cleanup
@@ -357,12 +366,8 @@ namespace RocketSoundEnhancement
                     airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
                     airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
                     airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-                }
-
-                if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
-                    source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                 } else {
-                    source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                    source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                 }
             } else {
                 if(source.outputAudioMixerGroup != null)
