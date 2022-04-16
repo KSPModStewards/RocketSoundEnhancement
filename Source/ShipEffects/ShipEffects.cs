@@ -311,7 +311,7 @@ namespace RocketSoundEnhancement
                 if(!Controls.ContainsKey(sourceLayerName)) {
                     Controls.Add(sourceLayerName, 0);
                 }
-                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 20) * TimeWarp.deltaTime);
+                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, Mathf.Max(control, 0.04f) * (60 * TimeWarp.deltaTime));
                 control = Controls[sourceLayerName];
             }
 

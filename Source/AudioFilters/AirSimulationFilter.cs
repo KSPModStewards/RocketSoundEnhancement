@@ -25,7 +25,7 @@ namespace RocketSoundEnhancement
 
         public float MaxDistance = 2000;
         public float FarLowpass = 1000f;
-        public float AngleHighPass = 250;
+        public float AngleHighPass = 500;
         public float MaxCombDelay = 20;
         public float MaxCombMix = 0.5f;
         public float MaxDistortion = 0.5f;
@@ -53,9 +53,9 @@ namespace RocketSoundEnhancement
             float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
             float machVelocity = (Velocity / SpeedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                     //  Current Mach Tapered by Pressure on Vacuum Approach.
             float machVelocityClamped = Mathf.Clamp01(machVelocity);
+            float angleAbs = (1 - Angle) * 0.5f;
 
             if(EnableCombFilter) {
-                float angleAbs = (1 - Angle) * 0.5f;
                 //float soundDelay = Mathf.Sqrt(Mathf.Pow(Distance, 2) + Mathf.Pow(Altitude, 2)) / SpeedOfSound;                //  Calculate sound delay reflected from the surface
                 //soundDelay = Mathf.Min(Mathf.Abs(soundDelay - (Distance / SpeedOfSound)) * 1000, MaxCombDelay);               //  get the time difference between origin and reverb
                 //CombDelay = soundDelay;
@@ -77,7 +77,7 @@ namespace RocketSoundEnhancement
             }
 
             if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv);
+                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv) * angleAbs;
             }
         }
 
