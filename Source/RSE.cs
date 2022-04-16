@@ -272,31 +272,17 @@ namespace RocketSoundEnhancement
 
                 GUILayout.EndHorizontal();
                 if(showAdvanceLowpass) {
-                    GUILayout.Label("Basic Muffler Enabled: " + lowpassFilter.enabled);
-                    GUILayout.BeginHorizontal();
-                    AudioMuffler.AirSimulation = GUILayout.Toggle(AudioMuffler.AirSimulation, "Air Simulation", GUILayout.Width(leftWidth));
-                    GUILayout.Label("Experimental, High CPU Usage.");
-                    GUILayout.EndHorizontal();
-                    AudioMuffler.AffectChatterer = GUILayout.Toggle(AudioMuffler.AffectChatterer, "Affect Chatterer");
-
                     if(AudioMuffler.Preset == "Custom") {
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label("Vacuum Muffling", GUILayout.Width(smlLeftWidth));
-                        AudioMuffler.VacuumMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.VacuumMuffling, 0, 22200),1);
-                        GUILayout.Label(AudioMuffler.VacuumMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.Label("Interior Muffling");
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("In Atmosphere", GUILayout.Width(smlLeftWidth));
-                        AudioMuffler.InteriorMufflingAtm = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMufflingAtm, 0, 22200),1);
-                        GUILayout.Label(AudioMuffler.InteriorMufflingAtm.ToString() + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.Label("Exterior Muffling", GUILayout.Width(smlLeftWidth));
+                        AudioMuffler.ExteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.ExteriorMuffling, 0, 22200),1);
+                        GUILayout.Label(AudioMuffler.ExteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label("In Vacuum", GUILayout.Width(smlLeftWidth));
-                        AudioMuffler.InteriorMufflingVac = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMufflingVac, 0, 22200),1);
-                        GUILayout.Label(AudioMuffler.InteriorMufflingVac.ToString() + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.Label("Interior Muffling", GUILayout.Width(smlLeftWidth));
+                        AudioMuffler.InteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMuffling, 0, 22200),1);
+                        GUILayout.Label(AudioMuffler.InteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
@@ -315,8 +301,9 @@ namespace RocketSoundEnhancement
                         lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
                         GUILayout.Label(lowpassFilter.cutoffFrequency.ToString("#.#") + "hz", GUILayout.Width(rightWidth));
                     }
-
                     GUILayout.EndHorizontal();
+                    AudioMuffler.AirSimulation = GUILayout.Toggle(AudioMuffler.AirSimulation, "Air Simulation: Experimental, High CPU Usage. Only RSE Enabled Parts Supported");
+                    AudioMuffler.AffectChatterer = GUILayout.Toggle(AudioMuffler.AffectChatterer, "Affect Chatterer");
                 }
             } else {
                 GUILayout.EndHorizontal();
@@ -454,9 +441,9 @@ namespace RocketSoundEnhancement
             if(Mixer != null && AudioMuffler.AirSimulation) {
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-                    float interiorMuffling = Mathf.Lerp(AudioMuffler.InteriorMufflingVac, AudioMuffler.InteriorMufflingAtm, atmDensity);
+                    float interiorMuffling = AudioMuffler.InteriorMuffling;
                     float maxFrequency = InternalCamera.Instance.isActive ? interiorMuffling : 22200;
-                    float atmCutOff = Mathf.Lerp(AudioMuffler.VacuumMuffling, maxFrequency, atmDensity);
+                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity);
 
                     MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, atmCutOff, 5000);
                     lastCutoffFreq = MufflingFrequency;
@@ -492,8 +479,8 @@ namespace RocketSoundEnhancement
                     return;
 
                 float atmDensity = (float)FlightGlobals.ActiveVessel.atmDensity;
-                float interiorMuffling = Mathf.Lerp(AudioMuffler.InteriorMufflingVac, AudioMuffler.InteriorMufflingAtm, atmDensity);
-                float exteriorMuffling = Mathf.Lerp(AudioMuffler.VacuumMuffling, 22200, atmDensity);
+                float interiorMuffling = AudioMuffler.InteriorMuffling;
+                float exteriorMuffling = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensity);
 
                 float targetFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
                 if(MapView.MapCamera.isActiveAndEnabled) {

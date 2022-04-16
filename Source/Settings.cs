@@ -184,14 +184,11 @@ namespace RocketSoundEnhancement
                         AudioMuffler.Preset = presetName;
                     }
 
-                    if(!float.TryParse(presetNode.GetValue("InteriorMufflingAtm"), out lowpassFilterPreset.InteriorMufflingAtm)) {
-                        lowpassFilterPreset.InteriorMufflingAtm = AudioMuffler.InteriorMufflingAtm;
+                    if(!float.TryParse(presetNode.GetValue("InteriorMuffling"), out lowpassFilterPreset.InteriorMuffling)) {
+                        lowpassFilterPreset.InteriorMuffling = AudioMuffler.InteriorMuffling;
                     }
-                    if(!float.TryParse(presetNode.GetValue("InteriorMufflingVac"), out lowpassFilterPreset.InteriorMufflingVac)) {
-                        lowpassFilterPreset.InteriorMufflingVac = AudioMuffler.InteriorMufflingVac;
-                    }
-                    if(!float.TryParse(presetNode.GetValue("VacuumMuffling"), out lowpassFilterPreset.VacuumMuffling)) {
-                        lowpassFilterPreset.VacuumMuffling = AudioMuffler.VacuumMuffling;
+                    if(!float.TryParse(presetNode.GetValue("ExteriorMuffling"), out lowpassFilterPreset.ExteriorMuffling)) {
+                        lowpassFilterPreset.ExteriorMuffling = AudioMuffler.ExteriorMuffling;
                     }
 
                     if(!AudioMuffler.Presets.ContainsKey(presetName)) {
@@ -210,9 +207,8 @@ namespace RocketSoundEnhancement
 
                 AudioMuffler.Default();
                 var defaultPresetNode = defaultLowpassFilterNode.AddNode("Custom");
-                defaultPresetNode.AddValue("InteriorMufflingAtm", AudioMuffler.DefaultLowpassFilterPreset.InteriorMufflingAtm);
-                defaultPresetNode.AddValue("InteriorMufflingVac", AudioMuffler.DefaultLowpassFilterPreset.InteriorMufflingVac);
-                defaultPresetNode.AddValue("VacuumMuffling", AudioMuffler.DefaultLowpassFilterPreset.VacuumMuffling);
+                defaultPresetNode.AddValue("InteriorMuffling", AudioMuffler.DefaultLowpassFilterPreset.InteriorMuffling);
+                defaultPresetNode.AddValue("ExteriorMuffling", AudioMuffler.DefaultLowpassFilterPreset.ExteriorMuffling);
             }
             #endregion
 
@@ -254,9 +250,8 @@ namespace RocketSoundEnhancement
                 if(AudioMuffler.Preset == "Custom") {
                     var customPreset = lowpassFilterNode.GetNode("Custom");
 
-                    customPreset.SetValue("InteriorMufflingAtm", AudioMuffler.InteriorMufflingAtm, true);
-                    customPreset.SetValue("InteriorMufflingVac", AudioMuffler.InteriorMufflingVac, true);
-                    customPreset.SetValue("VacuumMuffling", AudioMuffler.VacuumMuffling, true);
+                    customPreset.SetValue("InteriorMuffling", AudioMuffler.InteriorMuffling, true);
+                    customPreset.SetValue("ExteriorMuffling", AudioMuffler.ExteriorMuffling, true);
                 }
             }
 

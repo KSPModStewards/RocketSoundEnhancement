@@ -5,9 +5,8 @@ namespace RocketSoundEnhancement
 {
     public struct LowpassFilterPreset
     {
-        public float InteriorMufflingAtm;
-        public float InteriorMufflingVac;
-        public float VacuumMuffling;
+        public float InteriorMuffling;
+        public float ExteriorMuffling;
     }
 
     public static class AudioMuffler
@@ -17,9 +16,8 @@ namespace RocketSoundEnhancement
         {
             get {
                 var defaultPreset = new LowpassFilterPreset {
-                    InteriorMufflingAtm = 3000,
-                    InteriorMufflingVac = 1500,
-                    VacuumMuffling = 22200,
+                    InteriorMuffling = 1500,
+                    ExteriorMuffling = 22200,
                 };
                 return defaultPreset;
             }
@@ -29,16 +27,14 @@ namespace RocketSoundEnhancement
         public static bool AirSimulation = false;
         public static bool AffectChatterer = false;
         public static string Preset;
-        public static float InteriorMufflingAtm = 3000;
-        public static float InteriorMufflingVac = 1500;
-        public static float VacuumMuffling = 22200;
+        public static float InteriorMuffling = 1500;
+        public static float ExteriorMuffling = 22200;
 
         public static void ApplyPreset()
         {
             if(Preset != string.Empty && Presets.ContainsKey(Preset)) {
-                InteriorMufflingAtm = Presets[Preset].InteriorMufflingAtm;
-                InteriorMufflingVac = Presets[Preset].InteriorMufflingVac;
-                VacuumMuffling = Presets[Preset].VacuumMuffling;
+                InteriorMuffling = Presets[Preset].InteriorMuffling;
+                ExteriorMuffling = Presets[Preset].ExteriorMuffling;
                 Debug.Log("[RSE]: Audio Muffler: " + Preset + " Preset Applied");
             } else {
                 Default();
@@ -48,9 +44,8 @@ namespace RocketSoundEnhancement
 
         public static void Default()
         {
-            InteriorMufflingAtm = DefaultLowpassFilterPreset.InteriorMufflingAtm;
-            InteriorMufflingVac = DefaultLowpassFilterPreset.InteriorMufflingVac;
-            VacuumMuffling = DefaultLowpassFilterPreset.VacuumMuffling;
+            InteriorMuffling = DefaultLowpassFilterPreset.InteriorMuffling;
+            ExteriorMuffling = DefaultLowpassFilterPreset.ExteriorMuffling;
 
             if(!Presets.ContainsKey("Custom")) {
                 Presets.Add("Custom", DefaultLowpassFilterPreset);

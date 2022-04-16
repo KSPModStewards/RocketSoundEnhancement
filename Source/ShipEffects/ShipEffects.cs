@@ -24,7 +24,6 @@ namespace RocketSoundEnhancement
         public Vector3 MachOriginCameraNormal = new Vector3();
         public bool SonicBoomed;
         float pastAcceleration;
-        float machPassVolume;
 
         public bool initialized;
         bool gamePause;
@@ -157,7 +156,6 @@ namespace RocketSoundEnhancement
                 float angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
                 MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
                 MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
-                machPassVolume = 1f - Mathf.Clamp01(angle / MachAngle) * Mathf.Clamp01(machVelocity);
 
                 if(vessel.atmDensity > 0) {
                     if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !SonicBoomed) {
@@ -203,13 +201,6 @@ namespace RocketSoundEnhancement
                             continue;
 
                         source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-
-                        if(source.isPlaying) {
-                            float originalVol = source.volume;
-                            float distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, part.transform.position);
-                            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(distance / 5000 * 10)));
-                            source.volume = originalVol * machPassVolume * distanceInv;
-                        }
                     }
                 }
             }
