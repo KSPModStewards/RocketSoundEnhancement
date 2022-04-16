@@ -180,11 +180,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void GetStockSources()
-        {
-
-        }
-
+        List<AudioSource> stockSources = new List<AudioSource>();
         public void LateUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
@@ -199,8 +195,19 @@ namespace RocketSoundEnhancement
                     foreach(var source in sources) {
                         if(source == null)
                             continue;
+                        if(!stockSources.Contains(source))
+                            stockSources.Add(source);
 
                         source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                    }
+                }
+            } else {
+                if(stockSources.Count > 0) {
+                    foreach(var source in stockSources.ToList()) {
+                        if(source != null && source.outputAudioMixerGroup != null) {
+                            source.outputAudioMixerGroup = null;
+                        }
+                        stockSources.Remove(source);
                     }
                 }
             }
@@ -300,6 +307,9 @@ namespace RocketSoundEnhancement
                 } else {
                     source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                 }
+            } else {
+                if(source.outputAudioMixerGroup != null)
+                    source.outputAudioMixerGroup = null;
             }
 
             if(soundLayer.useFloatCurve) {

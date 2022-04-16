@@ -296,13 +296,13 @@ namespace RocketSoundEnhancement
                     bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
                     if(AudioMuffler.AirSimulation) {
                         MufflingFrequency = GUILayout.HorizontalSlider(MufflingFrequency, 0, 22200);
-                        GUILayout.Label(MufflingFrequency.ToString("#.#") + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.Label(MufflingFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
                     } else {
                         lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
-                        GUILayout.Label(lowpassFilter.cutoffFrequency.ToString("#.#") + "hz", GUILayout.Width(rightWidth));
+                        GUILayout.Label(lowpassFilter.cutoffFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
                     }
                     GUILayout.EndHorizontal();
-                    AudioMuffler.AirSimulation = GUILayout.Toggle(AudioMuffler.AirSimulation, "Air Simulation: Experimental, High CPU Usage. Only RSE Enabled Parts Supported");
+                    AudioMuffler.AirSimulation = GUILayout.Toggle(AudioMuffler.AirSimulation, "Air Simulation: High CPU Usage. Only RSE Enabled Parts Supported");
                     AudioMuffler.AffectChatterer = GUILayout.Toggle(AudioMuffler.AffectChatterer, "Affect Chatterer");
                 }
             } else {
@@ -367,7 +367,7 @@ namespace RocketSoundEnhancement
 
                     foreach(var soundLayerGroup in seModule.SoundLayerGroups) {
                         layerInfo +=
-                            "Group Name: " + soundLayerGroup.Key.ToString() + "\r\n";
+                            soundLayerGroup.Key.ToString() + "\r\n";
 
                         foreach(var soundLayer in soundLayerGroup.Value) {
                             string sourceLayerName = soundLayerGroup.Key.ToString() + "_" + soundLayer.name;

@@ -193,6 +193,9 @@ namespace RocketSoundEnhancement
                         source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                     }
                 }
+            } else {
+                if(source.outputAudioMixerGroup != null)
+                    source.outputAudioMixerGroup = null;
             }
 
             if(soundLayer.useFloatCurve) {
