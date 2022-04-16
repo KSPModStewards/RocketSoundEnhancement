@@ -70,7 +70,7 @@ namespace RocketSoundEnhancement
                 float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(Distance / VesselSize);  //  For Highpass when the camera is at front
                 float machPass = 1f - Mathf.Clamp01(angleDegrees / machAngle) * machVelocityClamped;                            //  The Mach Cone
                 machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                       //  Soften Mach Cone by Distance
-                //machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                     //  Taper Mach Effects if Near the Vessel.
+                machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                     //  Taper Mach Effects if Near the Vessel.
 
                 LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv) * Mathf.Max(machPass, 0.05f);       //  Only make it quieter outside the Cone, don't make it silent.
                 LowpassFrequency *= RSE.Instance.WindModulation();

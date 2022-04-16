@@ -448,7 +448,7 @@ namespace RocketSoundEnhancement
         void LateUpdate()
         {
             if(gamePaused || !AudioMuffler.EnableMuffling) {
-                if(AudioMuffler.AirSimulation)
+                if(!AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation)
                     AudioMuffler.AirSimulation = false;
                 return;
             }
