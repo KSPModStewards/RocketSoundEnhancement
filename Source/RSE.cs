@@ -434,7 +434,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        float windModulationAmount = 0.2f;
+        float windModulationAmount = 0.1f;
         float windModulationSpeed = 2f;
         public float WindModulation()
         {
