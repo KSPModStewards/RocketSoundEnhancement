@@ -10,6 +10,7 @@ namespace RocketSoundEnhancement
     {
         public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
+        public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
         Dictionary<string, float> Controls = new Dictionary<string, float>();
 
         public float TotalMass;
@@ -18,6 +19,8 @@ namespace RocketSoundEnhancement
         public float Jerk;
         public float ThrustAccel;
         public float DynamicPressure;
+        public float Distance;
+        public float Angle;
         public float MachAngle;
         public float MachPass;
         public float SpeedOfSound = 340.29f;
@@ -143,7 +146,7 @@ namespace RocketSoundEnhancement
             DynamicPressure = (float)vessel.dynamicPressurekPa;
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
-                
+                Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 SpeedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
@@ -153,9 +156,9 @@ namespace RocketSoundEnhancement
 
                 MachOriginCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
                 float machVelocity = ((float)vessel.srfSpeed / SpeedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
-                float angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
+                Angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
                 MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
-                MachPass = 1f - Mathf.Clamp01(angle / MachAngle);
+                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle);
 
                 if(vessel.atmDensity > 0) {
                     if(vessel.srfSpeed > SpeedOfSound && MachPass > 0 && !SonicBoomed) {
@@ -176,39 +179,6 @@ namespace RocketSoundEnhancement
                     }
                 } else {
                     SonicBoomed = false;
-                }
-            }
-        }
-
-        List<AudioSource> stockSources = new List<AudioSource>();
-        public void LateUpdate()
-        {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
-                return;
-
-            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
-                foreach(var part in vessel.Parts.ToList()) {
-                    var sources = part.gameObject.GetComponents<AudioSource>().ToList();
-                    sources.AddRange(part.gameObject.GetComponentsInChildren<AudioSource>());
-                    sources = sources.Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
-
-                    foreach(var source in sources) {
-                        if(source == null)
-                            continue;
-                        if(!stockSources.Contains(source))
-                            stockSources.Add(source);
-
-                        source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                    }
-                }
-            } else {
-                if(stockSources.Count > 0) {
-                    foreach(var source in stockSources.ToList()) {
-                        if(source != null && source.outputAudioMixerGroup != null) {
-                            source.outputAudioMixerGroup = null;
-                        }
-                        stockSources.Remove(source);
-                    }
                 }
             }
         }
@@ -249,16 +219,85 @@ namespace RocketSoundEnhancement
                     string sourceLayerName = soundLayerGroup.Key.ToString() + "_" + soundLayer.name;
 
                     PlaySoundLayer(gameObject, sourceLayerName, soundLayer, rawControl);
+
+                    if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation && soundLayer.channel == FXChannel.ShipBoth) {
+                        if(Sources[sourceLayerName].isPlaying) {
+                            AirSimulationFilter airSimFilter;
+                            if(!AirSimFilters.ContainsKey(sourceLayerName)) {
+                                airSimFilter = Sources[sourceLayerName].gameObject.AddComponent<AirSimulationFilter>();
+                                AirSimFilters.Add(sourceLayerName, airSimFilter);
+
+                                airSimFilter.enabled = true;
+                                airSimFilter.EnableLowpassFilter = true;
+                                airSimFilter.EnableWaveShaperFilter = true;
+                            } else {
+                                airSimFilter = AirSimFilters[sourceLayerName];
+                            }
+
+                            airSimFilter.Distance = Distance;
+                            airSimFilter.Velocity = (float)vessel.srfSpeed;
+                            airSimFilter.Angle = Angle;
+                            airSimFilter.VesselSize = vessel.vesselSize.magnitude;
+                            airSimFilter.SpeedOfSound = SpeedOfSound;
+                            airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
+                            airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                            airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
+                        }
+                    }
                 }
             }
 
             if(Sources.Count > 0) {
                 var sourceKeys = Sources.Keys.ToList();
                 foreach(var source in sourceKeys) {
+
+                    if(AirSimFilters.ContainsKey(source) && !AudioMuffler.AirSimulation) {
+                        UnityEngine.Object.Destroy(AirSimFilters[source]);
+                        AirSimFilters.Remove(source);
+                    }
+
                     if(!Sources[source].isPlaying) {
+                        if(AirSimFilters.ContainsKey(source)) {
+                            UnityEngine.Object.Destroy(AirSimFilters[source]);
+                            AirSimFilters.Remove(source);
+                        }
+
                         UnityEngine.Object.Destroy(Sources[source].gameObject);
                         Sources.Remove(source);
                         Controls.Remove(source);
+                    }
+                }
+            }
+        }
+
+        List<AudioSource> stockSources = new List<AudioSource>();
+        public void LateUpdate()
+        {
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
+                return;
+
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                foreach(var part in vessel.Parts.ToList()) {
+                    var sources = part.gameObject.GetComponents<AudioSource>().ToList();
+                    sources.AddRange(part.gameObject.GetComponentsInChildren<AudioSource>());
+                    sources = sources.Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
+
+                    foreach(var source in sources) {
+                        if(source == null)
+                            continue;
+                        if(!stockSources.Contains(source))
+                            stockSources.Add(source);
+
+                        source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                    }
+                }
+            } else {
+                if(stockSources.Count > 0) {
+                    foreach(var source in stockSources.ToList()) {
+                        if(source != null && source.outputAudioMixerGroup != null) {
+                            source.outputAudioMixerGroup = null;
+                        }
+                        stockSources.Remove(source);
                     }
                 }
             }
