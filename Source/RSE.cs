@@ -353,10 +353,14 @@ namespace RocketSoundEnhancement
                               "Speed Of Sound: " + ((float)vessel.speedOfSound).ToString("0.00") + "\r\n" +
                               "Thrust Acceleration: " + seModule.ThrustAccel.ToString("0.00") + "\r\n" +
                               "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
-                              "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n" +
-                              "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
-                              "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
-                              "SonicBoom: " + seModule.SonicBoomed + "\r\n";
+                              "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
+
+                if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+                    info +=
+                        "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
+                        "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
+                        "SonicBoom: " + seModule.SonicBoomed + "\r\n";
+                }
 
                 GUILayout.Label(info);
                 shipEffectsScrollPos = GUILayout.BeginScrollView(shipEffectsScrollPos, GUILayout.Height(windowHeight));
@@ -408,7 +412,6 @@ namespace RocketSoundEnhancement
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 
-
         public AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
         public AudioMixerGroup AirSimMixer { get { return Mixer.FindMatchingGroups("AIRSIM")[0]; } }
         public AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
@@ -431,19 +434,31 @@ namespace RocketSoundEnhancement
             }
         }
 
+        float windModulationAmount = 0.2f;
+        float windModulationSpeed = 2f;
+        public float WindModulation()
+        {
+            float windModulation = 1 - windModulationAmount + Mathf.PerlinNoise(Time.time * windModulationSpeed, 0) * windModulationAmount;
+            return Mathf.Lerp(1, windModulation, Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity));
+        }
+
         float lastCutoffFreq;
         float lastInteriorCutoffFreq;
+
         void LateUpdate()
         {
-            if(gamePaused || !AudioMuffler.EnableMuffling)
+            if(gamePaused || !AudioMuffler.EnableMuffling) {
+                if(AudioMuffler.AirSimulation)
+                    AudioMuffler.AirSimulation = false;
                 return;
+            }
 
-            if(Mixer != null && AudioMuffler.AirSimulation) {
+            if(AudioMuffler.AirSimulation && Mixer != null) {
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
                     float interiorMuffling = AudioMuffler.InteriorMuffling;
                     float maxFrequency = InternalCamera.Instance.isActive ? interiorMuffling : 22200;
-                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity);
+                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity) * WindModulation();
 
                     MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, atmCutOff, 5000);
                     lastCutoffFreq = MufflingFrequency;

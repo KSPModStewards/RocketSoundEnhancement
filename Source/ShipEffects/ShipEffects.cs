@@ -340,7 +340,7 @@ namespace RocketSoundEnhancement
                 source = Sources[sourceLayerName];
             }
 
-            if(AudioMuffler.AirSimulation) {
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                 if(soundLayer.channel == FXChannel.ShipInternal && vessel == FlightGlobals.ActiveVessel) {
                     source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                 } else {

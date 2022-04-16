@@ -183,7 +183,7 @@ namespace RocketSoundEnhancement
                 source = Sources[sourceLayerName];
             }
 
-            if(AudioMuffler.AirSimulation) {
+            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
                 if(UseAirSimFilters) {
                     source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
                 } else {
