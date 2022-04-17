@@ -44,40 +44,45 @@ namespace RocketSoundEnhancement
             SampleRate = AudioSettings.outputSampleRate;
         }
 
-        public void Update()
+        void Start()
         {
             if(EnableSimulationUpdating) {
-                float speedOfSound = SpeedOfSound > 0 ? SpeedOfSound : 340.29f;
-                float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
-                float machVelocity = (Velocity / speedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                     //  Current Mach Tapered by Pressure on Vacuum Approach.
-                float machVelocityClamped = Mathf.Clamp01(machVelocity);
-                float angleAbs = (1 - Angle) * 0.5f;
+                InvokeRepeating("UpdateFilters", 0, 0.02f);
+            }
+        }
 
-                if(EnableCombFilter) {
-                    //float soundDelay = Mathf.Sqrt(Mathf.Pow(Distance, 2) + Mathf.Pow(Altitude, 2)) / SpeedOfSound;                //  Calculate sound delay reflected from the surface
-                    //soundDelay = Mathf.Min(Mathf.Abs(soundDelay - (Distance / SpeedOfSound)) * 1000, MaxCombDelay);               //  get the time difference between origin and reverb
-                    //CombDelay = soundDelay;
+        public void UpdateFilters()
+        {
+            float speedOfSound = SpeedOfSound > 0 ? SpeedOfSound : 340.29f;
+            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
+            float machVelocity = (Velocity / speedOfSound) * Mathf.Clamp01(AtmosphericPressurePa / 404.1f);                     //  Current Mach Tapered by Pressure on Vacuum Approach.
+            float machVelocityClamped = Mathf.Clamp01(machVelocity);
+            float angleAbs = (1 - Angle) * 0.5f;
 
-                    CombDelay = MaxCombDelay * distanceInv;
-                    CombMix = Mathf.Lerp(MaxCombMix, ActiveInternalVessel ? 0 : MaxCombMix * 0.5f * angleAbs, distanceInv);
-                }
+            if(EnableCombFilter) {
+                //float soundDelay = Mathf.Sqrt(Mathf.Pow(Distance, 2) + Mathf.Pow(Altitude, 2)) / SpeedOfSound;                //  Calculate sound delay reflected from the surface
+                //soundDelay = Mathf.Min(Mathf.Abs(soundDelay - (Distance / SpeedOfSound)) * 1000, MaxCombDelay);               //  get the time difference between origin and reverb
+                //CombDelay = soundDelay;
 
-                if(EnableLowpassFilter) {
-                    float angleDegrees = (1 + Angle) * 90f;                                                                         //  Camera Angle
-                    float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //  Mach Angle
-                    float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(Distance / VesselSize);  //  For Highpass when the camera is at front
-                    float machPass = 1f - Mathf.Clamp01(angleDegrees / machAngle) * machVelocityClamped;                            //  The Mach Cone
-                    machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                       //  Soften Mach Cone by Distance
-                    machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                       //  Taper Mach Effects if Near the Vessel.
+                CombDelay = MaxCombDelay * distanceInv;
+                CombMix = Mathf.Lerp(MaxCombMix, ActiveInternalVessel ? 0 : MaxCombMix * 0.5f * angleAbs, distanceInv);
+            }
 
-                    LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv) * Mathf.Max(machPass, 0.05f);       //  Only make it quieter outside the Cone, don't make it silent.
-                    LowpassFrequency *= RSE.Instance.WindModulation();
-                    HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
-                }
+            if(EnableLowpassFilter) {
+                float angleDegrees = (1 + Angle) * 90f;                                                                         //  Camera Angle
+                float machAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;                                   //  Mach Angle
+                float anglePos = Mathf.Clamp01((angleDegrees - machAngle) / machAngle) * Mathf.Clamp01(Distance / VesselSize);  //  For Highpass when the camera is at front
+                float machPass = 1f - Mathf.Clamp01(angleDegrees / machAngle) * machVelocityClamped;                            //  The Mach Cone
+                machPass = Mathf.Clamp01(machPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                       //  Soften Mach Cone by Distance
+                machPass = Mathf.Lerp(1, machPass, Mathf.Clamp01(Distance / VesselSize));                                       //  Taper Mach Effects if Near the Vessel.
 
-                if(EnableWaveShaperFilter) {
-                    Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv) * angleAbs;
-                }
+                LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv) * Mathf.Max(machPass, 0.05f);       //  Only make it quieter outside the Cone, don't make it silent.
+                LowpassFrequency *= RSE.Instance.WindModulation();
+                HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
+            }
+
+            if(EnableWaveShaperFilter) {
+                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv) * angleAbs;
             }
         }
         void OnAudioFilterRead(float[] data, int channels)
