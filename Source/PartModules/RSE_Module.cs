@@ -45,7 +45,7 @@ namespace RocketSoundEnhancement
                 var sourceKeys = Sources.Keys.ToList();
 
                 foreach(var source in sourceKeys) {
-                    if(AirSimFilters.ContainsKey(source) && !AudioMuffler.AirSimulation) {
+                    if(AirSimFilters.ContainsKey(source) && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim) {
                         UnityEngine.Object.Destroy(AirSimFilters[source]);
                         AirSimFilters.Remove(source);
                     }
@@ -75,7 +75,7 @@ namespace RocketSoundEnhancement
             if(!initialized)
                 return;
 
-            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
+            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
 
@@ -144,7 +144,7 @@ namespace RocketSoundEnhancement
                 finalPitch *= pitchVariation;
             }
 
-            if(AudioMuffler.AirSimulation) {
+            if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
                 finalPitch *= Doppler;
             }
 
@@ -174,41 +174,59 @@ namespace RocketSoundEnhancement
                 source = Sources[sourceLayerName];
             }
 
-            if(AudioMuffler.EnableMuffling && AudioMuffler.AirSimulation) {
-                if(UseAirSimFilters && soundLayer.channel == FXChannel.ShipBoth) {
-                    source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
-                    AirSimulationFilter airSimFilter;
-                    if(!AirSimFilters.ContainsKey(sourceLayerName)) {
-                        airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
-
-                        airSimFilter.enabled = true;
-                        airSimFilter.EnableCombFilter = EnableCombFilter;
-                        airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                        airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
-
-                        AirSimFilters.Add(sourceLayerName, airSimFilter);
-                    } else {
-                        airSimFilter = AirSimFilters[sourceLayerName];
-                    }
-                    
-                    airSimFilter.Distance = distance;
-                    airSimFilter.Velocity = (float)vessel.srfSpeed;
-                    airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
-                    airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                    airSimFilter.SpeedOfSound = speedOfSound;
-                    airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-                    airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
-                    airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-                } else {
-                    if(soundLayer.channel == FXChannel.ShipInternal) {
-                        source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
-                    } else {
-                        source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                    }
+            bool processAirSim = false;
+            if(AudioMuffler.EnableMuffling) {
+                switch(AudioMuffler.MufflerQuality) {
+                    case AudioMufflerQuality.Lite:
+                        if(source.outputAudioMixerGroup != null) {
+                            source.outputAudioMixerGroup = null;
+                        }
+                        break;
+                    case AudioMufflerQuality.Full:
+                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                        } else {
+                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
+                        }
+                        break;
+                    case AudioMufflerQuality.AirSim:
+                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                            if(UseAirSimFilters) {
+                                source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
+                                processAirSim = true;
+                            } else {
+                                source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                            }
+                        } else {
+                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
+                        }
+                        break;
                 }
-            } else {
-                if(source.outputAudioMixerGroup != null)
-                    source.outputAudioMixerGroup = null;
+            }
+
+            if(processAirSim) {
+                AirSimulationFilter airSimFilter;
+                if(!AirSimFilters.ContainsKey(sourceLayerName)) {
+                    airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
+
+                    airSimFilter.enabled = true;
+                    airSimFilter.EnableCombFilter = EnableCombFilter;
+                    airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
+                    airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+
+                    AirSimFilters.Add(sourceLayerName, airSimFilter);
+                } else {
+                    airSimFilter = AirSimFilters[sourceLayerName];
+                }
+
+                airSimFilter.Distance = distance;
+                airSimFilter.Velocity = (float)vessel.srfSpeed;
+                airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
+                airSimFilter.VesselSize = vessel.vesselSize.magnitude;
+                airSimFilter.SpeedOfSound = speedOfSound;
+                airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
+                airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 
             source.volume = finalVolume;
@@ -227,7 +245,6 @@ namespace RocketSoundEnhancement
             } else {
                 AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
             }
-            
         }
 
         public void onGamePause()

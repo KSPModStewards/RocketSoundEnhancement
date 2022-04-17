@@ -154,12 +154,12 @@ namespace RocketSoundEnhancement
                     lowpassFilterNode.AddValue("EnableMuffling", true);
                 }
 
-                if(lowpassFilterNode.HasValue("AirSimulation")) {
-                    if(!bool.TryParse(lowpassFilterNode.GetValue("AirSimulation"), out AudioMuffler.AirSimulation)) {
-                        AudioMuffler.AirSimulation = false;
+                if(lowpassFilterNode.HasValue("MufflerQuality")) {
+                    if(!Enum.TryParse(lowpassFilterNode.GetValue("MufflerQuality"), true,out AudioMuffler.MufflerQuality)) {
+                        AudioMuffler.MufflerQuality = AudioMufflerQuality.Lite;
                     }
                 } else {
-                    lowpassFilterNode.AddValue("AirSimulation", AudioMuffler.AirSimulation);
+                    lowpassFilterNode.AddValue("MufflerQuality", AudioMuffler.MufflerQuality);
                 }
 
                 if(lowpassFilterNode.HasValue("AffectChatterer")) {
@@ -242,7 +242,7 @@ namespace RocketSoundEnhancement
                 var lowpassFilterNode = settingsNode.GetNode("AUDIOMUFFLER");
 
                 lowpassFilterNode.SetValue("EnableMuffling", AudioMuffler.EnableMuffling, true);
-                lowpassFilterNode.SetValue("AirSimulation", AudioMuffler.AirSimulation, true);
+                lowpassFilterNode.SetValue("MufflerQuality", AudioMuffler.MufflerQuality.ToString(), true);
                 lowpassFilterNode.SetValue("AffectChatterer", AudioMuffler.AffectChatterer, true);
 
                 lowpassFilterNode.SetValue("Preset", AudioMuffler.Preset, true);

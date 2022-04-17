@@ -284,7 +284,7 @@ namespace RocketSoundEnhancement
                         source.mute = !InternalCamera.Instance.isActive;
                     }
                     
-                    if(!AudioMuffler.AirSimulation) {
+                    if(AudioMuffler.MufflerQuality == 0) {
                         source.bypassListenerEffects = true;
                         source.bypassEffects = true;
                     }

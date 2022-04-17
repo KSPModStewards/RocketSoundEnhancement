@@ -9,6 +9,13 @@ namespace RocketSoundEnhancement
         public float ExteriorMuffling;
     }
 
+    public enum AudioMufflerQuality
+    {
+        Lite = 0,
+        Full = 1,
+        AirSim = 2
+    }
+
     public static class AudioMuffler
     {
         public static Dictionary<string, LowpassFilterPreset> Presets = new Dictionary<string, LowpassFilterPreset>();
@@ -24,7 +31,7 @@ namespace RocketSoundEnhancement
         }
 
         public static bool EnableMuffling = true;
-        public static bool AirSimulation = false;
+        public static AudioMufflerQuality MufflerQuality = AudioMufflerQuality.Lite;
         public static bool AffectChatterer = false;
         public static string Preset;
         public static float InteriorMuffling = 1500;
@@ -40,9 +47,7 @@ namespace RocketSoundEnhancement
                 Default();
                 Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
             }
-            if(AirSimulation) {
-                Debug.Log("[RSE]: Audio Muffler: Air Simulation Enabled");
-            }
+            Debug.Log("[RSE]: Audio Muffler: Quality = [" + MufflerQuality.ToString() + "]");
         }
 
         public static void Default()
