@@ -373,7 +373,6 @@ namespace RocketSoundEnhancement
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
 
-        //ToDo
         //ShipEffects Debug Window
         Vector2 shipEffectsScrollPos;
         bool shipEffectsInfo;
@@ -494,7 +493,7 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
-            if(AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite && cachSources.Count > 0) {
+            if(AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite || !AudioMuffler.EnableMuffling && cachSources.Count > 0) {
                 foreach(var source in cachSources.ToList()) {
                     if(source != null) {
                         source.outputAudioMixerGroup = null;
