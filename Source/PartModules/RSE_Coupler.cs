@@ -50,6 +50,7 @@ namespace RocketSoundEnhancement
                             AirSimFilters.Add(soundLayer.name, airSimFilter);
                             airSimFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim;
                             airSimFilter.EnableLowpassFilter = true;
+                            airSimFilter.EnableSimulationUpdating = false;
                         }
                     }
                 }
@@ -87,13 +88,7 @@ namespace RocketSoundEnhancement
                         AirSimulationFilter airSimFilter = AirSimFilters[source];
                         if(Sources[source].isPlaying) {
                             airSimFilter.enabled = true;
-                            airSimFilter.Distance = distance;
-                            airSimFilter.Velocity = (float)vessel.srfSpeed;
-                            airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, vessel.velocityD.normalized);
-                            airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                            airSimFilter.SpeedOfSound = (float)vessel.speedOfSound;
-                            airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-                            airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                            airSimFilter.LowpassFrequency = Mathf.Lerp(airSimFilter.FarLowpass * 2, 22200, vessel.GetComponent<ShipEffects>().DistanceInv);
                         } else {
                             airSimFilter.enabled = false;
                         }

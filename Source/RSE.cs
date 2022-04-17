@@ -401,9 +401,12 @@ namespace RocketSoundEnhancement
 
                 if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
                     info +=
+                        "Distance: " + seModule.Distance.ToString("0.00") + "\r\n" +
+                        "DistanceInv: " + seModule.DistanceInv.ToString("0.00") + "\r\n" +
                         "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
                         "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
-                        "SonicBoom: " + seModule.SonicBoomed + "\r\n";
+                        "SonicBoom1: " + seModule.SonicBoomed1 + "\r\n" +
+                        "SonicBoom2: " + seModule.SonicBoomed2 + "\r\n";
                 }
 
                 GUILayout.Label(info);
@@ -437,6 +440,13 @@ namespace RocketSoundEnhancement
                             } else {
                                 layerInfo += "Source Null or Inactive" + "\r\n\r\n\r\n";
                             }
+                        }
+                    }
+
+                    foreach(var source in seModule.Sources.Keys.ToList()) {
+                        if(seModule.AirSimFilters.ContainsKey(source)) {
+                            layerInfo += "Name: " + source + "\r\n" +
+                                "LP Frequency: " + seModule.AirSimFilters[source].LowpassFrequency.ToString("0.0");
                         }
                     }
 
