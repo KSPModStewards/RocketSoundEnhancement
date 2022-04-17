@@ -125,10 +125,10 @@ namespace RocketSoundEnhancement
             float finalPitch;
 
             if(soundLayer.useFloatCurve) {
-                finalVolume = soundLayer.volumeFC.Evaluate(control) * GameSettings.SHIP_VOLUME * vol;
+                finalVolume = soundLayer.volumeFC.Evaluate(control);
                 finalPitch = soundLayer.pitchFC.Evaluate(control);
             } else {
-                finalVolume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME * vol;
+                finalVolume = soundLayer.volume.Value(control);
                 finalPitch = soundLayer.pitch.Value(control);
             }
 
@@ -229,7 +229,7 @@ namespace RocketSoundEnhancement
                 airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 
-            source.volume = finalVolume;
+            source.volume = finalVolume * GameSettings.SHIP_VOLUME * vol;
             source.pitch = finalPitch;
 
             if(oneShot) {

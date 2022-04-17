@@ -127,15 +127,14 @@ namespace RocketSoundEnhancement
                     soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
             }
 
-            if(node.HasNode("massToVolume")) {
+            if(node.HasValue("massToVolume")) {
                 soundLayer.massToVolume = new FXCurve("massToVolume", 1);
                 soundLayer.massToVolume.Load("massToVolume", node);
             }
 
-            if(node.HasNode("massToPitch")) {
+            if(node.HasValue("massToPitch")) {
                 soundLayer.massToPitch = new FXCurve("massToPitch", 1);
                 soundLayer.massToPitch.Load("massToPitch", node);
-
             }
 
             if(node.HasValue("data")) {

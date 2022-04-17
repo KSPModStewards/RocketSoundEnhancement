@@ -295,10 +295,10 @@ namespace RocketSoundEnhancement
             float finalVolume;
             float finalPitch;
             if(soundLayer.useFloatCurve) {
-                finalVolume = soundLayer.volumeFC.Evaluate(control) * GameSettings.SHIP_VOLUME;
+                finalVolume = soundLayer.volumeFC.Evaluate(control);
                 finalPitch = soundLayer.pitchFC.Evaluate(control);
             } else {
-                finalVolume = soundLayer.volume.Value(control) * GameSettings.SHIP_VOLUME;
+                finalVolume = soundLayer.volume.Value(control);
                 finalPitch = soundLayer.pitch.Value(control);
             }
 
@@ -404,7 +404,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            source.volume = finalVolume;
+            source.volume = finalVolume * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
             if(oneShot) {
