@@ -50,7 +50,7 @@ namespace RocketSoundEnhancement
                             AirSimFilters.Add(soundLayer.name, airSimFilter);
                             airSimFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim;
                             airSimFilter.EnableLowpassFilter = true;
-                            airSimFilter.EnableSimulationUpdating = false;
+                            airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
                         }
                     }
                 }
@@ -75,34 +75,26 @@ namespace RocketSoundEnhancement
             }
         }
 
-        void LateUpdate()
-        {
-            if(!HighLogic.LoadedSceneIsFlight)
-                return;
-
-            var sourceKeys = Sources.Keys;
-            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
-                float distance = Vector3.Distance(FlightGlobals.camera_position, transform.position);
-                foreach(var source in sourceKeys) {
-                    if(AirSimFilters.ContainsKey(source)) {
-                        AirSimulationFilter airSimFilter = AirSimFilters[source];
-                        if(Sources[source].isPlaying) {
-                            airSimFilter.enabled = true;
-                            airSimFilter.LowpassFrequency = Mathf.Lerp(airSimFilter.FarLowpass * 2, 22200, vessel.GetComponent<ShipEffects>().DistanceInv);
-                        } else {
-                            airSimFilter.enabled = false;
-                        }
-                    }
-                }
-            }
-        }
-
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight)
                 return;
 
             var sourceKeys = Sources.Keys;
+            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
+                foreach(var source in sourceKeys) {
+                    if(AirSimFilters.ContainsKey(source)) {
+                        AirSimulationFilter airSimFilter = AirSimFilters[source];
+                        if(Sources[source].isPlaying) {
+                            airSimFilter.enabled = true;
+                            airSimFilter.Distance = distance;
+                        } else {
+                            airSimFilter.enabled = false;
+                        }
+                    }
+                }
+            }
+
             foreach(var source in sourceKeys) {
                 if(source == "decouple" || source == "activate") {
                     if(AudioMuffler.EnableMuffling) {

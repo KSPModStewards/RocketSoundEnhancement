@@ -14,22 +14,26 @@ namespace RocketSoundEnhancement
         Dictionary<string, float> VolumeControls = new Dictionary<string, float>();
         Dictionary<string, float> PitchControls = new Dictionary<string, float>();
 
-        public float TotalMass;
-        public float DryMass;
+        //  Physics Sound Effects Controls
+        public float VesselMass;
         public float Acceleration;
         public float Jerk;
-        public float ThrustAccel;
+        public float ThrustToWeight;
         public float DynamicPressure;
+
+        //  Air Simulation Values
         public float Distance;
         public float DistanceInv;
         public float Angle;
+        public float AngleRear;
         public float MachAngle;
         public float MachPass;
-        public float SpeedOfSound = 340.29f;
+        public float MachPassRear;
+        public float MachVelocity;
         public Vector3 MachOriginCameraNormal = new Vector3();
+        public Vector3 MachRearCameraNormal = new Vector3();
         public bool SonicBoomed1;
         public bool SonicBoomed2;
-        float pastAcceleration;
 
         public bool initialized;
         bool gamePause;
@@ -137,21 +141,29 @@ namespace RocketSoundEnhancement
         }
 
         int timeOut;
-        float machVelocity;
+
+        float speedOfSound = 340.29f;
+        float pastAcceleration;
+        float pastAngularVelocity;
         public void FixedUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePause || noPhysics)
                 return;
 
             Acceleration = (float)vessel.geeForce * 9.81f;
+            Acceleration += ((pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
-            pastAcceleration = Acceleration;
             DynamicPressure = (float)vessel.dynamicPressurekPa;
+
+            pastAngularVelocity = vessel.angularVelocity.magnitude;
+            pastAcceleration = Acceleration;
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 DistanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / 2500 * 10)));
-                SpeedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
+                speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
+                MachVelocity = (float)(vessel.srfSpeed / speedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
+                MachAngle = Mathf.Asin(1 / Mathf.Max(MachVelocity, 1)) * Mathf.Rad2Deg;
 
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
@@ -160,18 +172,25 @@ namespace RocketSoundEnhancement
                 }
 
                 MachOriginCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
-                machVelocity = (float)(vessel.srfSpeed / SpeedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 Angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
-                MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
-                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(machVelocity);
-                MachPass = Mathf.Lerp(1, MachPass, Mathf.Clamp01(Distance / vessel.vesselSize.magnitude));
+                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(MachVelocity);
+
+                Vector3 vesselRear = transform.position;
+                RaycastHit rearHit;
+                if(Physics.BoxCast(transform.position - (vessel.velocityD.normalized * vessel.vesselSize.magnitude), vessel.vesselSize, vessel.velocityD.normalized, out rearHit)) {
+                    vesselRear = rearHit.point;
+                }
+
+                MachRearCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselRear).normalized;
+                AngleRear = (1 + Vector3.Dot(MachRearCameraNormal, vessel.velocityD.normalized)) * 90;
+                MachPassRear = 1f - Mathf.Clamp01(AngleRear / MachAngle) * Mathf.Clamp01(MachVelocity);
             }
         }
 
         public void PlaySonicBoom(SoundLayer soundLayer, string sourceLayerName)
         {
             if(!(InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)) {
-                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, Mathf.Min(machVelocity, 12), false, true, true);
+                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, Mathf.Min(MachVelocity, 12), false, true, true);
             }
         }
 
@@ -230,13 +249,11 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            TotalMass = vessel.GetTotalMass();
-            DryMass = vessel.Parts.Sum(x => x.prefabMass);
+            VesselMass = vessel.GetTotalMass();
 
             var excludedPart = vessel.Parts.Find(x => x.Modules.Contains("ModuleAsteroid"));
             if(excludedPart != null) {
-                TotalMass -= excludedPart.mass;
-                DryMass -= excludedPart.prefabMass;
+                VesselMass -= excludedPart.mass;
             }
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
@@ -251,13 +268,13 @@ namespace RocketSoundEnhancement
                         if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
                             if(vessel.atmDensity > 0) {
 
-                                if(vessel.srfSpeed > SpeedOfSound) {
+                                if(vessel.srfSpeed > speedOfSound) {
                                     if(MachPass > 0 && !SonicBoomed1) {
                                         SonicBoomed1 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
                                     }
                                     //Rear Mach Cone
-                                    if(MachPass > 0.5 && !SonicBoomed2) {
+                                    if(MachPassRear > 0.0 && !SonicBoomed2) {
                                         SonicBoomed2 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
                                     }
@@ -300,7 +317,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control, bool smoothControl = true, bool oneShot = false, bool airSimLP = false)
+        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control, bool smoothControl = true, bool oneShot = false, bool AirSimBasic = false)
         {
             float finalVolume;
             float finalPitch;
@@ -313,11 +330,11 @@ namespace RocketSoundEnhancement
             }
 
             if(soundLayer.massToVolume != null) {
-                finalVolume *= soundLayer.massToVolume.Value(TotalMass);
+                finalVolume *= soundLayer.massToVolume.Value(VesselMass);
             }
 
             if(soundLayer.massToPitch != null) {
-                finalPitch *= soundLayer.massToPitch.Value(TotalMass);
+                finalPitch *= soundLayer.massToPitch.Value(VesselMass);
             }
 
             if(smoothControl) {
@@ -371,7 +388,7 @@ namespace RocketSoundEnhancement
                         break;
                     case AudioMufflerQuality.AirSim:
                         if(soundLayer.channel == FXChannel.ShipBoth) {
-                            if(airSimLP) {
+                            if(AirSimBasic) {
                                 source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             } else {
                                 source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
@@ -392,24 +409,25 @@ namespace RocketSoundEnhancement
 
                     airSimFilter.enabled = true;
                     airSimFilter.EnableLowpassFilter = true;
-                    airSimFilter.EnableWaveShaperFilter = true;
-                    airSimFilter.EnableSimulationUpdating = !airSimLP;
+                    airSimFilter.SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
+
+                    if(AirSimBasic) {
+                        airSimFilter.FarLowpass = 5000;
+                    }
 
                     AirSimFilters.Add(sourceLayerName, airSimFilter);
                 } else {
                     airSimFilter = AirSimFilters[sourceLayerName];
                 }
 
-                if(airSimLP) {
-                    airSimFilter.LowpassFrequency = Mathf.Lerp(5000, 22200, DistanceInv);
+                if(AirSimBasic) {
+                    airSimFilter.Distance = Distance;
                 } else {
                     airSimFilter.Distance = Distance;
-                    airSimFilter.Velocity = (float)vessel.srfSpeed;
+                    airSimFilter.MachVelocity = MachVelocity;
                     airSimFilter.Angle = Angle;
-                    airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                    airSimFilter.SpeedOfSound = SpeedOfSound;
-                    airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-                    airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                    airSimFilter.MachPass = MachPass;
+                    airSimFilter.MachAngle = Angle;
                     airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
                 }
             }
@@ -459,12 +477,12 @@ namespace RocketSoundEnhancement
                                 totalThrust += module.GetCurrentThrust();
                             }
                         }
-                        controller = (totalThrust * 1000) / (vessel.GetTotalMass() * 1000);
-                        ThrustAccel = controller;
+                        controller = (totalThrust * 1000) / (VesselMass * 1000);
+                        ThrustToWeight = controller;
                         break;
                     }
                     controller = 0;
-                    ThrustAccel = 0;
+                    ThrustToWeight = 0;
                     break;
                 case PhysicsControl.SONICBOOM:
                     break;

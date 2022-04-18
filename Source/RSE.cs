@@ -410,16 +410,17 @@ namespace RocketSoundEnhancement
                               "Airspeed: " + ((float)vessel.indicatedAirSpeed).ToString("0.00") + "\r\n" +
                               "Dynamic Pressure (kPa): " + ((float)vessel.dynamicPressurekPa).ToString("0.00") + "\r\n" +
                               "Speed Of Sound: " + ((float)vessel.speedOfSound).ToString("0.00") + "\r\n" +
-                              "Thrust Acceleration: " + seModule.ThrustAccel.ToString("0.00") + "\r\n" +
-                              "Mass: " + seModule.TotalMass.ToString("0.00") + "\r\n" +
-                              "DryMass: " + seModule.DryMass.ToString("0.00") + "\r\n";
+                              "Thrust to Weight: " + seModule.ThrustToWeight.ToString("0.00") + "\r\n" +
+                              "Mass: " + seModule.VesselMass.ToString("0.00") + "\r\n";
 
                 if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
                     info +=
                         "Distance: " + seModule.Distance.ToString("0.00") + "\r\n" +
                         "DistanceInv: " + seModule.DistanceInv.ToString("0.00") + "\r\n" +
+                        "Angle: " + seModule.Angle.ToString("0.00") + "\r\n" +
                         "MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
                         "MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
+                        "MachPassRear: " + seModule.MachPassRear.ToString("0.00") + "\r\n" +
                         "SonicBoom1: " + seModule.SonicBoomed1 + "\r\n" +
                         "SonicBoom2: " + seModule.SonicBoomed2 + "\r\n";
                 }
@@ -492,7 +493,6 @@ namespace RocketSoundEnhancement
         bool bypassAutomaticFiltering;
 
         private AudioMixer mixer;
-
         public AudioMixer Mixer
         {
             get {
@@ -527,9 +527,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if(gamePaused || !AudioMuffler.EnableMuffling) {
+            if(gamePaused || !AudioMuffler.EnableMuffling)
                 return;
-            }
 
             if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite && Mixer != null) {
                 var soundSources = GameObject.FindObjectsOfType<AudioSource>().ToList();
@@ -545,22 +544,21 @@ namespace RocketSoundEnhancement
                     }
                 }
 
-
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-                    float interiorMuffling = AudioMuffler.InteriorMuffling;
-                    float maxFrequency = InternalCamera.Instance.isActive ? interiorMuffling : 22200;
+                    float maxFrequency = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : 22200;
                     float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity) * WindModulation();
+                    float focusMuffling = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : atmCutOff;
+
+                    if(MapView.MapCamera.isActiveAndEnabled) {
+                        focusMuffling = AudioMuffler.InteriorMuffling < atmCutOff ? AudioMuffler.InteriorMuffling : atmCutOff;
+                        atmCutOff = AudioMuffler.InteriorMuffling < atmCutOff ? AudioMuffler.InteriorMuffling : atmCutOff;
+                    }
 
                     MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, atmCutOff, 5000);
                     lastCutoffFreq = MufflingFrequency;
 
-                    interiorMuffling = InternalCamera.Instance.isActive ? interiorMuffling : atmCutOff;
-                    if(MapView.MapCamera.isActiveAndEnabled) {
-                        interiorMuffling = interiorMuffling < atmCutOff ? interiorMuffling : atmCutOff;
-                    }
-
-                    FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, interiorMuffling, 5000);
+                    FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);
                     lastInteriorCutoffFreq = FocusMufflingFrequency;
                 } else {
                     FocusMufflingFrequency = MufflingFrequency;
@@ -571,7 +569,6 @@ namespace RocketSoundEnhancement
 
                 if(AudioMuffler.AffectChatterer) {
                     foreach(var source in ChattererSources) {
-
                         if(source == null)
                             continue;
 

@@ -33,9 +33,7 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
-        float distance = 0;
-        float speedOfSound = 340.29f;
-        Vector3 machOriginCameraNormal = Vector3.zero;
+
         public override void OnUpdate()
         {
             if(!initialized)
@@ -70,6 +68,10 @@ namespace RocketSoundEnhancement
             }
         }
 
+        public float distance = 0;
+        public float angle = 0;
+        public float machPass;
+        float speedOfSound = 340.29f;
         public virtual void FixedUpdate()
         {
             if(!initialized)
@@ -78,6 +80,8 @@ namespace RocketSoundEnhancement
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
+                angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
+                machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().MachVelocity);
 
                 CalculateDoppler();
             }
@@ -213,6 +217,7 @@ namespace RocketSoundEnhancement
                     airSimFilter.EnableCombFilter = EnableCombFilter;
                     airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
                     airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
 
                     AirSimFilters.Add(sourceLayerName, airSimFilter);
                 } else {
@@ -220,12 +225,10 @@ namespace RocketSoundEnhancement
                 }
 
                 airSimFilter.Distance = distance;
-                airSimFilter.Velocity = (float)vessel.srfSpeed;
-                airSimFilter.Angle = Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized);
-                airSimFilter.VesselSize = vessel.vesselSize.magnitude;
-                airSimFilter.SpeedOfSound = speedOfSound;
-                airSimFilter.AtmosphericPressurePa = (float)vessel.staticPressurekPa * 1000f;
-                airSimFilter.ActiveInternalVessel = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
+                airSimFilter.MachVelocity = vessel.GetComponent<ShipEffects>().MachVelocity;
+                airSimFilter.Angle = angle;
+                airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
+                airSimFilter.MachPass = machPass;
                 airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 
