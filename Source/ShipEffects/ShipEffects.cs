@@ -163,7 +163,7 @@ namespace RocketSoundEnhancement
                 machVelocity = (float)(vessel.srfSpeed / SpeedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 Angle = (1 + Vector3.Dot(MachOriginCameraNormal, vessel.velocityD.normalized)) * 90;
                 MachAngle = Mathf.Asin(1 / Mathf.Max(machVelocity, 1)) * Mathf.Rad2Deg;
-                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle);
+                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(machVelocity);
                 MachPass = Mathf.Lerp(1, MachPass, Mathf.Clamp01(Distance / vessel.vesselSize.magnitude));
             }
         }
@@ -175,7 +175,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        List<AudioSource> stockSources = new List<AudioSource>();
+        Dictionary<AudioSource, float> stockSources = new Dictionary<AudioSource, float>();
         public void LateUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
@@ -190,15 +190,25 @@ namespace RocketSoundEnhancement
                     foreach(var source in sources) {
                         if(source == null)
                             continue;
-                        if(!stockSources.Contains(source))
-                            stockSources.Add(source);
+                        if(!stockSources.ContainsKey(source)) {
+                            stockSources.Add(source, source.minDistance);
+                        }
+
+                        if(AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
+                            source.minDistance = Mathf.Lerp(0, stockSources[source], (MachPass * Mathf.Max(DistanceInv,0.1f)) * 0.5f);
+                        } else {
+                            if(source.minDistance != stockSources[source]) {
+                                source.minDistance = stockSources[source];
+                            }
+                        }
 
                         source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                     }
                 }
+                
             } else {
                 if(stockSources.Count > 0) {
-                    foreach(var source in stockSources.ToList()) {
+                    foreach(var source in stockSources.Keys.ToList()) {
                         if(source != null && source.outputAudioMixerGroup != null) {
                             source.outputAudioMixerGroup = null;
                         }

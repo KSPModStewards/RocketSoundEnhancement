@@ -547,7 +547,6 @@ namespace RocketSoundEnhancement
 
                     FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, interiorMuffling, 5000);
                     lastInteriorCutoffFreq = FocusMufflingFrequency;
-
                 } else {
                     FocusMufflingFrequency = MufflingFrequency;
                 }
