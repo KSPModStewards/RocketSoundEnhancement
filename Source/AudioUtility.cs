@@ -256,6 +256,7 @@ namespace RocketSoundEnhancement
 
             switch(channel) {
                 case FXChannel.ShipBoth:
+                    source.volume *= Settings.Instance.ExteriorVolume;
                     if(loop) {
                         if(!source.isPlaying) {
                             if(loopAtRandom) {
@@ -276,6 +277,8 @@ namespace RocketSoundEnhancement
                     }
                     break;
                 case FXChannel.ShipInternal:
+                    source.volume *= Settings.Instance.InteriorVolume;
+
                     if(vessel != null) {
                         source.mute = vessel == FlightGlobals.ActiveVessel ? !InternalCamera.Instance.isActive : true;
 

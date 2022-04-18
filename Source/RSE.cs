@@ -209,6 +209,7 @@ namespace RocketSoundEnhancement
             AudioLimiter.EnableLimiter = GUILayout.Toggle(AudioLimiter.EnableLimiter, "Sound Effects Mastering", GUILayout.Width(leftWidth));
             audioLimiter.enabled = AudioLimiter.EnableLimiter;
 
+            #region AUDIOLIMITER SETTINGS
             if(AudioLimiter.EnableLimiter) {
                 if(GUILayout.Button(AudioLimiter.Preset)) {
                     int limiterPresetIndex = AudioLimiter.Presets.Keys.ToList().IndexOf(AudioLimiter.Preset) + 1;
@@ -277,7 +278,9 @@ namespace RocketSoundEnhancement
             } else {
                 GUILayout.EndHorizontal();
             }
+            #endregion
 
+            #region AUDIOMUFFLER SETTINGS
             GUILayout.BeginHorizontal();
             AudioMuffler.EnableMuffling = GUILayout.Toggle(AudioMuffler.EnableMuffling, "Audio Muffler", GUILayout.Width(leftWidth));
             if(AudioMuffler.EnableMuffling) {
@@ -353,6 +356,18 @@ namespace RocketSoundEnhancement
             } else {
                 GUILayout.EndHorizontal();
             }
+            #endregion
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Exterior Volume", GUILayout.Width(smlLeftWidth));
+            Settings.Instance.ExteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.Instance.ExteriorVolume, 2), 0, 2);
+            GUILayout.Label(Settings.Instance.ExteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Interior Volume", GUILayout.Width(smlLeftWidth));
+            Settings.Instance.InteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.Instance.InteriorVolume, 2), 0, 2);
+            GUILayout.Label(Settings.Instance.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
+            GUILayout.EndHorizontal();
 
             GUILayout.FlexibleSpace();
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound"); 

@@ -18,6 +18,9 @@ namespace RocketSoundEnhancement
 
         public bool DisableStagingSound = false;
 
+        public float ExteriorVolume = 1;
+        public float InteriorVolume = 1;
+
         private List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
         public List<ConfigNode> ShipEffectsNodes()
         {
@@ -53,6 +56,18 @@ namespace RocketSoundEnhancement
             }
 
             ConfigNode settingsNode = _settings.GetNode(SettingsName);
+            if(settingsNode.HasValue("ExteriorVolume")) {
+                if(!float.TryParse(settingsNode.GetValue("ExteriorVolume"), out ExteriorVolume)) {
+                    ExteriorVolume = 1;
+                }
+            }
+
+            if(settingsNode.HasValue("InteriorVolume")) {
+                if(!float.TryParse(settingsNode.GetValue("InteriorVolume"), out InteriorVolume)) {
+                    InteriorVolume = 1;
+                }
+            }
+
             if(settingsNode.HasValue("DisableStagingSound")) {
                 if(!bool.TryParse(settingsNode.GetValue("DisableStagingSound"), out DisableStagingSound)) {
                     DisableStagingSound = false; 
@@ -218,6 +233,8 @@ namespace RocketSoundEnhancement
         public void Save()
         {
             var settingsNode = _settings.GetNode(SettingsName);
+            settingsNode.SetValue("ExteriorVolume", ExteriorVolume, true);
+            settingsNode.SetValue("InteriorVolume", InteriorVolume, true);
             settingsNode.SetValue("DisableStagingSound", DisableStagingSound, true);
 
             if(settingsNode.HasNode("AUDIOLIMITER")) {
