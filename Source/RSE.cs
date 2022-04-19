@@ -57,11 +57,11 @@ namespace RocketSoundEnhancement
             shipEffectsRect = new Rect(windowRect.x - 250 - 40, windowRect.y, 250, windowHeight * 2);
 
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
+                if(source == null || source.name.Contains(AudioUtility.RSETag))
+                    continue;
+
                 if(source.clip != null)
                     source.bypassListenerEffects = false;
-
-                if(source.name.Contains(AudioUtility.RSETag))
-                    continue;
 
                 if(source.name.Contains("Music") || source.name.ToLower().Contains("soundtrackeditor") || source.name.Contains("PartActionController")) {
                     source.bypassListenerEffects = true;
@@ -118,7 +118,11 @@ namespace RocketSoundEnhancement
         {
             var stageSource = StageManager.Instance.GetComponent<AudioSource>();
             if(stageSource) {
-                stageSource.bypassListenerEffects = true;
+                if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
+                    stageSource.outputAudioMixerGroup = InternalMixer;
+                } else {
+                    stageSource.bypassListenerEffects = true;
+                }
 
                 stageSource.enabled = !Settings.Instance.DisableStagingSound;
             }
@@ -134,7 +138,8 @@ namespace RocketSoundEnhancement
                                 source.outputAudioMixerGroup = null;
                                 source.bypassListenerEffects = !AudioMuffler.AffectChatterer;
                                 break;
-                            case AudioMufflerQuality.Full | AudioMufflerQuality.AirSim:
+                            case AudioMufflerQuality.Full:
+                            case AudioMufflerQuality.AirSim:
                                 if(AudioMuffler.AffectChatterer) {
                                     source.outputAudioMixerGroup = InternalCamera.Instance.isActive ? InternalMixer : FocusMixer;
                                 } else {
@@ -149,7 +154,7 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
-            
+
             foreach(var source in StockSources) {
                 if(AudioMuffler.EnableMuffling) {
                     switch(AudioMuffler.MufflerQuality) {
@@ -157,7 +162,8 @@ namespace RocketSoundEnhancement
                             if(source.outputAudioMixerGroup != null)
                                 source.outputAudioMixerGroup = null;
                             break;
-                        case AudioMufflerQuality.Full | AudioMufflerQuality.AirSim:
+                        case AudioMufflerQuality.Full:
+                        case AudioMufflerQuality.AirSim:
                             source.outputAudioMixerGroup = ExternalMixer;
                             break;
                     }

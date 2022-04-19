@@ -47,7 +47,7 @@ namespace RocketSoundEnhancement
                 Default();
                 Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + Preset + ". Using Default Settings");
             }
-            Debug.Log("[RSE]: Audio Muffler: Quality = [" + MufflerQuality.ToString() + "]");
+            Debug.Log("[RSE]: Audio Muffler: Quality = " + MufflerQuality.ToString());
         }
 
         public static void Default()

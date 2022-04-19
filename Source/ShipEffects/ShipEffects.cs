@@ -141,7 +141,7 @@ namespace RocketSoundEnhancement
         }
 
         int timeOut;
-
+        bool wasSupersonic = false;
         float speedOfSound = 340.29f;
         float pastAcceleration;
         float pastAngularVelocity;
@@ -164,6 +164,10 @@ namespace RocketSoundEnhancement
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 MachVelocity = (float)(vessel.srfSpeed / speedOfSound) * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 MachAngle = Mathf.Asin(1 / Mathf.Max(MachVelocity, 1)) * Mathf.Rad2Deg;
+
+                if(vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
+                    MachVelocity = 0;
+                }
 
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
@@ -269,6 +273,7 @@ namespace RocketSoundEnhancement
                             if(vessel.atmDensity > 0) {
 
                                 if(vessel.srfSpeed > speedOfSound) {
+                                    wasSupersonic = true;
                                     if(MachPass > 0 && !SonicBoomed1) {
                                         SonicBoomed1 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
@@ -278,6 +283,11 @@ namespace RocketSoundEnhancement
                                         SonicBoomed2 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
                                     }
+                                }
+
+                                if(wasSupersonic) {
+                                    wasSupersonic = false;
+                                    PlaySonicBoom(soundLayer, sourceLayerName);
                                 }
 
                                 if(MachPass == 0) {
