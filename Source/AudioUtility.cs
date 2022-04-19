@@ -27,6 +27,7 @@ namespace RocketSoundEnhancement
         SONICBOOM,
         DYNAMICPRESSURE,
         THRUST,
+        REENTRYHEAT,
         None
     }
 
@@ -243,11 +244,6 @@ namespace RocketSoundEnhancement
                 if(source.isPlaying) {
                     source.Stop();
                 }
-                return;
-            }
-
-            if(RSE.Instance.MuteRSE) {
-                source.mute = true;
                 return;
             }
 
