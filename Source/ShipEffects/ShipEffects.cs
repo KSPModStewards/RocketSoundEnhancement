@@ -283,11 +283,11 @@ namespace RocketSoundEnhancement
                                         SonicBoomed2 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
                                     }
-                                }
-
-                                if(wasSupersonic) {
-                                    wasSupersonic = false;
-                                    PlaySonicBoom(soundLayer, sourceLayerName);
+                                } else {
+                                    if(wasSupersonic) {
+                                        wasSupersonic = false;
+                                        PlaySonicBoom(soundLayer, sourceLayerName);
+                                    }
                                 }
 
                                 if(MachPass == 0) {
