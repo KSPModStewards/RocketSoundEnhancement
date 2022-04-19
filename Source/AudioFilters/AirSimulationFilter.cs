@@ -43,7 +43,6 @@ namespace RocketSoundEnhancement
         public float CombMix = 0;
         public float LowpassFrequency = 22200;
         public float HighPassFrequency = 0;
-        public float ResonanceQ = 0.1f;
         public float Distortion = 0;
 
         int SampleRate;
@@ -115,17 +114,18 @@ namespace RocketSoundEnhancement
             double delay = CombDelay * SampleRate / 1000;
 
             for(int i = 0; i < data.Length; i++) {
-                if(LowpassFrequency < 20) {
-                    data[i] *= (LowpassFrequency / 20);
-                }
                 if(EnableCombFilter) {
                     CombFilter(ref data[i], delay, 1, CombMix);
                 }
                 if(EnableLowpassFilter) {
-                    lowpassHighpassFilter(ref data[i], i, LowpassFrequency, HighPassFrequency, ResonanceQ);
+                    lowpassHighpassFilter(ref data[i], i, LowpassFrequency, HighPassFrequency);
                 }
                 if(EnableWaveShaperFilter) {
                     Waveshaper(ref data[i], Distortion);
+                }
+                if(EnableLowpassFilter && LowpassFrequency <= 50) {
+                    float volControl = Mathf.Pow(2, Mathf.Lerp(-150, 0, Mathf.Clamp01(LowpassFrequency / 50f)) / 6);
+                    data[i] *= volControl;
                 }
             }
         }
@@ -133,7 +133,7 @@ namespace RocketSoundEnhancement
         #region Time Variable Delay / Comb Filter
         //Flexible-time, non-sample quantized delay , can be used for stuff like waveguide synthesis or time-based(chorus/flanger) fx.
         //Source = https://www.musicdsp.org/en/latest/Effects/98-class-for-waveguide-delay-effects.html
-        float[] buffer = new float[64000];
+        float[] buffer = new float[4096];
         int counter = 0;
         public void CombFilter(ref float input, double delay, float dryMix = 0.5f, float wetMix = 0.5f)
         {
@@ -207,7 +207,7 @@ namespace RocketSoundEnhancement
         // source: https://www.musicdsp.org/en/latest/Filters/29-resonant-filter.html
         float buf0L, buf1L, buf0R, buf1R;
         float buf2L, buf3L, buf2R, buf3R, hpL, hpR;
-        public void lowpassHighpassFilter(ref float input, int index, float lowpass = 22000, float highpass = 0, float resQ = 0.8f)
+        public void lowpassHighpassFilter(ref float input, int index, float lowpass = 22000, float highpass = 0, float resQ = 0.0f)
         {
             float freqLP = Mathf.Clamp(lowpass, 20, 22000) * 2 / SampleRate;
             float freqHP = Mathf.Clamp(highpass, 20, 22000) * 2 / SampleRate;

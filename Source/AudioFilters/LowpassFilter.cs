@@ -20,7 +20,6 @@ namespace RocketSoundEnhancement
         private float c, a1, a2, a3, b1, b2;
 
         public float cutoffFrequency = 22200;
-        public float lowpassResonanceQ = 3;
 
         int SampleRate;
 
@@ -52,14 +51,8 @@ namespace RocketSoundEnhancement
 
         float AddInput(float newInput, int index)
         {
-            float finalCutOff = Mathf.Clamp(cutoffFrequency, 0, 22200);
-            float finalResonance = Mathf.Clamp(lowpassResonanceQ, 0.5f, 10);
-
-            //fadeout below 10hz;
-            if(finalCutOff <= 10) {
-                newInput *= (finalCutOff / 10f);
-                finalCutOff = 10;
-            }
+            float finalCutOff = Mathf.Clamp(cutoffFrequency, 10, 22200);
+            float finalResonance = Mathf.Sqrt(2);
 
             c = 1.0f / (float)Mathf.Tan(Mathf.PI * finalCutOff / SampleRate);
             a1 = 1.0f / (1.0f + finalResonance * c + c * c);
@@ -87,6 +80,11 @@ namespace RocketSoundEnhancement
                 outputHistoryRight[2] = outputHistoryRight[1];
                 outputHistoryRight[1] = outputHistoryRight[0];
                 outputHistoryRight[0] = newOutput;
+            }
+
+            if(cutoffFrequency <= 50) {
+                float volControl = Mathf.Pow(2, Mathf.Lerp(-150, 0, Mathf.Clamp01(cutoffFrequency / 50f)) / 6);
+                newOutput *= volControl;
             }
 
             return newOutput;

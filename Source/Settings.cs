@@ -17,6 +17,7 @@ namespace RocketSoundEnhancement
         public Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
 
         public bool DisableStagingSound = false;
+        public bool MuteStockAeroSounds = false;
 
         public float ExteriorVolume = 1;
         public float InteriorVolume = 1;
@@ -27,13 +28,6 @@ namespace RocketSoundEnhancement
             if(_shipEffectsNodes.Count == 0) {
                 foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
                     _shipEffectsNodes.AddRange(configNode.GetNodes());
-
-                    if(configNode.HasValue("nextStageClip")) {
-                        StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
-                    }
-                    if(configNode.HasValue("cannotSeparateClip")) {
-                        StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("cannotSeparateClip"));
-                    }
                 }
             }
 
@@ -46,6 +40,19 @@ namespace RocketSoundEnhancement
             CollisionData.Clear();
             AudioLimiter.Presets.Clear();
             AudioMuffler.Presets.Clear();
+
+            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
+                if(configNode.HasValue("MuteStockAeroSounds")) {
+                    bool.TryParse(configNode.GetValue("MuteStockAeroSounds"), out MuteStockAeroSounds);
+                }
+
+                if(configNode.HasValue("nextStageClip")) {
+                    StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
+                }
+                if(configNode.HasValue("cannotSeparateClip")) {
+                    StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("cannotSeparateClip"));
+                }
+            }
 
             _settings = ConfigNode.Load(ModPath + "Settings.cfg");
 
