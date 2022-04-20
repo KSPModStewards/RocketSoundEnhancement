@@ -17,15 +17,16 @@ namespace RocketSoundEnhancement
         private float[] outputHistoryLeft = new float[3];
         private float[] outputHistoryRight = new float[3];
 
-        private float c, a1, a2, a3, b1, b2;
+        private float c, a1, a2, a3, b1, b2, lowpassFade;
 
-        public float cutoffFrequency = 22200;
+        public float CutoffFrequency = 22200;
 
         int SampleRate;
-
         private void Awake()
         {
             SampleRate = AudioSettings.outputSampleRate;
+
+            InvokeRepeating("UpdateFilter", 0, 0.05f);
 
             inputHistoryLeft[1] = 0;
             inputHistoryLeft[0] = 0;
@@ -42,16 +43,9 @@ namespace RocketSoundEnhancement
             outputHistoryRight[0] = 0;
         }
 
-        void OnAudioFilterRead(float[] data, int channels)
+        public void UpdateFilter()
         {
-            for(int i = 0; i < data.Length; i++) {
-                data[i] = AddInput(data[i], i);
-            }
-        }
-
-        float AddInput(float newInput, int index)
-        {
-            float finalCutOff = Mathf.Clamp(cutoffFrequency, 10, 22200);
+            float finalCutOff = Mathf.Clamp(CutoffFrequency, 10, 22200);
             float finalResonance = Mathf.Sqrt(2);
 
             c = 1.0f / (float)Mathf.Tan(Mathf.PI * finalCutOff / SampleRate);
@@ -61,6 +55,20 @@ namespace RocketSoundEnhancement
             b1 = 2.0f * (1.0f - c * c) * a1;
             b2 = (1.0f - finalResonance * c + c * c) * a1;
 
+            lowpassFade = CutoffFrequency <= 50 ?
+                Mathf.Pow(2, Mathf.Lerp(-80, 0, Mathf.Clamp01(CutoffFrequency / 50f)) / 6) : 1;
+        }
+
+        void OnAudioFilterRead(float[] data, int channels)
+        {
+            for(int i = 0; i < data.Length; i++) {
+                data[i] *= lowpassFade;
+                data[i] = AddInput(data[i], i);
+            }
+        }
+
+        float AddInput(float newInput, int index)
+        {
             float newOutput = 0;
             if(index % 2 == 0) {
                 newOutput = a1 * newInput + a2 * inputHistoryLeft[0] + a3 * inputHistoryLeft[1] - b1 * outputHistoryLeft[0] - b2 * outputHistoryLeft[1];
@@ -80,11 +88,6 @@ namespace RocketSoundEnhancement
                 outputHistoryRight[2] = outputHistoryRight[1];
                 outputHistoryRight[1] = outputHistoryRight[0];
                 outputHistoryRight[0] = newOutput;
-            }
-
-            if(cutoffFrequency <= 50) {
-                float volControl = Mathf.Pow(2, Mathf.Lerp(-150, 0, Mathf.Clamp01(cutoffFrequency / 50f)) / 6);
-                newOutput *= volControl;
             }
 
             return newOutput;

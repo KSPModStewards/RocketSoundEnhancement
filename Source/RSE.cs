@@ -373,8 +373,8 @@ namespace RocketSoundEnhancement
                     GUILayout.BeginHorizontal();
                     bypassAutomaticFiltering = GUILayout.Toggle(bypassAutomaticFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
                     if(lowpassFilter.enabled) {
-                        lowpassFilter.cutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.cutoffFrequency, 0, 22200);
-                        GUILayout.Label(lowpassFilter.cutoffFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
+                        lowpassFilter.CutoffFrequency = GUILayout.HorizontalSlider(lowpassFilter.CutoffFrequency, 0, 22200);
+                        GUILayout.Label(lowpassFilter.CutoffFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
                     } else {
                         MufflingFrequency = GUILayout.HorizontalSlider(MufflingFrequency, 0, 22200);
                         GUILayout.Label(MufflingFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
@@ -571,7 +571,7 @@ namespace RocketSoundEnhancement
 
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-                    float maxFrequency = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : 24000;
+                    float maxFrequency = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : 22200;
                     float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity) * WindModulation();
                     float focusMuffling = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : atmCutOff;
 
@@ -630,7 +630,7 @@ namespace RocketSoundEnhancement
                     float smoothCutoff = Mathf.MoveTowards(lastCutoffFreq, targetFrequency, 5000);
                     lastCutoffFreq = smoothCutoff;
 
-                    lowpassFilter.cutoffFrequency = smoothCutoff;
+                    lowpassFilter.CutoffFrequency = smoothCutoff;
 
                     if(AudioMuffler.AffectChatterer) {
                         foreach(var source in ChattererSources) {
