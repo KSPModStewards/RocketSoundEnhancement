@@ -24,7 +24,7 @@ namespace RocketSoundEnhancement
 
         // Simulation Values
         public float Distance = 0;
-        public float MachVelocity = 0;
+        public float Mach = 0;
         public float Angle = 0;
         public float MachAngle = 90;
         public float MachPass = 1;
@@ -93,7 +93,7 @@ namespace RocketSoundEnhancement
         public void UpdateFiltersFull()
         {
             float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
-            float machVelocityClamped = Mathf.Clamp01(MachVelocity);
+            float machVelocityClamped = Mathf.Clamp01(Mach);
             float angleAbs = 1 - Mathf.Clamp01(Angle / 180);
 
             if(EnableCombFilter) {

@@ -162,9 +162,6 @@ namespace RocketSoundEnhancement
                 DistanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / 2500 * 10)));
                 Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
-                if(vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
-                    Mach = 0;
-                }
 
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
@@ -185,6 +182,11 @@ namespace RocketSoundEnhancement
                 MachRearCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselRear).normalized;
                 AngleRear = (1 + Vector3.Dot(MachRearCameraNormal, vessel.velocityD.normalized)) * 90;
                 MachPassRear = 1f - Mathf.Clamp01(AngleRear / MachAngle) * Mathf.Clamp01(Mach);
+
+                if(vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
+                    MachPass = 1;
+                    MachPassRear = 1;
+                }
             }
         }
 
@@ -432,7 +434,7 @@ namespace RocketSoundEnhancement
                     airSimFilter.Distance = Distance;
                 } else {
                     airSimFilter.Distance = Distance;
-                    airSimFilter.MachVelocity = Mach;
+                    airSimFilter.Mach = Mach;
                     airSimFilter.Angle = Angle;
                     airSimFilter.MachPass = MachPass;
                     airSimFilter.MachAngle = Angle;

@@ -82,6 +82,10 @@ namespace RocketSoundEnhancement
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
+                if(vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
+                    machPass = 1;
+                    angle = 0;
+                }
 
                 CalculateDoppler();
             }
@@ -225,7 +229,7 @@ namespace RocketSoundEnhancement
                 }
 
                 airSimFilter.Distance = distance;
-                airSimFilter.MachVelocity = vessel.GetComponent<ShipEffects>().Mach;
+                airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
                 airSimFilter.Angle = angle;
                 airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
                 airSimFilter.MachPass = machPass;

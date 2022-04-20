@@ -387,6 +387,7 @@ namespace RocketSoundEnhancement
                 GUILayout.EndHorizontal();
             }
             #endregion
+            GUILayout.FlexibleSpace();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Exterior Volume", GUILayout.Width(smlLeftWidth));
@@ -399,7 +400,6 @@ namespace RocketSoundEnhancement
             GUILayout.Label(Settings.Instance.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
             GUILayout.EndHorizontal();
 
-            GUILayout.FlexibleSpace();
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound"); 
 
             shipEffectsInfo = GUILayout.Toggle(shipEffectsInfo, "ShipEffects Info");
@@ -447,7 +447,7 @@ namespace RocketSoundEnhancement
                         "AIR SIM PARAMETERS \r\n" +
                         "- Distance: " + seModule.Distance.ToString("0.00") + "\r\n" +
                         "- DistanceInv: " + seModule.DistanceInv.ToString("0.00") + "\r\n" +
-                        "- MachVelocity: " + seModule.Mach.ToString("0.00") + "\r\n" +
+                        "- Mach: " + seModule.Mach.ToString("0.00") + "\r\n" +
                         "- Angle: " + seModule.Angle.ToString("0.00") + "\r\n" +
                         "- MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
                         "- MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
