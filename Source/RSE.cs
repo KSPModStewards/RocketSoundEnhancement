@@ -76,6 +76,8 @@ namespace RocketSoundEnhancement
 
             AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
 
+            AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
+
             foreach(var source in GameObject.FindObjectsOfType<AudioSource>()) {
                 if(source == null || source.name.Contains(AudioUtility.RSETag))
                     continue;
