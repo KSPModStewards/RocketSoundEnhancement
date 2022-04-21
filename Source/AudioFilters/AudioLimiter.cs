@@ -145,10 +145,13 @@ namespace RocketSoundEnhancement
             atcoef = Mathf.Exp(-1 / (attime * SampleRate));
             relcoef = Mathf.Exp(-1 / (reltime * SampleRate));
             rmscoef = Mathf.Exp(-1 / (rmstime * SampleRate));
-
         }
 
-        public void LateUpdate()
+        float aspl0;
+        float runave;
+        float dcoffset = 0; // never assigned to
+
+        void OnAudioFilterRead(float[] data, int channels)
         {
             thresh = Threshold;
             threshv = Mathf.Exp(thresh * db2log);
@@ -195,14 +198,7 @@ namespace RocketSoundEnhancement
 
             rmstime = LevelDetectorRMSWindow / 1000000;
             rmscoef = Mathf.Exp(-1 / (rmstime * SampleRate));
-        }
 
-        float aspl0;
-        float runave;
-        float dcoffset = 0; // never assigned to
-
-        void OnAudioFilterRead(float[] data, int channels)
-        {
             for(int i = 0; i < data.Length; i++) {
                 aspl0 = Mathf.Abs(data[i]);
 

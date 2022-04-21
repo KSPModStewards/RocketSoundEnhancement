@@ -82,7 +82,7 @@ namespace RocketSoundEnhancement
                 speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
-                if(vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
+                if(vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled)) {
                     machPass = 1;
                     angle = 0;
                 }
@@ -192,7 +192,7 @@ namespace RocketSoundEnhancement
                         break;
                     case AudioMufflerQuality.Full:
                         if(soundLayer.channel == FXChannel.ShipBoth) {
-                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                            source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                         } else {
                             source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                         }
@@ -203,7 +203,7 @@ namespace RocketSoundEnhancement
                                 source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
                                 processAirSim = true;
                             } else {
-                                source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                                source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             }
                         } else {
                             source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
@@ -233,7 +233,7 @@ namespace RocketSoundEnhancement
                 airSimFilter.Angle = angle;
                 airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
                 airSimFilter.MachPass = machPass;
-                airSimFilter.MaxLowpassFrequency = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
+                airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 
             source.volume = finalVolume * GameSettings.SHIP_VOLUME * vol;

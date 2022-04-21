@@ -281,11 +281,10 @@ namespace RocketSoundEnhancement
                     } else {
                         source.mute = !InternalCamera.Instance.isActive;
                     }
-                    
-                    if(AudioMuffler.MufflerQuality == 0) {
-                        source.bypassListenerEffects = true;
-                        source.bypassEffects = true;
-                    }
+
+                    bool bypassFX = AudioMuffler.MufflerQuality < AudioMufflerQuality.Full;
+                    source.bypassListenerEffects = bypassFX;
+                    source.bypassEffects = bypassFX;
 
                     if(loop) {
                         if(!source.isPlaying) {

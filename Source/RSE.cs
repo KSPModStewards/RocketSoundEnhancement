@@ -387,7 +387,6 @@ namespace RocketSoundEnhancement
                 GUILayout.EndHorizontal();
             }
             #endregion
-            GUILayout.FlexibleSpace();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Exterior Volume", GUILayout.Width(smlLeftWidth));
@@ -400,6 +399,7 @@ namespace RocketSoundEnhancement
             GUILayout.Label(Settings.Instance.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
             GUILayout.EndHorizontal();
 
+            GUILayout.FlexibleSpace();
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound"); 
 
             shipEffectsInfo = GUILayout.Toggle(shipEffectsInfo, "ShipEffects Info");
@@ -571,27 +571,25 @@ namespace RocketSoundEnhancement
 
                 if(!bypassAutomaticFiltering) {
                     float atmDensity = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-                    float maxFrequency = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : 22200;
-                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, maxFrequency, atmDensity) * WindModulation();
+                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensity) * WindModulation();
                     float focusMuffling = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : atmCutOff;
 
                     if(MapView.MapCamera.isActiveAndEnabled) {
                         focusMuffling = AudioMuffler.InteriorMuffling < atmCutOff ? AudioMuffler.InteriorMuffling : atmCutOff;
-                        atmCutOff = AudioMuffler.InteriorMuffling < atmCutOff ? AudioMuffler.InteriorMuffling : atmCutOff;
                     }
 
-                    MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, atmCutOff, 5000);
+                    MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, Mathf.Min(atmCutOff,focusMuffling), 5000);
                     lastCutoffFreq = MufflingFrequency;
 
                     FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);
                     lastInteriorCutoffFreq = FocusMufflingFrequency;
-
                 } else {
                     FocusMufflingFrequency = MufflingFrequency;
                 }
 
-                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency,10,22000));
                 Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
+                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency,10,22000));
+
 
                 if(FocusMufflingFrequency <= 50) {
                     Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
