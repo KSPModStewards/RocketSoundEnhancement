@@ -588,7 +588,7 @@ namespace RocketSoundEnhancement
                 }
 
                 Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
-                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency,10,22000));
+                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 10, 22000));
 
 
                 if(FocusMufflingFrequency <= 50) {

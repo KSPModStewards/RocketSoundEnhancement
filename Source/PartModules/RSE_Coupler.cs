@@ -35,7 +35,8 @@ namespace RocketSoundEnhancement
                 if(SoundLayers.Where(x => x.name == fxGroup.name).Count() > 0) {
                     var soundLayer = SoundLayers.Find(x => x.name == fxGroup.name);
                     if(soundLayer.audioClips != null) {
-                        var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[0]);
+                        int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+                        var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
                         if(clip != null) {
                             fxGroup.sfx = clip;
                             fxGroup.audio = AudioUtility.CreateOneShotSource(
