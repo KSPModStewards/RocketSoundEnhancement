@@ -51,7 +51,7 @@ namespace RocketSoundEnhancement
                             AirSimFilters.Add(soundLayer.name, airSimFilter);
                             airSimFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim;
                             airSimFilter.EnableLowpassFilter = true;
-                            airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
+                            airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
                         }
                     }
                 }
@@ -89,6 +89,10 @@ namespace RocketSoundEnhancement
                         if(Sources[source].isPlaying) {
                             airSimFilter.enabled = true;
                             airSimFilter.Distance = distance;
+                            airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
+                            airSimFilter.MachAngle = angle;
+                            airSimFilter.MachPass = machPass;
+                            airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
                         } else {
                             airSimFilter.enabled = false;
                         }
@@ -105,8 +109,11 @@ namespace RocketSoundEnhancement
                                     Sources[source].outputAudioMixerGroup = null;
                                 }
                                 break;
-                            case AudioMufflerQuality.Full | AudioMufflerQuality.AirSim:
-                                Sources[source].outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                            case AudioMufflerQuality.Full:
+                                Sources[source].outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                                break;
+                            case AudioMufflerQuality.AirSim:
+                                Sources[source].outputAudioMixerGroup = RSE.Instance.AirSimMixer;
                                 break;
                         }
                     }
@@ -147,8 +154,9 @@ namespace RocketSoundEnhancement
                                 source.outputAudioMixerGroup = null;
                             }
                             break;
-                        case AudioMufflerQuality.Full | AudioMufflerQuality.AirSim:
-                            source.outputAudioMixerGroup = vessel == FlightGlobals.ActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                        case AudioMufflerQuality.Full:
+                        case AudioMufflerQuality.AirSim:
+                            source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             break;
                     }
                 }
