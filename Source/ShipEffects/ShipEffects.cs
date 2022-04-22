@@ -141,7 +141,6 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Remove(onGameUnpause);
         }
 
-        int timeOut;
         float pastAcceleration;
         float pastAngularVelocity;
         public void FixedUpdate()
@@ -246,11 +245,6 @@ namespace RocketSoundEnhancement
 
             if(ignoreVessel || SoundLayerGroups.Count() == 0)
                 return;
-
-            if(timeOut != 60) {
-                timeOut++;
-                return;
-            }
 
             VesselMass = vessel.GetTotalMass();
 

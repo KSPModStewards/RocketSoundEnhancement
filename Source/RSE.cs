@@ -132,6 +132,20 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Add(() => gamePaused = true);
             GameEvents.onGameUnpause.Add(() => gamePaused = false);
+            GameEvents.onPartDeCoupleNewVesselComplete.Add(onNewVessel);
+        }
+        private void onNewVessel(Vessel data0, Vessel data1)
+        {
+            var se1 = data0.GetComponent<ShipEffects>();
+            var se2 = data1.GetComponent<ShipEffects>();
+
+            if(data0.launchTime > data1.launchTime) {
+                se1.SonicBoomed1 = se2.SonicBoomed1;
+                se1.SonicBoomed2 = se2.SonicBoomed2;
+            } else {
+                se2.SonicBoomed1 = se1.SonicBoomed1;
+                se2.SonicBoomed2 = se1.SonicBoomed2;
+            }
         }
 
         void ApplySettings()
@@ -654,6 +668,7 @@ namespace RocketSoundEnhancement
             }
             GameEvents.onGamePause.Remove(() => gamePaused = true);
             GameEvents.onGameUnpause.Remove(() => gamePaused = false);
+            GameEvents.onPartDeCoupleNewVesselComplete.Remove(onNewVessel);
         }
     }
 }
