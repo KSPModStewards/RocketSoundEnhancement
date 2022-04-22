@@ -22,7 +22,9 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
+            getSoundLayersandGroups = false;
+
+            base.OnStart(state);
 
             foreach(var groupNode in configNode.GetNodes()) {
                 var soundLayerNodes = groupNode.GetNodes("SOUNDLAYER");
@@ -41,7 +43,7 @@ namespace RocketSoundEnhancement
             UseAirSimFilters = true;
             EnableLowpassFilter = true;
             DopplerFactor = 0.25f;
-            base.OnStart(state);
+
         }
 
         Collision collision;

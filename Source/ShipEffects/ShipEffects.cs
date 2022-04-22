@@ -142,7 +142,6 @@ namespace RocketSoundEnhancement
         }
 
         int timeOut;
-        bool wasSupersonic = false;
         float pastAcceleration;
         float pastAngularVelocity;
         public void FixedUpdate()
@@ -273,7 +272,6 @@ namespace RocketSoundEnhancement
                             if(vessel.atmDensity > 0) {
 
                                 if(vessel.mach > 1) {
-                                    wasSupersonic = true;
                                     if(MachPass > 0 && !SonicBoomed1) {
                                         SonicBoomed1 = true;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
@@ -281,11 +279,6 @@ namespace RocketSoundEnhancement
                                     //Rear Mach Cone
                                     if(MachPassRear > 0.0 && !SonicBoomed2) {
                                         SonicBoomed2 = true;
-                                        PlaySonicBoom(soundLayer, sourceLayerName);
-                                    }
-                                } else {
-                                    if(wasSupersonic) {
-                                        wasSupersonic = false;
                                         PlaySonicBoom(soundLayer, sourceLayerName);
                                     }
                                 }

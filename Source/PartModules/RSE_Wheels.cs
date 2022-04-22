@@ -16,43 +16,22 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            string partParentName = part.name + "_" + this.moduleName;
-            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
+            base.OnStart(state);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
 
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-            if(!float.TryParse(configNode.GetValue("volume"), out volume))
-                volume = 1;
-
-            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-            Controls = new Dictionary<string, float>();
-            foreach(var node in configNode.GetNodes()) {
-
-                string soundLayerGroupName = node.name;
-
-                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                if(soundLayers.Count > 0) {
-                    if(SoundLayerGroups.ContainsKey(soundLayerGroupName)) {
-                        SoundLayerGroups[soundLayerGroupName].AddRange(soundLayers);
-                    } else {
-                        SoundLayerGroups.Add(soundLayerGroupName, soundLayers);
-                    }
-                }
-            }
-
             UseAirSimFilters = true;
             EnableLowpassFilter = true;
 
-            base.OnStart(state);
+            initialized = true;
         }
 
         bool retracted = false;
         public override void OnUpdate()
         {
-            if(audioParent == null || !HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
                 return;
 
             bool running = false;

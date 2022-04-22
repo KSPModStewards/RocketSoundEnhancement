@@ -31,34 +31,22 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            base.OnStart(state);
+
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
 
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-            if(!float.TryParse(configNode.GetValue("volume"), out volume))
-                volume = 1;
+            configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
             if(!float.TryParse(configNode.GetValue("maxRPM"), out maxRPM))
                 maxRPM = rotorModule.traverseVelocityLimits.y;
 
-            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-            Controls = new Dictionary<string, float>();
-            foreach(var node in configNode.GetNodes()) {
-                string soundLayerGroupName = node.name;
-                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                if(soundLayers.Count > 0) {
-                    if(SoundLayerGroups.ContainsKey(soundLayerGroupName)) {
-                        SoundLayerGroups[soundLayerGroupName].AddRange(soundLayers);
-                    } else {
-                        SoundLayerGroups.Add(soundLayerGroupName, soundLayers);
-                    }
-                }
-            }
-
             SetupBlades();
+
             UseAirSimFilters = true;
             EnableCombFilter = true;
             EnableLowpassFilter = true;
-            base.OnStart(state);
+
+            initialized = true;
         }
 
         void SetupBlades()
@@ -135,7 +123,7 @@ namespace RocketSoundEnhancement
                                 finalControl = 0;
                         }
 
-                        PlaySoundLayer(gameObject, sourceLayerName, soundLayer, finalControl, volume);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, finalControl, volume);
                     }
                 }
             }

@@ -16,30 +16,9 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            string partParentName = part.name + "_" + this.moduleName;
-            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
+            base.OnStart(state);
 
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
             engineModules = part.Modules.GetModules<ModuleEngines>();
-
-            if(!float.TryParse(configNode.GetValue("volume"), out volume))
-                volume = 1;
-
-            SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
-            Controls = new Dictionary<string, float>();
-            foreach(var node in configNode.GetNodes()) {
-                string _engineState = node.name;
-
-                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                if(soundLayers.Count > 0) {
-                    if(SoundLayerGroups.ContainsKey(_engineState)) {
-                        SoundLayerGroups[_engineState].AddRange(soundLayers);
-                    } else {
-                        SoundLayerGroups.Add(_engineState, soundLayers);
-                    }
-                }
-            }
-
             foreach(var engineModule in engineModules) {
                 ignites.Add(engineModule.engineID, engineModule.EngineIgnited);
                 flameouts.Add(engineModule.engineID, engineModule.flameout);
@@ -50,7 +29,7 @@ namespace RocketSoundEnhancement
             EnableLowpassFilter = true;
             EnableWaveShaperFilter = true;
 
-            base.OnStart(state);
+            initialized = true;
         }
 
         public override void OnUpdate()

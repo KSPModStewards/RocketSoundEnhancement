@@ -15,18 +15,14 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            base.OnStart(state);
+
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();
             lastThrustControl = new float[moduleRCSFX.thrustForces.Length];
 
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-            if(!float.TryParse(configNode.GetValue("volume"), out volume))
-                volume = 1;
-
-            SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
-
             UseAirSimFilters = true;
             EnableLowpassFilter = true;
-            base.OnStart(state);
+            initialized = true;
         }
 
         public override void OnUpdate()

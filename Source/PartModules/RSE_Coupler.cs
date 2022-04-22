@@ -6,28 +6,26 @@ namespace RocketSoundEnhancement
 {
     public class RSE_Coupler : RSE_Module
     {
+        AudioSource launchClampSource;
+        ModuleDecouplerBase moduleDecoupler;
         FXGroup fxGroup;
         bool isDecoupler;
+        bool hasDecoupled;
 
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            string partParentName = part.name + "_" + this.moduleName;
-            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
-
-            var configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-
-            SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
+            base.OnStart(state);
 
             if(part.isLaunchClamp()) {
                 fxGroup = part.findFxGroup("activate");
-                isDecoupler = true;
             }
 
             if(part.GetComponent<ModuleDecouplerBase>()) {
-                fxGroup = part.findFxGroup("decouple");
+                moduleDecoupler = part.GetComponent<ModuleDecouplerBase>();
+                hasDecoupled = moduleDecoupler.isDecoupled;
                 isDecoupler = true;
             }
 
@@ -44,126 +42,73 @@ namespace RocketSoundEnhancement
                                 soundLayer.volume * GameSettings.SHIP_VOLUME,
                                 soundLayer.pitch,
                                 soundLayer.spread);
-
-                            Sources.Add(soundLayer.name, fxGroup.audio);
-
-                            var airSimFilter = Sources[soundLayer.name].gameObject.AddComponent<AirSimulationFilter>();
-                            AirSimFilters.Add(soundLayer.name, airSimFilter);
-                            airSimFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim;
-                            airSimFilter.EnableLowpassFilter = true;
-                            airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
+                            launchClampSource = fxGroup.audio;
                         }
                     }
                 }
             }
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
+
             initialized = true;
         }
 
         private void onUnDock(Part data)
         {
             if(part.flightID == data.flightID && !isDecoupler) {
-                PlaySound("undock");
+                PlaySound("Undock");
             }
         }
 
         private void onDock(GameEvents.FromToAction<Part, Part> data)
         {
             if(part.flightID == data.from.flightID && !isDecoupler) {
-                PlaySound("dock");
+                PlaySound("Dock");
             }
         }
 
         public override void OnUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight)
+            if(!HighLogic.LoadedSceneIsFlight && !initialized)
                 return;
 
-            var sourceKeys = Sources.Keys;
-            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
-                foreach(var source in sourceKeys) {
-                    if(AirSimFilters.ContainsKey(source)) {
-                        AirSimulationFilter airSimFilter = AirSimFilters[source];
-                        if(Sources[source].isPlaying) {
-                            airSimFilter.enabled = true;
-                            airSimFilter.Distance = distance;
-                            airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
-                            airSimFilter.MachAngle = angle;
-                            airSimFilter.MachPass = machPass;
-                            airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-                        } else {
-                            airSimFilter.enabled = false;
-                        }
+            if(moduleDecoupler != null && SoundLayerGroups.ContainsKey("Decouple")) {
+                if(moduleDecoupler.isDecoupled && !hasDecoupled) {
+                    foreach(var soundlayer in SoundLayerGroups["Decouple"]) {
+                        PlaySoundLayer(audioParent, soundlayer.name, soundlayer, 1, 1, false, true);
                     }
+                    hasDecoupled = moduleDecoupler.isDecoupled;
                 }
             }
 
-            foreach(var source in sourceKeys) {
-                if(source == "decouple" || source == "activate") {
-                    if(AudioMuffler.EnableMuffling) {
-                        switch(AudioMuffler.MufflerQuality) {
-                            case AudioMufflerQuality.Lite:
-                                if(Sources[source].outputAudioMixerGroup != null) {
-                                    Sources[source].outputAudioMixerGroup = null;
-                                }
-                                break;
-                            case AudioMufflerQuality.Full:
-                                Sources[source].outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                                break;
-                            case AudioMufflerQuality.AirSim:
-                                Sources[source].outputAudioMixerGroup = RSE.Instance.AirSimMixer;
-                                break;
-                        }
-                    }
-                    continue;
-                }
-
-                if(!Sources[source].isPlaying) {
-                    UnityEngine.Object.Destroy(Sources[source]);
-                    Sources.Remove(source);
-                }
-            }
-        }
-
-        public void PlaySound(string action)
-        {
-            if(SoundLayers.Where(x => x.name == action).Count() > 0) {
-                var soundLayer = SoundLayers.Find(x => x.name == action);
-
-                if(soundLayer.audioClips == null)
-                    return;
-
-                AudioSource source;
-                if(Sources.ContainsKey(action)) {
-                    source = Sources[action];
-                } else {
-                    source = AudioUtility.CreateOneShotSource(
-                        audioParent,
-                        soundLayer.volume * GameSettings.SHIP_VOLUME,
-                        soundLayer.pitch,
-                        soundLayer.spread);
-                    Sources.Add(soundLayer.name, source);
-                }
-
+            if(launchClampSource != null) {
                 if(AudioMuffler.EnableMuffling) {
                     switch(AudioMuffler.MufflerQuality) {
                         case AudioMufflerQuality.Lite:
-                            if(source.outputAudioMixerGroup != null) {
-                                source.outputAudioMixerGroup = null;
+                            if(launchClampSource.outputAudioMixerGroup != null) {
+                                launchClampSource.outputAudioMixerGroup = null;
                             }
                             break;
                         case AudioMufflerQuality.Full:
                         case AudioMufflerQuality.AirSim:
-                            source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                            launchClampSource.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             break;
                     }
                 }
+            }
 
-                var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[0]);
-                if(clip != null) {
-                    source.PlayOneShot(clip);
+            base.OnUpdate();
+        }
+
+        public void PlaySound(string action)
+        {
+            if(SoundLayerGroups.ContainsKey(action)) {
+                foreach(var soundLayer in SoundLayerGroups[action]) {
+                    PlaySoundLayer(audioParent, action + "_" + soundLayer.name, soundLayer, 1, 1, false, true);
                 }
             }
         }

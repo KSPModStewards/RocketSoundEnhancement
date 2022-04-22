@@ -11,8 +11,8 @@ namespace RocketSoundEnhancement
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
         public Dictionary<string, float> Controls = new Dictionary<string, float>();
 
-        public Dictionary<string, List<SoundLayer>> SoundLayerGroups;
-        public List<SoundLayer> SoundLayers;
+        public Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
+        public List<SoundLayer> SoundLayers = new List<SoundLayer>();
 
         public GameObject audioParent;
 
@@ -25,12 +25,36 @@ namespace RocketSoundEnhancement
 
         public float volume = 1;
 
+        public ConfigNode configNode;
+        public bool getSoundLayersandGroups = true;
         public override void OnStart(StartState state)
         {
+            string partParentName = part.name + "_" + this.moduleName;
+            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
+
+            configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
+            if(!float.TryParse(configNode.GetValue("volume"), out volume))
+                volume = 1;
+
+            if(getSoundLayersandGroups) {
+                SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
+
+                foreach(var node in configNode.GetNodes()) {
+                    string groupName = node.name;
+
+                    var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
+                    if(soundLayers.Count > 0) {
+                        if(SoundLayerGroups.ContainsKey(groupName)) {
+                            SoundLayerGroups[groupName].AddRange(soundLayers);
+                        } else {
+                            SoundLayerGroups.Add(groupName, soundLayers);
+                        }
+                    }
+                }
+            }
+
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
-
-            initialized = true;
         }
 
 
