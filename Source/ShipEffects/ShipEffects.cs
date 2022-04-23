@@ -49,7 +49,7 @@ namespace RocketSoundEnhancement
             PitchControls.Clear();
 
             if(vessel.Parts.Count <= 1) {
-                if(vessel.Parts[0].PhysicsSignificance == 1 || vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
+                if(vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
                     ignoreVessel = true;
 
                     if(vessel.Parts[0].PhysicsSignificance == 1) {
@@ -192,15 +192,21 @@ namespace RocketSoundEnhancement
         public void PlaySonicBoom(SoundLayer soundLayer, string sourceLayerName)
         {
             if(!(InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)) {
-                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, Mathf.Min(Mach, 12), false, true, true);
+                float vesselSize = vessel.vesselSize.sqrMagnitude;
+                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, 1, Mathf.Clamp01(Distance / vesselSize) * Mathf.Min(Mach, 4), false, true, true); ;
             }
         }
 
         Dictionary<AudioSource, float> stockSources = new Dictionary<AudioSource, float>();
         public void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
+            if(!HighLogic.LoadedSceneIsFlight || gamePause || noPhysics)
                 return;
+
+            if(vessel.loaded && !initialized && !ignoreVessel) {
+                Initialize();
+                return;
+            }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
                 foreach(var part in vessel.Parts.ToList()) {
@@ -236,11 +242,6 @@ namespace RocketSoundEnhancement
                         stockSources.Remove(source);
                     }
                 }
-            }
-
-            if(vessel.loaded && !initialized && !ignoreVessel) {
-                Initialize();
-                return;
             }
 
             if(ignoreVessel || SoundLayerGroups.Count() == 0)
@@ -314,7 +315,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control, bool smoothControl = true, bool oneShot = false, bool AirSimBasic = false)
+        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control,float volumeScale = 1, bool smoothControl = true, bool oneShot = false, bool AirSimBasic = false)
         {
             float finalVolume;
             float finalPitch;
@@ -332,6 +333,10 @@ namespace RocketSoundEnhancement
 
             if(soundLayer.massToPitch != null) {
                 finalPitch *= soundLayer.massToPitch.Value(VesselMass);
+            }
+
+            if(soundLayer.distance != null) {
+                finalVolume *= soundLayer.distance.Value(Distance);
             }
 
             if(smoothControl) {
@@ -438,7 +443,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            source.volume = finalVolume * GameSettings.SHIP_VOLUME;
+            source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
             if(oneShot) {

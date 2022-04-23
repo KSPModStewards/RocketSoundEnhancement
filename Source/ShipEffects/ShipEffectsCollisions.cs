@@ -26,11 +26,11 @@ namespace RocketSoundEnhancement
 
             base.OnStart(state);
 
-            foreach(var groupNode in configNode.GetNodes()) {
-                var soundLayerNodes = groupNode.GetNodes("SOUNDLAYER");
+            foreach(var node in configNode.GetNodes()) {
+                var soundLayerNodes = node.GetNodes("SOUNDLAYER");
                 CollisionType collisionType;
 
-                if(Enum.TryParse(groupNode.name, out collisionType)) {
+                if(Enum.TryParse(node.name, out collisionType)) {
                     var soundLayers = AudioUtility.CreateSoundLayerGroup(soundLayerNodes);
                     if(SoundLayerColGroups.ContainsKey(collisionType)) {
                         SoundLayerColGroups[collisionType].AddRange(soundLayers);
@@ -40,34 +40,33 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
-            DopplerFactor = 0.25f;
-
+            initialized = true;
         }
 
+        bool collided;
         Collision collision;
         CollidingObject collidingObject;
         CollisionType collisionType;
-        bool collided;
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
 
             if(collided) {
+
                 if(SoundLayerColGroups.ContainsKey(collisionType)) {
+                    float control = 0;
+
+                    if(collision != null) {
+                        control = collision.relativeVelocity.magnitude;
+                    }
+
+                    if(collisionType == CollisionType.CollisionExit) {
+                        control = collision.relativeVelocity.magnitude;
+                    }
+
                     foreach(var soundLayer in SoundLayerColGroups[collisionType]) {
                         string soundLayerName = collisionType + "_" + soundLayer.name;
-                        float control = 0;
-
-                        if(collision != null) {
-                            control = collision.relativeVelocity.magnitude;
-                        }
-
-                        if(collisionType == CollisionType.CollisionExit) {
-                            control = collision.relativeVelocity.magnitude;
-                        }
 
                         var layerMaskName = soundLayer.data.ToLower();
                         if(layerMaskName != "") {
@@ -88,7 +87,8 @@ namespace RocketSoundEnhancement
                         }
 
                         bool isOneshot = collisionType != CollisionType.CollisionStay;
-                        PlaySoundLayer(gameObject, soundLayerName, soundLayer, control, volume, false, isOneshot, isOneshot);
+
+                        PlaySoundLayer(audioParent, soundLayerName, soundLayer, control, Volume, false, isOneshot, isOneshot);
                     }
                 }
             } else {

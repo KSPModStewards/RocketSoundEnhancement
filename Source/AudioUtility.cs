@@ -45,12 +45,15 @@ namespace RocketSoundEnhancement
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
+        public float MaxDistance;
+        public AudioRolloffMode RolloffMode;
         public FXCurve volume;
         public FXCurve pitch;
         public FloatCurve volumeFC;
         public FloatCurve pitchFC;
         public FXCurve massToVolume;
         public FXCurve massToPitch;
+        public FXCurve distance;
     }
 
     public static class AudioUtility
@@ -97,7 +100,11 @@ namespace RocketSoundEnhancement
             }
 
             node.TryGetValue("loop", ref soundLayer.loop);
-            node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom);
+
+            if(!node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom)){
+                soundLayer.loopAtRandom = soundLayer.loop;
+            }
+
             if(!node.TryGetValue("pitchVariation", ref soundLayer.pitchVariation)) {
                 soundLayer.pitchVariation = true;
             }
@@ -108,6 +115,14 @@ namespace RocketSoundEnhancement
 
             node.TryGetValue("spoolIdle", ref soundLayer.spoolIdle);
             node.TryGetValue("spread", ref soundLayer.spread);
+
+            if(!node.TryGetValue("MaxDistance", ref soundLayer.MaxDistance)) {
+                soundLayer.MaxDistance = 5000;
+            }
+
+            if(!Enum.TryParse(node.GetValue("RolloffMode"),out soundLayer.RolloffMode)) {
+                soundLayer.RolloffMode = AudioRolloffMode.Logarithmic;
+            }
 
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
@@ -136,6 +151,11 @@ namespace RocketSoundEnhancement
             if(node.HasValue("massToPitch")) {
                 soundLayer.massToPitch = new FXCurve("massToPitch", 1);
                 soundLayer.massToPitch.Load("massToPitch", node);
+            }
+
+            if(node.HasValue("distance")) {
+                soundLayer.distance = new FXCurve("distance", 1);
+                soundLayer.distance.Load("distance", node);
             }
 
             if(node.HasValue("data")) {
@@ -176,7 +196,10 @@ namespace RocketSoundEnhancement
                 source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0));
             }
 
-            source.rolloffMode = AudioRolloffMode.Logarithmic;
+            source.rolloffMode = soundLayer.RolloffMode;
+            if(soundLayer.RolloffMode == AudioRolloffMode.Linear) {
+                source.maxDistance = soundLayer.MaxDistance;
+            }
 
             return source;
         }

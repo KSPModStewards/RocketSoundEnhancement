@@ -18,12 +18,21 @@ namespace RocketSoundEnhancement
 
         public bool initialized;
         public bool gamePaused;
-        public bool UseAirSimFilters = false;
+
+        public bool UseAirSimulation = false;
         public bool EnableCombFilter = false;
         public bool EnableLowpassFilter = false;
         public bool EnableWaveShaperFilter = false;
+        public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
+        public float MaxDistance = 2500;
+        public float FarLowpass = 1000f;
+        public float AngleHighpass = 500;
+        public float MaxCombDelay = 20;
+        public float MaxCombMix = 0.25f;
+        public float MaxDistortion = 0.5f;
 
-        public float volume = 1;
+        public float Volume = 1;
+        public float DopplerFactor = 0.5f;
 
         public ConfigNode configNode;
         public bool getSoundLayersandGroups = true;
@@ -33,15 +42,48 @@ namespace RocketSoundEnhancement
             audioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
             configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
-            if(!float.TryParse(configNode.GetValue("volume"), out volume))
-                volume = 1;
+            if(!float.TryParse(configNode.GetValue("volume"), out Volume))
+                Volume = 1;
+
+            if(!float.TryParse(configNode.GetValue("DopplerFactor"), out DopplerFactor))
+                DopplerFactor = 0.5f;
+
+            if(configNode.HasNode("AIRSIMULATION")) {
+                var node = configNode.GetNode("AIRSIMULATION");
+                UseAirSimulation = true;
+
+                if(node.HasValue("EnableCombFilter"))
+                    bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
+
+                if(node.HasValue("EnableLowpassFilter"))
+                    bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
+
+                if(node.HasValue("EnableWaveShaperFilter"))
+                    bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
+
+                if(!Enum.TryParse(node.GetValue("UpdateMode"), true, out AirSimUpdateMode))
+                    AirSimUpdateMode = AirSimulationUpdate.Basic;
+
+                if(!float.TryParse(node.GetValue("MaxDistance"), out MaxDistance))
+                    MaxDistance = 2500;
+
+                if(!float.TryParse(node.GetValue("FarLowpass"), out FarLowpass))
+                    FarLowpass = 1000f;
+                if(!float.TryParse(node.GetValue("AngleHighpass"), out AngleHighpass))
+                    AngleHighpass = 0;
+                if(!float.TryParse(node.GetValue("MaxCombDelay"), out MaxCombDelay))
+                    MaxCombDelay = 20;
+                if(!float.TryParse(node.GetValue("MaxCombMix"), out MaxCombMix))
+                    MaxCombMix = 0.25f;
+                if(!float.TryParse(node.GetValue("MaxDistortion"), out MaxDistortion))
+                    MaxDistortion = 0.5f;
+            }
 
             if(getSoundLayersandGroups) {
                 SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
 
                 foreach(var node in configNode.GetNodes()) {
                     string groupName = node.name;
-
                     var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
                     if(soundLayers.Count > 0) {
                         if(SoundLayerGroups.ContainsKey(groupName)) {
@@ -50,6 +92,7 @@ namespace RocketSoundEnhancement
                             SoundLayerGroups.Add(groupName, soundLayers);
                         }
                     }
+
                 }
             }
 
@@ -116,7 +159,6 @@ namespace RocketSoundEnhancement
         }
 
         public float Doppler = 1;
-        public float DopplerFactor = 0.5f;
         float dopplerRaw = 1;
 
         float relativeSpeed = 0;
@@ -180,6 +222,10 @@ namespace RocketSoundEnhancement
                 finalPitch *= Doppler;
             }
 
+            if(soundLayer.distance != null) {
+                finalVolume *= soundLayer.distance.Value(distance);
+            }
+
             //For Looped sounds cleanup
             if(finalVolume < float.Epsilon) {
                 if(Sources.ContainsKey(sourceLayerName)) {
@@ -223,7 +269,7 @@ namespace RocketSoundEnhancement
                         break;
                     case AudioMufflerQuality.AirSim:
                         if(soundLayer.channel == FXChannel.ShipBoth) {
-                            if(UseAirSimFilters) {
+                            if(UseAirSimulation) {
                                 source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
                                 processAirSim = true;
                             } else {
@@ -245,7 +291,7 @@ namespace RocketSoundEnhancement
                     airSimFilter.EnableCombFilter = EnableCombFilter;
                     airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
                     airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
-                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
+                    airSimFilter.SimulationUpdate = AirSimUpdateMode;
 
                     AirSimFilters.Add(sourceLayerName, airSimFilter);
                 } else {
@@ -257,6 +303,13 @@ namespace RocketSoundEnhancement
                 airSimFilter.Angle = angle;
                 airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
                 airSimFilter.MachPass = machPass;
+
+                airSimFilter.MaxDistance = MaxDistance;
+                airSimFilter.FarLowpass = FarLowpass;
+                airSimFilter.AngleHighPass = AngleHighpass;
+                airSimFilter.MaxCombDelay = MaxCombDelay;
+                airSimFilter.MaxCombMix = MaxCombMix;
+                airSimFilter.MaxDistortion = MaxDistortion;
                 airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 

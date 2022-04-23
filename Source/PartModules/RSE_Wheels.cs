@@ -22,9 +22,6 @@ namespace RocketSoundEnhancement
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
 
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
-
             initialized = true;
         }
 
@@ -105,7 +102,7 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, volume, soundLayer.spool);
+                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, Volume, soundLayer.spool);
                 }
             }
 

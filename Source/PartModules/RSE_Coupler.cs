@@ -48,9 +48,6 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
-
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
 

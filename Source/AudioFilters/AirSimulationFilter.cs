@@ -125,8 +125,11 @@ namespace RocketSoundEnhancement
             }
 
             if(EnableLowpassFilter) {
+                float anglePos = Mathf.Clamp01((Angle - MachAngle) / MachAngle);
+
                 LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv);
                 LowpassFrequency *= RSE.Instance.WindModulation();
+                HighPassFrequency = Mathf.Lerp(0, AngleHighPass, anglePos);
             }
 
             if(EnableWaveShaperFilter) {
