@@ -24,6 +24,10 @@ namespace RocketSoundEnhancement
 
             getSoundLayersandGroups = false;
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+            DopplerFactor = 0.25f;
+
             base.OnStart(state);
 
             foreach(var groupNode in configNode.GetNodes()) {
@@ -39,11 +43,6 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
-
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
-            DopplerFactor = 0.25f;
-
         }
 
         Collision collision;
@@ -88,7 +87,7 @@ namespace RocketSoundEnhancement
                         }
 
                         bool isOneshot = collisionType != CollisionType.CollisionStay;
-                        PlaySoundLayer(gameObject, soundLayerName, soundLayer, control, volume, false, isOneshot, isOneshot);
+                        PlaySoundLayer(audioParent, soundLayerName, soundLayer, control, Volume, false, isOneshot, isOneshot);
                     }
                 }
             } else {

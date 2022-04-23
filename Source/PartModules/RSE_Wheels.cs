@@ -16,14 +16,14 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             base.OnStart(state);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
-
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
 
             initialized = true;
         }
@@ -105,7 +105,7 @@ namespace RocketSoundEnhancement
                         }
                     }
 
-                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, volume, soundLayer.spool);
+                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, Volume, soundLayer.spool);
                 }
             }
 

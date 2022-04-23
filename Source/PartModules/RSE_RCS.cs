@@ -8,21 +8,17 @@ namespace RocketSoundEnhancement
     {
         ModuleRCSFX moduleRCSFX;
 
-        float[] lastThrustControl;
-
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             base.OnStart(state);
 
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();
-            lastThrustControl = new float[moduleRCSFX.thrustForces.Length];
-
-            UseAirSimFilters = true;
-            EnableLowpassFilter = true;
-            initialized = true;
         }
 
         public override void OnUpdate()
@@ -42,7 +38,7 @@ namespace RocketSoundEnhancement
             foreach(var soundLayer in SoundLayers) {
                 string sourceLayerName = soundLayer.name;
 
-                PlaySoundLayer(gameObject, sourceLayerName, soundLayer, rawControl / thrustTransforms.Count, volume * thrustTransforms.Count);
+                PlaySoundLayer(audioParent, sourceLayerName, soundLayer, rawControl / thrustTransforms.Count, Volume * thrustTransforms.Count);
             }
 
             base.OnUpdate();

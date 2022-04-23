@@ -22,8 +22,6 @@ namespace RocketSoundEnhancement
         Dictionary<string, PropellerBladeData> PropellerBlades = new Dictionary<string, PropellerBladeData>();
         ModuleRoboticServoRotor rotorModule;
 
-        float maxRPM = 250;
-
         int childPartsCount = 0;
 
         public override void OnStart(StartState state)
@@ -31,20 +29,18 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+            EnableCombFilter = true;
+            EnableWaveShaperFilter = true;
+
             base.OnStart(state);
 
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
 
             configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
-            if(!float.TryParse(configNode.GetValue("maxRPM"), out maxRPM))
-                maxRPM = rotorModule.traverseVelocityLimits.y;
-
             SetupBlades();
-
-            UseAirSimFilters = true;
-            EnableCombFilter = true;
-            EnableLowpassFilter = true;
 
             initialized = true;
         }
@@ -106,7 +102,7 @@ namespace RocketSoundEnhancement
 
             if(SoundLayerGroups.Count > 0) {
                 foreach(var soundLayerGroup in SoundLayerGroups) {
-                    float rpmControl = rotorModule.transformRateOfMotion / maxRPM; //* (rotorModule.servoMotorSize / 100);
+                    float rpmControl = rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y; //* (rotorModule.servoMotorSize / 100);
                     
                     foreach(var soundLayer in soundLayerGroup.Value) {
                         string sourceLayerName = soundLayerGroup.Key + "_" + soundLayer.name;
@@ -123,7 +119,7 @@ namespace RocketSoundEnhancement
                                 finalControl = 0;
                         }
 
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, finalControl, volume);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, finalControl, Volume);
                     }
                 }
             }
@@ -145,7 +141,7 @@ namespace RocketSoundEnhancement
                     foreach(var soundLayer in PropellerBlades[propBlade].soundLayers) {
                         string sourceLayerName = propBlade + "_" + "_" + soundLayer.name;
 
-                        PlaySoundLayer(gameObject, sourceLayerName, soundLayer, propControl * bladeMultiplier, propOverallVolume);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, propControl * bladeMultiplier, propOverallVolume);
                     }
                 }
             }

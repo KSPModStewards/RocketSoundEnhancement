@@ -10,11 +10,17 @@ namespace RocketSoundEnhancement
         Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
 
         List<ModuleEngines> engineModules = new List<ModuleEngines>();
+        bool bursted;
 
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
+
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+            EnableCombFilter = true;
+            EnableWaveShaperFilter = true;
 
             base.OnStart(state);
 
@@ -23,11 +29,6 @@ namespace RocketSoundEnhancement
                 ignites.Add(engineModule.engineID, engineModule.EngineIgnited);
                 flameouts.Add(engineModule.engineID, engineModule.flameout);
             }
-
-            UseAirSimFilters = true;
-            EnableCombFilter = true;
-            EnableLowpassFilter = true;
-            EnableWaveShaperFilter = true;
 
             initialized = true;
         }
@@ -71,11 +72,12 @@ namespace RocketSoundEnhancement
                             Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
                         }
 
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, Controls[sourceLayerName], volume, false);
+                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, Controls[sourceLayerName], Volume, false);
                     }
                 }
 
                 foreach(var soundLayer in SoundLayerGroups) {
+                    float control = 1;
                     switch(soundLayer.Key) {
                         case "Engage":
                             if(engineIgnited && !ignites[engineID]) {
@@ -103,6 +105,19 @@ namespace RocketSoundEnhancement
                                 continue;
                             }
                             break;
+                        case "Burst":
+                            control = rawControl;
+                            if(engineIgnited && rawControl > 0) {
+                                if(!bursted) {
+                                    bursted = true;
+                                } else {
+                                    continue;
+                                }
+                            } else {
+                                bursted = false;
+                                continue;
+                            }
+                            break;
                         default:
                             continue;
                     }
@@ -110,7 +125,7 @@ namespace RocketSoundEnhancement
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
                         string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
-                        PlaySoundLayer(audioParent, oneShotLayerName, oneShotLayer, 1, volume, false, true);
+                        PlaySoundLayer(audioParent, oneShotLayerName, oneShotLayer, control, Volume, false, true);
                     }
                 }
             }

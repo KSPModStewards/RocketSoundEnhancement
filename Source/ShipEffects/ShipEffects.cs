@@ -49,7 +49,7 @@ namespace RocketSoundEnhancement
             PitchControls.Clear();
 
             if(vessel.Parts.Count <= 1) {
-                if(vessel.Parts[0].PhysicsSignificance == 1 || vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
+                if(vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA")) {
                     ignoreVessel = true;
 
                     if(vessel.Parts[0].PhysicsSignificance == 1) {
@@ -199,8 +199,13 @@ namespace RocketSoundEnhancement
         Dictionary<AudioSource, float> stockSources = new Dictionary<AudioSource, float>();
         public void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || gamePause || noPhysics)
+            if(!HighLogic.LoadedSceneIsFlight || gamePause || noPhysics)
                 return;
+
+            if(vessel.loaded && !initialized && !ignoreVessel) {
+                Initialize();
+                return;
+            }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
                 foreach(var part in vessel.Parts.ToList()) {
@@ -236,11 +241,6 @@ namespace RocketSoundEnhancement
                         stockSources.Remove(source);
                     }
                 }
-            }
-
-            if(vessel.loaded && !initialized && !ignoreVessel) {
-                Initialize();
-                return;
             }
 
             if(ignoreVessel || SoundLayerGroups.Count() == 0)
