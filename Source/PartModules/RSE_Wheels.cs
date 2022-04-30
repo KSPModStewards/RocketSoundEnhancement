@@ -16,6 +16,9 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            UseAirSimFilters = true;
+            EnableLowpassFilter = true;
+
             base.OnStart(state);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
