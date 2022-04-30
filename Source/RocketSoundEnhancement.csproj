@@ -1,6 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
-  <Import Project="packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.props" Condition="Exists('packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.props')" />
   <PropertyGroup>
     <ProjectGuid>{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}</ProjectGuid>
     <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -9,16 +7,16 @@
     <OutputType>Library</OutputType>
     <RootNamespace>RocketSoundEnhancement</RootNamespace>
     <AssemblyName>RocketSoundEnhancement</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile/>
     <NoWin32Manifest>False</NoWin32Manifest>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <WarningLevel>4</WarningLevel>
-    <NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>&#xD;
     </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
@@ -38,7 +36,7 @@
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\KSP 1.9.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
     <DebugSymbols>False</DebugSymbols>
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
@@ -47,7 +45,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
-    <OutputPath>bin\</OutputPath>
+    <OutputPath>..\..\..\KSP 1.9.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
@@ -55,6 +53,9 @@
     <LangVersion>preview</LangVersion>
     <OutputPath>..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
     <DebugType>none</DebugType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
@@ -65,11 +66,11 @@
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
+    <Reference Include="System"/>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml"/>
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -77,12 +78,11 @@
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <Private>False</Private>
+    <Reference Include="UnityEngine.AnimationModule">
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
@@ -98,16 +98,8 @@
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.VehiclesModule">
@@ -116,38 +108,30 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioFilters\AirSimulationFilter.cs" />
-    <Compile Include="AudioFilters\AudioLimiter.cs" />
-    <Compile Include="AudioFilters\LowpassFilter.cs" />
-    <Compile Include="PartModules\RSE_Module.cs" />
-    <Compile Include="PartModules\RSE_RotorEngines.cs" />
-    <Compile Include="PartModules\RSE_RotorServos.cs" />
-    <Compile Include="PartModules\RSE_Coupler.cs" />
-    <Compile Include="PartModules\RSE_Engines.cs" />
-    <Compile Include="PartModules\RSE_Wheels.cs" />
-    <Compile Include="PartModules\RSE_RCS.cs" />
-    <Compile Include="AudioUtility.cs" />
-    <Compile Include="AudioMuffler.cs" />
-    <Compile Include="RSE.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="Startup.cs" />
-    <Compile Include="ShipEffects\ShipEffects.cs" />
-    <Compile Include="ShipEffects\ShipEffectsCollisions.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AudioFilters\AirSimulationFilter.cs"/>
+    <Compile Include="AudioFilters\AudioLimiter.cs"/>
+    <Compile Include="AudioFilters\LowpassFilter.cs"/>
+    <Compile Include="PartModules\RSE_Module.cs"/>
+    <Compile Include="PartModules\RSE_RotorEngines.cs"/>
+    <Compile Include="PartModules\RSE_RotorServos.cs"/>
+    <Compile Include="PartModules\RSE_Coupler.cs"/>
+    <Compile Include="PartModules\RSE_Engines.cs"/>
+    <Compile Include="PartModules\RSE_Wheels.cs"/>
+    <Compile Include="PartModules\RSE_RCS.cs"/>
+    <Compile Include="AudioUtility.cs"/>
+    <Compile Include="AudioMuffler.cs"/>
+    <Compile Include="RSE.cs"/>
+    <Compile Include="Settings.cs"/>
+    <Compile Include="Startup.cs"/>
+    <Compile Include="ShipEffects\ShipEffects.cs"/>
+    <Compile Include="ShipEffects\ShipEffectsCollisions.cs"/>
+    <Compile Include="Properties\AssemblyInfo.cs"/>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <Publicize Include="Assembly-CSharp"/>
   </ItemGroup>
   <ItemGroup>
-    <Publicize Include="Assembly-CSharp" />
+    <PackageReference Include="Krafs.Publicizer" Version="1.0.2"/>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins"</PostBuildEvent>
-  </PropertyGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <Error Condition="!Exists('packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.props'))" />
-    <Error Condition="!Exists('packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.targets'))" />
-  </Target>
-  <Import Project="packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.targets" Condition="Exists('packages\Krafs.Publicizer.1.0.2\build\Krafs.Publicizer.targets')" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

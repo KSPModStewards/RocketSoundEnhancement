@@ -375,7 +375,7 @@ namespace RocketSoundEnhancement
             }
 
             if(vessel == FlightGlobals.ActiveVessel && soundLayer.channel == FXChannel.ShipInternal && InternalCamera.Instance.isActiveAndEnabled) {
-                source.transform.localPosition = InternalCamera.Instance._camera.transform.localPosition + Vector3.back;
+                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
             }
 
             if(soundLayer.channel == FXChannel.ShipBoth) {
