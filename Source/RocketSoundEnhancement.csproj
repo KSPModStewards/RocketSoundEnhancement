@@ -113,7 +113,6 @@
     <Compile Include="AudioFilters\LowpassFilter.cs"/>
     <Compile Include="PartModules\RSE_Module.cs"/>
     <Compile Include="PartModules\RSE_RotorEngines.cs"/>
-    <Compile Include="PartModules\RSE_RotorServos.cs"/>
     <Compile Include="PartModules\RSE_Coupler.cs"/>
     <Compile Include="PartModules\RSE_Engines.cs"/>
     <Compile Include="PartModules\RSE_Wheels.cs"/>
