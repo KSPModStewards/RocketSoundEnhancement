@@ -141,18 +141,21 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Remove(onGameUnpause);
         }
 
-        float pastAcceleration;
+        float pastVelocity;
         float pastAngularVelocity;
+        float pastAcceleration;
         public void FixedUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePause || noPhysics)
                 return;
 
-            Acceleration = (float)vessel.geeForce * 9.81f;
+            Acceleration = Mathf.Abs(pastVelocity - (float)vessel.speed) / Time.fixedDeltaTime;
             Acceleration += (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
+            Acceleration = Mathf.Round(Acceleration * 10) * 0.1f;
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
             DynamicPressure = (float)vessel.dynamicPressurekPa;
 
+            pastVelocity = (float)vessel.speed;
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
@@ -317,8 +320,9 @@ namespace RocketSoundEnhancement
 
         public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float control,float volumeScale = 1, bool smoothControl = true, bool oneShot = false, bool AirSimBasic = false)
         {
-            float finalVolume;
-            float finalPitch;
+            float finalVolume = 1;
+            float finalPitch = 1;
+
             if(soundLayer.useFloatCurve) {
                 finalVolume = soundLayer.volumeFC.Evaluate(control);
                 finalPitch = soundLayer.pitchFC.Evaluate(control);
@@ -353,6 +357,8 @@ namespace RocketSoundEnhancement
                 finalPitch = PitchControls[sourceLayerName];
             }
 
+            finalVolume = Mathf.Round(finalVolume * 1000) * 0.001f;
+            
             //For Looped sounds cleanup
             if(finalVolume < float.Epsilon) {
                 if(Sources.ContainsKey(sourceLayerName)) {
