@@ -14,8 +14,8 @@ namespace RocketSoundEnhancement
 
     public enum FXChannel
     {
-        ShipInternal,
-        ShipBoth
+        Exterior,
+        Interior
     }
 
     public enum PhysicsControl
@@ -127,7 +127,7 @@ namespace RocketSoundEnhancement
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
 
-            node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.ShipBoth);
+            node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.Exterior);
 
             soundLayer.volume.Load("volume", node);
             soundLayer.pitch.Load("pitch", node);
@@ -274,7 +274,7 @@ namespace RocketSoundEnhancement
                 return;
 
             switch(channel) {
-                case FXChannel.ShipBoth:
+                case FXChannel.Exterior:
                     source.volume *= Settings.Instance.ExteriorVolume;
                     if(loop) {
                         if(!source.isPlaying) {
@@ -295,7 +295,7 @@ namespace RocketSoundEnhancement
                         }
                     }
                     break;
-                case FXChannel.ShipInternal:
+                case FXChannel.Interior:
                     source.volume *= Settings.Instance.InteriorVolume;
 
                     if(vessel != null) {

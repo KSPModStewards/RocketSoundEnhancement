@@ -260,7 +260,7 @@ namespace RocketSoundEnhancement
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 float rawControl = GetController(soundLayerGroup.Key);
                 foreach(var soundLayer in soundLayerGroup.Value) {
-                    if(vessel.crewableParts == 0 && soundLayer.channel == FXChannel.ShipInternal)
+                    if(vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
                         continue;
 
                     string sourceLayerName = soundLayerGroup.Key.ToString() + "_" + soundLayer.name;
@@ -380,11 +380,11 @@ namespace RocketSoundEnhancement
                 source = Sources[sourceLayerName];
             }
 
-            if(vessel == FlightGlobals.ActiveVessel && soundLayer.channel == FXChannel.ShipInternal && InternalCamera.Instance.isActiveAndEnabled) {
+            if(vessel == FlightGlobals.ActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled) {
                 source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
             }
 
-            if(soundLayer.channel == FXChannel.ShipBoth) {
+            if(soundLayer.channel == FXChannel.Exterior) {
                 source.transform.position = vessel.CurrentCoM;
             }
 
@@ -397,14 +397,14 @@ namespace RocketSoundEnhancement
                         }
                         break;
                     case AudioMufflerQuality.Full:
-                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                        if(soundLayer.channel == FXChannel.Exterior) {
                             source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                         } else {
                             source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                         }
                         break;
                     case AudioMufflerQuality.AirSim:
-                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                        if(soundLayer.channel == FXChannel.Exterior) {
                             if(AirSimBasic) {
                                 source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                             } else {

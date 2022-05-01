@@ -261,14 +261,14 @@ namespace RocketSoundEnhancement
                         }
                         break;
                     case AudioMufflerQuality.Full:
-                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                        if(soundLayer.channel == FXChannel.Exterior) {
                             source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                         } else {
                             source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
                         }
                         break;
                     case AudioMufflerQuality.AirSim:
-                        if(soundLayer.channel == FXChannel.ShipBoth) {
+                        if(soundLayer.channel == FXChannel.Exterior) {
                             if(UseAirSimulation) {
                                 source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
                                 processAirSim = true;
