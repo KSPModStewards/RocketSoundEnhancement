@@ -36,7 +36,6 @@ namespace RocketSoundEnhancement
         public float MaxCombDelay = 20;
         public float MaxCombMix = 0.25f;
         public float MaxDistortion = 0.5f;
-        public float MaxLowpassFrequency = 22200;
 
         // Filter Controls
         public float CombDelay = 0;
@@ -48,7 +47,6 @@ namespace RocketSoundEnhancement
         int SampleRate;
         float lowpassFade;
         double combDelaySamples;
-        float combMixClamped;
 
         void Awake()
         {
@@ -70,11 +68,10 @@ namespace RocketSoundEnhancement
             }
 
             lowpassFade = EnableLowpassFilter && LowpassFrequency <= 50 ?
-                Mathf.Pow(2, Mathf.Lerp(-80, 0, Mathf.Clamp01(LowpassFrequency / 50f)) / 6) : 1;
+                Mathf.Pow(2, Mathf.Lerp(-80, 0, LowpassFrequency / 50f) / 6) : 1;
 
             #region Combfilter Update
             combDelaySamples = CombDelay * SampleRate / 1000;
-            combMixClamped = Mathf.Clamp01(CombMix);
             #endregion
 
             #region LowpassHighpassFilter Update
@@ -92,48 +89,47 @@ namespace RocketSoundEnhancement
 
         public void UpdateFiltersFull()
         {
-            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));                                    //  Inverse Distance
+            float distancePow = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
             float machVelocityClamped = Mathf.Clamp01(Mach);
             float angleAbs = 1 - Mathf.Clamp01(Angle / 180);
 
             if(EnableCombFilter) {
-                CombDelay = MaxCombDelay * distanceInv;
-                CombMix = Mathf.Lerp(MaxCombMix, 0, distanceInv);
+                CombDelay = MaxCombDelay * distancePow;
+                CombMix = Mathf.Lerp(MaxCombMix, 0, distancePow);
             }
 
             if(EnableLowpassFilter) {
                 float anglePos = Mathf.Clamp01((Angle - MachAngle) / MachAngle);                                                //  For Highpass when the camera is at front
-                float machPass = Mathf.Clamp01(MachPass / Mathf.Lerp(0.1f, 1f, Mathf.Clamp01(Distance / 100)));                 //  Soften Mach Cone over Distance
+                float machPass = Mathf.Clamp01(MachPass / Mathf.Lerp(0.1f, 1f, Distance / 100));                                //  Soften Mach Cone over Distance
 
-                LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv);
-                LowpassFrequency *= Mathf.Max(machPass, 0.05f) * RSE.Instance.WindModulation();                                 //  Only make it quieter outside the Cone, don't make it silent.
+                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distancePow);
+                LowpassFrequency *= Mathf.Max(machPass, 0.05f);                                                                 //  Only make it quieter outside the Cone, don't make it silent.
                 HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
             }
 
             if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceInv) * angleAbs;
+                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distancePow) * angleAbs;
             }
         }
 
         public void UpdateFiltersBasic()
         {
-            float distanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / MaxDistance * 10)));
+            float distancePower = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
 
             if(EnableCombFilter) {
-                CombDelay = MaxCombDelay * distanceInv;
-                CombMix = Mathf.Lerp(MaxCombMix, 0, distanceInv);
+                CombDelay = MaxCombDelay * distancePower;
+                CombMix = Mathf.Lerp(MaxCombMix, 0, distancePower);
             }
 
             if(EnableLowpassFilter) {
                 float anglePos = Mathf.Clamp01((Angle - MachAngle) / MachAngle);
 
-                LowpassFrequency = Mathf.Lerp(Mathf.Min(FarLowpass, MaxLowpassFrequency), MaxLowpassFrequency, distanceInv);
-                LowpassFrequency *= RSE.Instance.WindModulation();
+                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distancePower);
                 HighPassFrequency = Mathf.Lerp(0, AngleHighPass, anglePos);
             }
 
             if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, 0, distanceInv);
+                Distortion = Mathf.Lerp(MaxDistortion, 0, distancePower);
             }
         }
 
@@ -209,7 +205,7 @@ namespace RocketSoundEnhancement
                 if(counter >= buffer.Length)
                     counter = 0;
 
-                input += (combOutput * combMixClamped);
+                input += (combOutput * CombMix);
             } catch {
                 ClearCombFilter();
             }

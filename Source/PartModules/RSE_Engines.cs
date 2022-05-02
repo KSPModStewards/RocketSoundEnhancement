@@ -43,32 +43,28 @@ namespace RocketSoundEnhancement
                 if(SoundLayerGroups.ContainsKey(engineID)) {
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
+                        float control = soundLayer.data.Contains("Turbine") ? Mathf.Min(engineModule.requestedThrottle, rawControl) : rawControl;
+
                         if(!Controls.ContainsKey(sourceLayerName)) {
                             Controls.Add(sourceLayerName, 0);
                         }
 
-                        if(soundLayer.spool) {
-                            float spoolIdle = engineModule.EngineIgnited ? soundLayer.spoolIdle : 0;
-                            float spoolControl = Mathf.Lerp(spoolIdle, 1.0f, soundLayer.data.Contains("Turbine") ? engineModule.requestedThrottle : rawControl);
-                            float spoolSpeed = engineModule.EngineIgnited ? soundLayer.spoolSpeed : Mathf.Max(soundLayer.spoolSpeed, spoolControl);
-                            spoolSpeed *= TimeWarp.deltaTime;
-
-                            if(engineModule.flameout) {
-                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], 0, spoolSpeed);
-                            } else {
-                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
-                            }
+                       if(soundLayer.spool) {
+                            float spoolSpeed = Mathf.Max(soundLayer.spoolSpeed, control) * TimeWarp.deltaTime;
+                            float spoolControl = Mathf.Lerp(engineIgnited ? soundLayer.spoolIdle : 0, 1, control); 
+                            spoolControl = engineFlameout ? 0 : spoolControl;
 
                             if(!soundLayer.data.Contains("Turbine") && (!engineIgnited || engineFlameout)) {
-                                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], 0, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                                spoolSpeed = AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime);
                             }
+                            
+                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
 
                         } else {
-                            //fix for audiosource clicks
-                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], rawControl, AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime));
+                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
                         }
 
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, Controls[sourceLayerName], Volume, false);
+                        PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume);
                     }
                 }
 
@@ -121,7 +117,7 @@ namespace RocketSoundEnhancement
                     var oneShotLayers = soundLayer.Value;
                     foreach(var oneShotLayer in oneShotLayers) {
                         string oneShotLayerName = soundLayer.Key + "_" + oneShotLayer.name;
-                        PlaySoundLayer(audioParent, oneShotLayerName, oneShotLayer, control, Volume, false, true);
+                        PlaySoundLayer(oneShotLayerName, oneShotLayer, control, Volume, true);
                     }
                 }
             }

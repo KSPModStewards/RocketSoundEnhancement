@@ -26,6 +26,11 @@ namespace RocketSoundEnhancement
         }
 
         bool retracted = false;
+        [KSPField(isPersistant = false, guiActive = true)]
+        public float wheelSpeed = 0;
+        [KSPField(isPersistant = false, guiActive = true)]
+        public float slipDisplacement = 0;
+        CollidingObject collidingObject;
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
@@ -34,16 +39,6 @@ namespace RocketSoundEnhancement
             bool running = false;
             bool motorEnabled = false;
             float driveOutput = 0;
-            float wheelSpeed = moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity;
-            float slipDisplacement = Mathf.Abs(GetSlipDisplacement(wheelSpeed));
-
-            WheelHit hit;
-
-            //ISSUES: it wont detect Vessels :(
-            CollidingObject colObjectType = CollidingObject.Dirt;
-            if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
-                colObjectType = AudioUtility.GetCollidingObject(hit.collider.gameObject);
-            }
 
             if(moduleMotor) {
                 running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
@@ -57,21 +52,21 @@ namespace RocketSoundEnhancement
 
             foreach(var soundLayerGroup in SoundLayerGroups) {
                 string soundLayerGroupKey = soundLayerGroup.Key;
-                float rawControl = 0;
+                float control = 0;
 
                 if(!retracted) {
                     switch(soundLayerGroup.Key) {
                         case "Torque":
-                            rawControl = running ? driveOutput / 100 : 0;
+                            control = running ? driveOutput / 100 : 0;
                             break;
                         case "Speed":
-                            rawControl = motorEnabled ? Mathf.Abs(wheelSpeed) : 0;
+                            control = motorEnabled ? wheelSpeed : 0;
                             break;
                         case "Ground":
-                            rawControl = moduleWheel.isGrounded ? Mathf.Abs(wheelSpeed) : 0;
+                            control = moduleWheel.isGrounded ?  Mathf.Max(wheelSpeed, slipDisplacement): 0;
                             break;
                         case "Slip":
-                            rawControl = moduleWheel.isGrounded ? slipDisplacement : 0;
+                            control = moduleWheel.isGrounded ? slipDisplacement : 0;
                             break;
                         default:
                             continue;
@@ -79,43 +74,64 @@ namespace RocketSoundEnhancement
                 }
 
                 foreach(var soundLayer in soundLayerGroup.Value) {
-                    float control = rawControl;
                     string sourceLayerName = soundLayerGroupKey + "_" + soundLayer.name;
+                    float finalControl = control;
 
                     if(soundLayerGroupKey == "Ground" || soundLayerGroupKey == "Slip") {
                         string layerMaskName = soundLayer.data;
                         if(layerMaskName != "") {
-                            switch(colObjectType) {
+                            switch(collidingObject) {
                                 case CollidingObject.Vessel:
                                     if(!layerMaskName.Contains("vessel"))
-                                        control = 0;
+                                    finalControl = 0;
                                     break;
                                 case CollidingObject.Concrete:
                                     if(!layerMaskName.Contains("concrete"))
-                                        control = 0;
+                                    finalControl = 0;
                                     break;
                                 case CollidingObject.Dirt:
                                     if(!layerMaskName.Contains("dirt"))
-                                        control = 0;
+                                    finalControl = 0;
                                     break;
                             }
                         }
                     }
+                    
+                    if(soundLayer.spool) {
+                        if(!Controls.ContainsKey(sourceLayerName)) {
+                            Controls.Add(sourceLayerName, 0);
+                        }
+                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                        finalControl = Controls[sourceLayerName];
+                    }
 
-                    PlaySoundLayer(audioParent, sourceLayerName, soundLayer, control, Volume, soundLayer.spool);
+                    PlaySoundLayer(sourceLayerName, soundLayer, finalControl, Volume);
                 }
             }
 
             base.OnUpdate();
         }
 
-        //Do Slip Displacement calculations on our own because KSP's ModuleWheelBase.slipDisplacement is broken for some wheels
-        float GetSlipDisplacement(float wheelSpeed)
+        public override void FixedUpdate()
         {
-            float x = moduleWheel.Wheel.currentState.localWheelVelocity.x;
-            float y = wheelSpeed - moduleWheel.Wheel.currentState.localWheelVelocity.y;
+            if(!initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
+                return;
 
-            return Mathf.Sqrt(x * x + y * y) * TimeWarp.deltaTime;
+            WheelHit hit;
+            if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
+                collidingObject = AudioUtility.GetCollidingObject(hit.collider.gameObject);
+            }else{
+                collidingObject = CollidingObject.Dirt;
+            }
+
+            wheelSpeed = Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity);
+
+            float x = moduleWheel.Wheel.currentState.localWheelVelocity.x;
+            float y = (moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) - moduleWheel.Wheel.currentState.localWheelVelocity.y;
+
+            slipDisplacement = Mathf.Sqrt(x * x + y * y);
+
+            base.FixedUpdate();
         }
     }
 }

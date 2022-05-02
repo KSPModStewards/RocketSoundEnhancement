@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace RocketSoundEnhancement
 {
@@ -174,26 +175,9 @@ namespace RocketSoundEnhancement
         }
 
         float pitchVariation = 1;
-        public void PlaySoundLayer(GameObject audioGameObject, string sourceLayerName, SoundLayer soundLayer, float rawControl, float vol, bool spoolProccess = true, bool oneShot = false, bool rndOneShotVol = false)
+        public void PlaySoundLayer(string sourceLayerName, SoundLayer soundLayer, float controlInput, float volume, bool oneShot = false, bool rndOneShotVol = false)
         {
-            float control = rawControl;
-
-            if(spoolProccess) {
-                if(!Controls.ContainsKey(sourceLayerName)) {
-                    Controls.Add(sourceLayerName, 0);
-                }
-
-                if(soundLayer.spool) {
-                    Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                    control = Controls[sourceLayerName];
-                } else {
-                    //fix for audiosource clicks
-                    Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
-                    control = Controls[sourceLayerName];
-                }
-            }
-
-            control = Mathf.Round(control * 1000.0f) * 0.001f;
+            float control = Mathf.Round(controlInput * 1000.0f) * 0.001f;
 
             float finalVolume;
             float finalPitch;
@@ -237,9 +221,9 @@ namespace RocketSoundEnhancement
             AudioSource source;
             if(!Sources.ContainsKey(sourceLayerName)) {
                 GameObject sourceGameObject = new GameObject(sourceLayerName);
-                sourceGameObject.transform.parent = audioGameObject.transform;
-                sourceGameObject.transform.position = audioGameObject.transform.position;
-                sourceGameObject.transform.rotation = audioGameObject.transform.rotation;
+                sourceGameObject.transform.parent = audioParent.transform;
+                sourceGameObject.transform.position = audioParent.transform.position;
+                sourceGameObject.transform.rotation = audioParent.transform.rotation;
 
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
 
@@ -252,68 +236,18 @@ namespace RocketSoundEnhancement
                 source = Sources[sourceLayerName];
             }
 
-            bool processAirSim = false;
-            if(AudioMuffler.EnableMuffling) {
-                switch(AudioMuffler.MufflerQuality) {
-                    case AudioMufflerQuality.Lite:
-                        if(source.outputAudioMixerGroup != null) {
-                            source.outputAudioMixerGroup = null;
-                        }
-                        break;
-                    case AudioMufflerQuality.Full:
-                        if(soundLayer.channel == FXChannel.Exterior) {
-                            source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                        } else {
-                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
-                        }
-                        break;
-                    case AudioMufflerQuality.AirSim:
-                        if(soundLayer.channel == FXChannel.Exterior) {
-                            if(UseAirSimulation) {
-                                source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
-                                processAirSim = true;
-                            } else {
-                                source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                            }
-                        } else {
-                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
-                        }
-                        break;
-                }
-            }
+            source.outputAudioMixerGroup = GetMixerGroup(soundLayer.channel);
 
-            if(processAirSim) {
-                AirSimulationFilter airSimFilter;
-                if(!AirSimFilters.ContainsKey(sourceLayerName)) {
-                    airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
-
-                    airSimFilter.enabled = true;
-                    airSimFilter.EnableCombFilter = EnableCombFilter;
-                    airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                    airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
-                    airSimFilter.SimulationUpdate = AirSimUpdateMode;
-
-                    AirSimFilters.Add(sourceLayerName, airSimFilter);
+            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior) {
+                if(UseAirSimulation){
+                    ProcessAirSimulation(sourceLayerName, ref source);
                 } else {
-                    airSimFilter = AirSimFilters[sourceLayerName];
+                    float machPassLog = Mathf.Log(Mathf.Lerp(1, 10, machPass), 10);
+                    finalVolume *= Mathf.Min(machPassLog, Mathf.Pow(1 - Mathf.Clamp01(distance / MaxDistance), 2) * 0.5f);
                 }
-
-                airSimFilter.Distance = distance;
-                airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
-                airSimFilter.Angle = angle;
-                airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
-                airSimFilter.MachPass = machPass;
-
-                airSimFilter.MaxDistance = MaxDistance;
-                airSimFilter.FarLowpass = FarLowpass;
-                airSimFilter.AngleHighPass = AngleHighpass;
-                airSimFilter.MaxCombDelay = MaxCombDelay;
-                airSimFilter.MaxCombMix = MaxCombMix;
-                airSimFilter.MaxDistortion = MaxDistortion;
-                airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
             }
 
-            source.volume = finalVolume * GameSettings.SHIP_VOLUME * vol;
+            source.volume = finalVolume * GameSettings.SHIP_VOLUME * volume;
             source.pitch = finalPitch;
 
             if(oneShot) {
@@ -329,6 +263,124 @@ namespace RocketSoundEnhancement
             } else {
                 AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
             }
+        }
+
+        public void PlaySoundLayerSimple(string sourceLayerName, SoundLayer soundLayer, float controlInput, float volume, bool oneShot = false)
+        {
+            float control = Mathf.Round(controlInput * 1000.0f) * 0.001f;
+
+            float finalVolume;
+            float finalPitch;
+            
+            if(soundLayer.useFloatCurve) {
+                finalVolume = soundLayer.volumeFC.Evaluate(control);
+                finalPitch = soundLayer.pitchFC.Evaluate(control);
+            } else {
+                finalVolume = soundLayer.volume.Value(control);
+                finalPitch = soundLayer.pitch.Value(control);
+            }
+
+            if(soundLayer.pitchVariation && !soundLayer.loopAtRandom) {
+                finalPitch *= pitchVariation;
+            }
+
+            if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
+                finalPitch *= Doppler;
+            }
+
+            if(soundLayer.distance != null) {
+                finalVolume *= soundLayer.distance.Value(distance);
+            }
+
+            //For Looped sounds cleanup
+            if(finalVolume < float.Epsilon) {
+                if(Sources.ContainsKey(sourceLayerName)) {
+                    Sources[sourceLayerName].Stop();
+                }
+                return;
+            }
+
+            AudioSource source;
+            if(!Sources.ContainsKey(sourceLayerName)) {
+                GameObject sourceGameObject = new GameObject(sourceLayerName);
+                sourceGameObject.transform.parent = audioParent.transform;
+                sourceGameObject.transform.position = audioParent.transform.position;
+                sourceGameObject.transform.rotation = audioParent.transform.rotation;
+
+                source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
+
+                Sources.Add(sourceLayerName, source);
+                if(soundLayer.pitchVariation) {
+                    pitchVariation = UnityEngine.Random.Range(0.95f, 1.05f);
+                }
+
+            } else {
+                source = Sources[sourceLayerName];
+            }
+
+            source.outputAudioMixerGroup = GetMixerGroup(soundLayer.channel, false);
+
+            if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior) {
+                finalVolume *= Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(distance / 2500), 10), 0.1f) * machPass;
+            }
+
+            source.volume = finalVolume * GameSettings.SHIP_VOLUME * volume;
+            source.pitch = finalPitch;
+
+            if(oneShot) {
+                int index = 0;
+                if(soundLayer.audioClips.Length > 1) {
+                    index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+                }
+                AudioClip clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+                float volumeScale = UnityEngine.Random.Range(0.9f, 1.0f);
+
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, false, false,true, volumeScale, clip);
+
+            } else {
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
+            }
+        }
+
+        public AudioMixerGroup GetMixerGroup(FXChannel channel, bool airSimChannel = true){
+            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite){
+                if (channel == FXChannel.Exterior){
+                    return vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                } else {
+                    return RSE.Instance.InternalMixer;
+                }
+            }
+            return null;
+        }
+
+        public void ProcessAirSimulation(string sourceLayerName, ref AudioSource source){
+            AirSimulationFilter airSimFilter;
+            if(!AirSimFilters.ContainsKey(sourceLayerName)) {
+                airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
+
+                airSimFilter.enabled = true;
+                airSimFilter.EnableCombFilter = EnableCombFilter;
+                airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
+                airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+                airSimFilter.SimulationUpdate = AirSimUpdateMode;
+
+                AirSimFilters.Add(sourceLayerName, airSimFilter);
+            } else {
+                airSimFilter = AirSimFilters[sourceLayerName];
+            }
+
+            airSimFilter.Distance = distance;
+            airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
+            airSimFilter.Angle = angle;
+            airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
+            airSimFilter.MachPass = machPass;
+
+            airSimFilter.MaxDistance = MaxDistance;
+            airSimFilter.FarLowpass = FarLowpass;
+            airSimFilter.AngleHighPass = AngleHighpass;
+            airSimFilter.MaxCombDelay = MaxCombDelay;
+            airSimFilter.MaxCombMix = MaxCombMix;
+            airSimFilter.MaxDistortion = MaxDistortion;
         }
 
         public void onGamePause()

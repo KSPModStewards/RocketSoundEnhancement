@@ -460,7 +460,6 @@ namespace RocketSoundEnhancement
                     info +=
                         "AIR SIM PARAMETERS \r\n" +
                         "- Distance: " + seModule.Distance.ToString("0.00") + "\r\n" +
-                        "- DistanceInv: " + seModule.DistanceInv.ToString("0.00") + "\r\n" +
                         "- Mach: " + seModule.Mach.ToString("0.00") + "\r\n" +
                         "- Angle: " + seModule.Angle.ToString("0.00") + "\r\n" +
                         "- MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
@@ -606,13 +605,13 @@ namespace RocketSoundEnhancement
 
 
                 if(FocusMufflingFrequency <= 50) {
-                    Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
+                    Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, FocusMufflingFrequency / 50));
                 } else {
                     Mixer.SetFloat("FocusVolume", 0);
                 }
 
                 if(MufflingFrequency <= 50) {
-                    Mixer.SetFloat("ExternalVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(MufflingFrequency / 50)));
+                    Mixer.SetFloat("ExternalVolume", Mathf.Lerp(-80, 0, MufflingFrequency / 50));
                 } else {
                     Mixer.SetFloat("ExternalVolume", 0);
                 }

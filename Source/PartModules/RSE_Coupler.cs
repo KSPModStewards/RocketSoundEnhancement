@@ -76,7 +76,7 @@ namespace RocketSoundEnhancement
             if(moduleDecoupler != null && SoundLayerGroups.ContainsKey("Decouple")) {
                 if(moduleDecoupler.isDecoupled && !hasDecoupled) {
                     foreach(var soundlayer in SoundLayerGroups["Decouple"]) {
-                        PlaySoundLayer(audioParent, soundlayer.name, soundlayer, 1, 1, false, true);
+                        PlaySoundLayer(soundlayer.name, soundlayer, 1, 1, false, true);
                     }
                     hasDecoupled = moduleDecoupler.isDecoupled;
                 }
@@ -105,7 +105,7 @@ namespace RocketSoundEnhancement
         {
             if(SoundLayerGroups.ContainsKey(action)) {
                 foreach(var soundLayer in SoundLayerGroups[action]) {
-                    PlaySoundLayer(audioParent, action + "_" + soundLayer.name, soundLayer, 1, 1, false, true);
+                    PlaySoundLayer(action + "_" + soundLayer.name, soundLayer, 1, 1, true);
                 }
             }
         }

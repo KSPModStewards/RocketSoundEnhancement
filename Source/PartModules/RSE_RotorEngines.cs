@@ -21,6 +21,7 @@ namespace RocketSoundEnhancement
     {
         Dictionary<string, PropellerBladeData> PropellerBlades = new Dictionary<string, PropellerBladeData>();
         ModuleRoboticServoRotor rotorModule;
+        ModuleResourceIntake resourceIntake;
 
         int childPartsCount = 0;
 
@@ -32,6 +33,7 @@ namespace RocketSoundEnhancement
             base.OnStart(state);
 
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
+            resourceIntake = part.GetComponent<ModuleResourceIntake>();
 
             SetupBlades();
 
@@ -92,27 +94,50 @@ namespace RocketSoundEnhancement
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
-
+                
             if(SoundLayerGroups.Count > 0) {
+                float intakeMultiplier = 1;
+                bool motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked;
+                
+                if(resourceIntake!= null){
+                    motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked && resourceIntake.intakeEnabled;
+                    intakeMultiplier = resourceIntake.intakeEnabled ? Mathf.Min(resourceIntake.airFlow, 1) : 0;
+                }
+
+                float rpmControl = (rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y);
+
                 foreach(var soundLayerGroup in SoundLayerGroups) {
-                    float rpmControl = rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y; //* (rotorModule.servoMotorSize / 100);
-                    
+                    float control = 0;
+
+                    switch(soundLayerGroup.Key){
+                        case "RPM":
+                            control = rpmControl;
+                            break;
+                        case "Motor":
+                            control = motorEngaged ? rpmControl * intakeMultiplier: 0;
+                            if(rotorModule.servoIsBraking){
+                                control *= 0.25f;
+                            }
+                            break;
+                    }
+
                     foreach(var soundLayer in soundLayerGroup.Value) {
                         string sourceLayerName = soundLayerGroup.Key + "_" + soundLayer.name;
 
-                        float finalControl = rpmControl;
-
+                        if(!Controls.ContainsKey(sourceLayerName)) {
+                            Controls.Add(sourceLayerName, 0);
+                        }
+                        
                         if(soundLayer.spool) {
-                            float idle = rotorModule.servoMotorIsEngaged ? soundLayer.spoolIdle : 0;
-                            finalControl = Mathf.Max(idle, rpmControl);
-                        }
+                            float spoolSpeed = Mathf.Max(soundLayer.spoolSpeed, control) * TimeWarp.deltaTime;
+                            float spoolControl = Mathf.Lerp(motorEngaged ? soundLayer.spoolIdle : 0, 1, control); 
 
-                        if(soundLayerGroup.Key == "MotorRPM") {
-                            if(!rotorModule.servoMotorIsEngaged)
-                                finalControl = 0;
+                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
+                        } else {
+                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
                         }
-
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, finalControl, Volume);
+                        
+                        PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume);
                     }
                 }
             }
@@ -130,11 +155,18 @@ namespace RocketSoundEnhancement
                     float propControl = rotorRPM / PropellerBlades[propBlade].baseRPM;
                     float propOverallVolume = PropellerBlades[propBlade].volume.Value(propControl) * atm;
                     float bladeMultiplier = Mathf.Clamp((float)PropellerBlades[propBlade].bladeCount / PropellerBlades[propBlade].maxBlades, 0, 1); //dont allow more than the max blade count. SoundEffects pitched up too much doesnt sound right
+                    float control = propControl * bladeMultiplier;
 
                     foreach(var soundLayer in PropellerBlades[propBlade].soundLayers) {
                         string sourceLayerName = propBlade + "_" + "_" + soundLayer.name;
 
-                        PlaySoundLayer(audioParent, sourceLayerName, soundLayer, propControl * bladeMultiplier, propOverallVolume);
+                        if(!Controls.ContainsKey(sourceLayerName)) {
+                            Controls.Add(sourceLayerName, 0);
+                        }
+
+                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
+
+                        PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], propOverallVolume);
                     }
                 }
             }

@@ -35,8 +35,9 @@ namespace RocketSoundEnhancement
 
             foreach(var soundLayer in SoundLayers) {
                 string sourceLayerName = soundLayer.name;
+                float finalControl = rawControl / thrustTransforms.Count;
 
-                PlaySoundLayer(audioParent, sourceLayerName, soundLayer, rawControl / thrustTransforms.Count, Volume * thrustTransforms.Count);
+                PlaySoundLayerSimple(sourceLayerName, soundLayer, finalControl, Volume * thrustTransforms.Count);
             }
 
             base.OnUpdate();

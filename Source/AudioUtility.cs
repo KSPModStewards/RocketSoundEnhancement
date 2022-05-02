@@ -141,6 +141,11 @@ namespace RocketSoundEnhancement
 
                 if(node.HasNode("pitchFC"))
                     soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
+
+                soundLayer.volumeFC.fCurve.preWrapMode = WrapMode.ClampForever;
+                soundLayer.volumeFC.fCurve.postWrapMode = WrapMode.ClampForever;
+                soundLayer.pitchFC.fCurve.preWrapMode = WrapMode.ClampForever;
+                soundLayer.pitchFC.fCurve.postWrapMode = WrapMode.ClampForever;  
             }
 
             if(node.HasValue("massToVolume")) {

@@ -56,7 +56,7 @@ namespace RocketSoundEnhancement
             b2 = (1.0f - finalResonance * c + c * c) * a1;
 
             lowpassFade = CutoffFrequency <= 50 ?
-                Mathf.Pow(2, Mathf.Lerp(-80, 0, Mathf.Clamp01(CutoffFrequency / 50f)) / 6) : 1;
+                Mathf.Pow(2, Mathf.Lerp(-80, 0, CutoffFrequency / 50f) / 6) : 1;
         }
 
         void OnAudioFilterRead(float[] data, int channels)

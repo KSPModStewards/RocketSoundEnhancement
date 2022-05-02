@@ -51,9 +51,8 @@ namespace RocketSoundEnhancement
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
                 return;
-
+            
             if(collided) {
-
                 if(SoundLayerColGroups.ContainsKey(collisionType)) {
                     float control = 0;
 
@@ -67,28 +66,31 @@ namespace RocketSoundEnhancement
 
                     foreach(var soundLayer in SoundLayerColGroups[collisionType]) {
                         string soundLayerName = collisionType + "_" + soundLayer.name;
+                        float finalControl = control;
 
                         var layerMaskName = soundLayer.data.ToLower();
                         if(layerMaskName != "") {
                             switch(collidingObject) {
                                 case CollidingObject.Vessel:
                                     if(!layerMaskName.Contains("vessel"))
-                                        control = 0;
+                                        finalControl = 0;
                                     break;
                                 case CollidingObject.Concrete:
                                     if(!layerMaskName.Contains("concrete"))
-                                        control = 0;
+                                        finalControl = 0;
                                     break;
                                 case CollidingObject.Dirt:
                                     if(!layerMaskName.Contains("dirt"))
-                                        control = 0;
+                                        finalControl = 0;
                                     break;
                             }
                         }
 
-                        bool isOneshot = collisionType != CollisionType.CollisionStay;
-
-                        PlaySoundLayer(audioParent, soundLayerName, soundLayer, control, Volume, false, isOneshot, isOneshot);
+                        if (collisionType == CollisionType.CollisionStay){
+                            PlaySoundLayer(soundLayerName, soundLayer, control, Volume);
+                        } else {
+                            PlaySoundLayerSimple(soundLayerName, soundLayer, control, Volume, true);
+                        }
                     }
                 }
             } else {
@@ -104,7 +106,7 @@ namespace RocketSoundEnhancement
 
         public override void FixedUpdate()
         {
-            if(!initialized)
+            if(!initialized || gamePaused)
                 return;
 
             collided = false;

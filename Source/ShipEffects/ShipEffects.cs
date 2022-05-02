@@ -23,7 +23,6 @@ namespace RocketSoundEnhancement
 
         //  Air Simulation Values
         public float Distance;
-        public float DistanceInv;
         public float Angle;
         public float AngleRear;
         public float MachAngle;
@@ -161,7 +160,6 @@ namespace RocketSoundEnhancement
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-                DistanceInv = Mathf.Clamp01(Mathf.Pow(2, -(Distance / 2500 * 10)));
                 Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                 MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
 
@@ -212,6 +210,7 @@ namespace RocketSoundEnhancement
             }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) {
+                
                 foreach(var part in vessel.Parts.ToList()) {
                     var sources = part.gameObject.GetComponents<AudioSource>().ToList();
                     sources.AddRange(part.gameObject.GetComponentsInChildren<AudioSource>());
@@ -225,7 +224,10 @@ namespace RocketSoundEnhancement
                         }
 
                         if(AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim) {
-                            source.minDistance = Mathf.Lerp(0, stockSources[source], (MachPass * Mathf.Max(DistanceInv,0.1f)) * 0.5f);
+                            float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / 2500), 10), 0.1f) * MachPass;
+                            
+                            source.minDistance = stockSources[source] * distanceAttenuation;
                         } else {
                             if(source.minDistance != stockSources[source]) {
                                 source.minDistance = stockSources[source];
@@ -388,33 +390,16 @@ namespace RocketSoundEnhancement
                 source.transform.position = vessel.CurrentCoM;
             }
 
-            bool processAirSim = false;
-            if(AudioMuffler.EnableMuffling) {
-                switch(AudioMuffler.MufflerQuality) {
-                    case AudioMufflerQuality.Lite:
-                        if(source.outputAudioMixerGroup != null) {
-                            source.outputAudioMixerGroup = null;
-                        }
-                        break;
-                    case AudioMufflerQuality.Full:
-                        if(soundLayer.channel == FXChannel.Exterior) {
-                            source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                        } else {
-                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
-                        }
-                        break;
-                    case AudioMufflerQuality.AirSim:
-                        if(soundLayer.channel == FXChannel.Exterior) {
-                            if(AirSimBasic) {
-                                source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                            } else {
-                                source.outputAudioMixerGroup = RSE.Instance.AirSimMixer;
-                            }
-                            processAirSim = true;
-                        } else {
-                            source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
-                        }
-                        break;
+            bool processAirSim = AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim;
+            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite){
+                if (soundLayer.channel == FXChannel.Exterior){
+                    source.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                } else {
+                    source.outputAudioMixerGroup = RSE.Instance.InternalMixer;
+                }
+            } else {
+                if(source.outputAudioMixerGroup != null){
+                    source.outputAudioMixerGroup = null;
                 }
             }
 
@@ -425,7 +410,6 @@ namespace RocketSoundEnhancement
 
                     airSimFilter.enabled = true;
                     airSimFilter.EnableLowpassFilter = true;
-                    airSimFilter.EnableWaveShaperFilter = !AirSimBasic;
                     airSimFilter.SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
 
                     if(AirSimBasic) {
@@ -437,16 +421,11 @@ namespace RocketSoundEnhancement
                     airSimFilter = AirSimFilters[sourceLayerName];
                 }
 
-                if(AirSimBasic) {
-                    airSimFilter.Distance = Distance;
-                } else {
-                    airSimFilter.Distance = Distance;
-                    airSimFilter.Mach = Mach;
-                    airSimFilter.Angle = Angle;
-                    airSimFilter.MachPass = MachPass;
-                    airSimFilter.MachAngle = Angle;
-                    airSimFilter.MaxLowpassFrequency = vessel.isActiveVessel ? RSE.Instance.FocusMufflingFrequency : RSE.Instance.MufflingFrequency;
-                }
+                airSimFilter.Distance = Distance;
+                airSimFilter.Mach = Mach;
+                airSimFilter.Angle = Angle;
+                airSimFilter.MachPass = MachPass;
+                airSimFilter.MachAngle = Angle;
             }
 
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
