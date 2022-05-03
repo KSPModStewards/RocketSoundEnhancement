@@ -25,25 +25,20 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
+        float motorOutput = 0;
+        float wheelSpeed = 0;
+        float slipDisplacement = 0;
         bool retracted = false;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float wheelSpeed = 0;
-        [KSPField(isPersistant = false, guiActive = true)]
-        public float slipDisplacement = 0;
+        bool motorRunning = false;
         CollidingObject collidingObject;
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
                 return;
 
-            bool running = false;
-            bool motorEnabled = false;
-            float driveOutput = 0;
-
             if(moduleMotor) {
-                running = moduleMotor.state == ModuleWheelMotor.MotorState.Running;
-                motorEnabled = moduleMotor.motorEnabled;
-                driveOutput = moduleMotor.driveOutput;
+                motorRunning = moduleMotor.motorEnabled && moduleMotor.state > ModuleWheelMotor.MotorState.Disabled;
+                motorOutput = moduleMotor.state == ModuleWheelMotor.MotorState.Running ? wheelSpeed / moduleMotor.wheelSpeedMax : 0;
             }
 
             if(moduleDeploy) {
@@ -56,11 +51,11 @@ namespace RocketSoundEnhancement
 
                 if(!retracted) {
                     switch(soundLayerGroup.Key) {
-                        case "Torque":
-                            control = running ? driveOutput / 100 : 0;
+                        case "Motor":
+                            control = motorOutput;
                             break;
                         case "Speed":
-                            control = motorEnabled ? wheelSpeed : 0;
+                            control = wheelSpeed;
                             break;
                         case "Ground":
                             control = moduleWheel.isGrounded ?  Mathf.Max(wheelSpeed, slipDisplacement): 0;
@@ -76,36 +71,45 @@ namespace RocketSoundEnhancement
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     string sourceLayerName = soundLayerGroupKey + "_" + soundLayer.name;
                     float finalControl = control;
-
                     if(soundLayerGroupKey == "Ground" || soundLayerGroupKey == "Slip") {
                         string layerMaskName = soundLayer.data;
                         if(layerMaskName != "") {
                             switch(collidingObject) {
                                 case CollidingObject.Vessel:
                                     if(!layerMaskName.Contains("vessel"))
-                                    finalControl = 0;
+                                        finalControl = 0;
                                     break;
                                 case CollidingObject.Concrete:
                                     if(!layerMaskName.Contains("concrete"))
-                                    finalControl = 0;
+                                        finalControl = 0;
                                     break;
                                 case CollidingObject.Dirt:
                                     if(!layerMaskName.Contains("dirt"))
-                                    finalControl = 0;
+                                        finalControl = 0;
                                     break;
                             }
                         }
                     }
-                    
-                    if(soundLayer.spool) {
-                        if(!Controls.ContainsKey(sourceLayerName)) {
-                            Controls.Add(sourceLayerName, 0);
-                        }
-                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, soundLayer.spoolSpeed * TimeWarp.deltaTime);
-                        finalControl = Controls[sourceLayerName];
+
+                    if(!Controls.ContainsKey(sourceLayerName)) {
+                        Controls.Add(sourceLayerName, 0);
                     }
 
-                    PlaySoundLayer(sourceLayerName, soundLayer, finalControl, Volume);
+                    if(soundLayer.spool) {
+                        float spoolControl = soundLayerGroupKey == "Motor" ? Mathf.Lerp(motorRunning ? soundLayer.spoolIdle : 0, 1, finalControl) : finalControl;
+                        float spoolSpeed = Mathf.Max(soundLayer.spoolSpeed, finalControl * 0.5f);
+
+                        if(soundLayerGroupKey == "Motor" && moduleWheel.wheel.brakeState > 0 && Controls[sourceLayerName] > spoolControl){
+                            spoolSpeed = moduleWheel.wheel.brakeState * 0.5f;
+                        }
+
+                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed * TimeWarp.deltaTime);
+                    } else {
+                        float smoothControl = AudioUtility.SmoothControl.Evaluate(Mathf.Max(Controls[sourceLayerName], finalControl)) * (60 * Time.deltaTime);
+                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], finalControl, smoothControl);
+                    }
+
+                    PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume);
                 }
             }
 

@@ -93,7 +93,6 @@ namespace RocketSoundEnhancement
                             SoundLayerGroups.Add(groupName, soundLayers);
                         }
                     }
-
                 }
             }
 

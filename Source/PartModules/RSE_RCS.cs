@@ -28,16 +28,24 @@ namespace RocketSoundEnhancement
             var thrustForces = moduleRCSFX.thrustForces;
 
             //Cheaper to use one AudioSource.
-            float rawControl = 0;
+            float control = 0;
             for(int i = 0; i < thrustTransforms.Count; i++) {
-                rawControl += thrustForces[i] / moduleRCSFX.thrusterPower;
+                control += thrustForces[i] / moduleRCSFX.thrusterPower;
             }
+
+            control /= thrustTransforms.Count > 0 ? thrustTransforms.Count : 1;
 
             foreach(var soundLayer in SoundLayers) {
                 string sourceLayerName = soundLayer.name;
-                float finalControl = rawControl / thrustTransforms.Count;
 
-                PlaySoundLayerSimple(sourceLayerName, soundLayer, finalControl, Volume * thrustTransforms.Count);
+                if(!Controls.ContainsKey(sourceLayerName)) {
+                    Controls.Add(sourceLayerName, 0);
+                }
+
+                float smoothControl = AudioUtility.SmoothControl.Evaluate(Mathf.Max(Controls[sourceLayerName], control)) * (60 * Time.deltaTime);
+                Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, smoothControl);
+
+                PlaySoundLayerSimple(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
             }
 
             base.OnUpdate();
