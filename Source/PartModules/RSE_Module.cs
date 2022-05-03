@@ -100,7 +100,6 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(onGameUnpause);
         }
 
-
         public override void OnUpdate()
         {
             if(!initialized)

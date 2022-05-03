@@ -28,7 +28,7 @@ namespace RocketSoundEnhancement
 
             initialized = true;
         }
-
+        
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
@@ -38,13 +38,13 @@ namespace RocketSoundEnhancement
                 string engineID = engineModule.engineID;
                 bool engineIgnited = engineModule.EngineIgnited;
                 bool engineFlameout = engineModule.flameout;
-                float rawControl = engineModule.GetCurrentThrust() / engineModule.maxThrust;
+                float currentThrust = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if(SoundLayerGroups.ContainsKey(engineID)) {
                     foreach(var soundLayer in SoundLayerGroups[engineID]) {
                         string sourceLayerName = engineID + "_" + soundLayer.name;
-                        float control = soundLayer.data.Contains("Turbine") ? Mathf.Min(engineModule.requestedThrottle, rawControl) : rawControl;
-
+                        float control = currentThrust;
+                        
                         if(!Controls.ContainsKey(sourceLayerName)) {
                             Controls.Add(sourceLayerName, 0);
                         }
@@ -55,7 +55,7 @@ namespace RocketSoundEnhancement
                             spoolControl = engineFlameout ? 0 : spoolControl;
 
                             if(!soundLayer.data.Contains("Turbine") && (!engineIgnited || engineFlameout)) {
-                                spoolSpeed = AudioUtility.SmoothControl.Evaluate(rawControl) * (60 * Time.deltaTime);
+                                spoolSpeed = AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime);
                             }
                             
                             Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
@@ -99,8 +99,8 @@ namespace RocketSoundEnhancement
                             }
                             break;
                         case "Burst":
-                            control = rawControl;
-                            if(engineIgnited && rawControl > 0) {
+                            control = currentThrust;
+                            if(engineIgnited && currentThrust > 0) {
                                 if(!bursts[engineID]) {
                                     bursts[engineID] = true;
                                 } else {

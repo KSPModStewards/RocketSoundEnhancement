@@ -99,22 +99,22 @@ namespace RocketSoundEnhancement
                 float intakeMultiplier = 1;
                 bool motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked;
                 
-                if(resourceIntake!= null){
+                if(resourceIntake != null){
                     motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked && resourceIntake.intakeEnabled;
                     intakeMultiplier = resourceIntake.intakeEnabled ? Mathf.Min(resourceIntake.airFlow, 1) : 0;
                 }
 
-                float rpmControl = (rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y);
+                float rpm = (rotorModule.transformRateOfMotion / rotorModule.traverseVelocityLimits.y);
 
                 foreach(var soundLayerGroup in SoundLayerGroups) {
                     float control = 0;
 
                     switch(soundLayerGroup.Key){
                         case "RPM":
-                            control = rpmControl;
+                            control = rpm;
                             break;
                         case "Motor":
-                            control = motorEngaged ? rpmControl * intakeMultiplier: 0;
+                            control = motorEngaged ? rpm * intakeMultiplier: 0;
                             if(rotorModule.servoIsBraking){
                                 control *= 0.25f;
                             }

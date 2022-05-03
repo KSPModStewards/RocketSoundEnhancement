@@ -265,19 +265,10 @@ namespace RocketSoundEnhancement
 
         public static void PlayAtChannel(AudioSource source, FXChannel channel,Vessel vessel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
         {
-            if(source == null)
-                return;
+            if(source == null || !source.isActiveAndEnabled) return;
 
-            if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) {
-                if(source.isPlaying) {
-                    source.Stop();
-                }
-                return;
-            }
-
-            if(!source.isActiveAndEnabled)
-                return;
-
+            if(TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) source.volume = 0;
+            
             switch(channel) {
                 case FXChannel.Exterior:
                     source.volume *= Settings.Instance.ExteriorVolume;
