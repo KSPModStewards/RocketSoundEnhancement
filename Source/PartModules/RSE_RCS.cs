@@ -42,10 +42,10 @@ namespace RocketSoundEnhancement
                     Controls.Add(sourceLayerName, 0);
                 }
 
-                float smoothControl = AudioUtility.SmoothControl.Evaluate(Mathf.Max(Controls[sourceLayerName], control)) * (60 * Time.deltaTime);
+                float smoothControl = AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime);
                 Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, smoothControl);
-
-                PlaySoundLayerSimple(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
+                
+                PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
             }
 
             base.OnUpdate();

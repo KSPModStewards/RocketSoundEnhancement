@@ -17,6 +17,11 @@ namespace RocketSoundEnhancement
     {
         Dictionary<CollisionType, List<SoundLayer>> SoundLayerColGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
+        bool collided;
+        Collision collision;
+        CollidingObject collidingObject;
+        CollisionType collisionType;
+        
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
@@ -43,10 +48,6 @@ namespace RocketSoundEnhancement
             initialized = true;
         }
 
-        bool collided;
-        Collision collision;
-        CollidingObject collidingObject;
-        CollisionType collisionType;
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
@@ -86,11 +87,7 @@ namespace RocketSoundEnhancement
                             }
                         }
 
-                        if (collisionType == CollisionType.CollisionStay){
-                            PlaySoundLayer(soundLayerName, soundLayer, control, Volume);
-                        } else {
-                            PlaySoundLayerSimple(soundLayerName, soundLayer, control, Volume, true);
-                        }
+                        PlaySoundLayer(soundLayerName, soundLayer, control, Volume, collisionType != CollisionType.CollisionStay);
                     }
                 }
             } else {

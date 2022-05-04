@@ -1,35 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
     public enum AirSimulationUpdate
     {
-        Full,
+        None,
         Basic,
-        None
+        Full
     }
 
     [RequireComponent(typeof(AudioBehaviour))]
     public class AirSimulationFilter : MonoBehaviour
     {
+        // Simulation Settings
         public bool EnableCombFilter = false;
         public bool EnableLowpassFilter = false;
         public bool EnableWaveShaperFilter = false;
         public AirSimulationUpdate SimulationUpdate = AirSimulationUpdate.Basic;
-
-        // Simulation Values
-        public float Distance = 0;
-        public float Mach = 0;
-        public float Angle = 0;
-        public float MachAngle = 90;
-        public float MachPass = 1;
-
-        // Simulation Settings
         public float MaxDistance = 2500;
         public float FarLowpass = 1000f;
         public float AngleHighPass = 500;
@@ -37,16 +25,25 @@ namespace RocketSoundEnhancement
         public float MaxCombMix = 0.25f;
         public float MaxDistortion = 0.5f;
 
+        // Simulation Inputs
+        public float Distance = 0;
+        public float Mach = 0;
+        public float Angle = 0;
+        public float MachAngle = 90;
+        public float MachPass = 1;
+
         // Filter Controls
-        public float CombDelay = 0;
-        public float CombMix = 0;
-        public float LowpassFrequency = 22200;
-        public float HighPassFrequency = 0;
-        public float Distortion = 0;
+        float CombDelay = 0;
+        float CombMix = 0;
+        float LowpassFrequency = 22200;
+        float HighPassFrequency = 0;
+        float Distortion = 0;
 
         int SampleRate;
         float lowpassFade;
         double combDelaySamples;
+
+        float distanceLog, machVelocityClamped, angleAbsolute, anglePositive, machPass;
 
         void Awake()
         {
@@ -56,80 +53,88 @@ namespace RocketSoundEnhancement
 
         public void UpdateFilters()
         {
-            switch(SimulationUpdate) {
-                case AirSimulationUpdate.Full:
+            if (SimulationUpdate > AirSimulationUpdate.None)
+            {
+                distanceLog = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
+                anglePositive = Mathf.Clamp01((Angle - MachAngle) / MachAngle);             //  Highpass when the camera is at front of the source
+
+                if (SimulationUpdate == AirSimulationUpdate.Full)
+                {
+                    machVelocityClamped = Mathf.Clamp01(Mach);
+                    angleAbsolute = 1 - Mathf.Clamp01(Angle / 180);
+                    machPass = Mathf.Clamp01(MachPass / Mathf.Lerp(0.1f, 1f, Distance / 100));  //  Soften Mach Cone over Distance
                     UpdateFiltersFull();
-                    break;
-                case AirSimulationUpdate.Basic:
+                }
+                else
+                {
                     UpdateFiltersBasic();
-                    break;
-                case AirSimulationUpdate.None:
-                    break;
+                }
             }
 
-            lowpassFade = EnableLowpassFilter && LowpassFrequency <= 50 ?
-                Mathf.Pow(2, Mathf.Lerp(-80, 0, LowpassFrequency / 50f) / 6) : 1;
-
             #region Combfilter Update
-            combDelaySamples = CombDelay * SampleRate / 1000;
+            if (EnableCombFilter) { combDelaySamples = CombDelay * SampleRate / 1000; }
             #endregion
 
             #region LowpassHighpassFilter Update
-            freqLP = Mathf.Clamp(LowpassFrequency, 20, 22000) * 2 / SampleRate;
-            freqHP = Mathf.Clamp(HighPassFrequency, 20, 22000) * 2 / SampleRate;
-            fbLP = 0 / (1 - freqLP);
-            fbHP = 0 / (1 - freqHP);
+            if (EnableLowpassFilter)
+            {
+                freqLP = Mathf.Clamp(LowpassFrequency, 20, 22000) * 2 / SampleRate;
+                freqHP = Mathf.Clamp(HighPassFrequency, 20, 22000) * 2 / SampleRate;
+                fbLP = 0 / (1 - freqLP);
+                fbHP = 0 / (1 - freqHP);
+
+                lowpassFade = LowpassFrequency <= 50 ?
+                    Mathf.Pow(2, Mathf.Lerp(-80, 0, LowpassFrequency / 50f) / 6) : 1;
+            }
             #endregion
 
             #region Waveshaper Update
-            float wsamount = Mathf.Min(Distortion, 0.999f);
-            wsK = 2 * wsamount / (1 - wsamount);
+            if (EnableWaveShaperFilter)
+            {
+                float wsamount = Mathf.Min(Distortion, 0.999f);
+                wsK = 2 * wsamount / (1 - wsamount);
+            }
             #endregion
         }
 
         public void UpdateFiltersFull()
         {
-            float distancePow = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
-            float machVelocityClamped = Mathf.Clamp01(Mach);
-            float angleAbs = 1 - Mathf.Clamp01(Angle / 180);
-
-            if(EnableCombFilter) {
-                CombDelay = MaxCombDelay * distancePow;
-                CombMix = Mathf.Lerp(MaxCombMix, 0, distancePow);
+            if (EnableCombFilter)
+            {
+                CombDelay = MaxCombDelay * distanceLog;
+                CombMix = Mathf.Lerp(MaxCombMix, 0, distanceLog);
             }
 
-            if(EnableLowpassFilter) {
-                float anglePos = Mathf.Clamp01((Angle - MachAngle) / MachAngle);                                                //  For Highpass when the camera is at front
-                float machPass = Mathf.Clamp01(MachPass / Mathf.Lerp(0.1f, 1f, Distance / 100));                                //  Soften Mach Cone over Distance
-
-                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distancePow);
-                LowpassFrequency *= Mathf.Max(machPass, 0.05f);                                                                 //  Only make it quieter outside the Cone, don't make it silent.
-                HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePos);
+            if (EnableLowpassFilter)
+            {
+                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distanceLog);
+                LowpassFrequency *= Mathf.Max(machPass, 0.05f);     //  Only make it quieter outside the Cone, don't make it fully silent.
+                HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePositive);
             }
 
-            if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distancePow) * angleAbs;
+            if (EnableWaveShaperFilter)
+            {
+                Distortion = Mathf.Lerp(MaxDistortion, (MaxDistortion * 0.5f) * machVelocityClamped, distanceLog) * angleAbsolute;
             }
         }
 
         public void UpdateFiltersBasic()
         {
-            float distancePower = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
-
-            if(EnableCombFilter) {
-                CombDelay = MaxCombDelay * distancePower;
-                CombMix = Mathf.Lerp(MaxCombMix, 0, distancePower);
+            if (EnableCombFilter)
+            {
+                CombDelay = MaxCombDelay * distanceLog;
+                CombMix = Mathf.Lerp(MaxCombMix, 0, distanceLog);
             }
 
-            if(EnableLowpassFilter) {
-                float anglePos = Mathf.Clamp01((Angle - MachAngle) / MachAngle);
-
-                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distancePower);
-                HighPassFrequency = Mathf.Lerp(0, AngleHighPass, anglePos);
+            if (EnableLowpassFilter)
+            {
+                LowpassFrequency = Mathf.Lerp(FarLowpass, 22200, distanceLog);
+                HighPassFrequency = Mathf.Lerp(0, AngleHighPass, anglePositive);
             }
 
-            if(EnableWaveShaperFilter) {
-                Distortion = Mathf.Lerp(MaxDistortion, 0, distancePower);
+            if (EnableWaveShaperFilter)
+            {
+                Distortion = Mathf.Lerp(MaxDistortion, 0, distanceLog);
             }
         }
 
@@ -257,6 +262,7 @@ namespace RocketSoundEnhancement
         #region Waveshaper
         // Source: https://www.musicdsp.org/en/latest/Effects/46-waveshaper.html
         float wsK;
+
         public void Waveshaper(ref float input)
         {
             input = Mathf.Min(Mathf.Max(input, -1), 1);

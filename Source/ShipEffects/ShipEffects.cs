@@ -437,9 +437,9 @@ namespace RocketSoundEnhancement
                     index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
                 }
                 AudioClip clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, false, false, true, 1, clip);
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveVessel, false, false, true, 1, clip);
             } else {
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
+                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveVessel, soundLayer.loop, soundLayer.loopAtRandom);
             }
         }
 

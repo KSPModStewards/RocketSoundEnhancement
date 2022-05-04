@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
@@ -10,7 +8,6 @@ namespace RocketSoundEnhancement
     [RequireComponent(typeof(AudioBehaviour))]
     public class LowpassFilter : MonoBehaviour
     {
-
         private float[] inputHistoryLeft = new float[2];
         private float[] inputHistoryRight = new float[2];
 

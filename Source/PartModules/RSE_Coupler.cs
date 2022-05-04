@@ -37,11 +37,7 @@ namespace RocketSoundEnhancement
                         var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
                         if(clip != null) {
                             fxGroup.sfx = clip;
-                            fxGroup.audio = AudioUtility.CreateOneShotSource(
-                                audioParent,
-                                soundLayer.volume * GameSettings.SHIP_VOLUME,
-                                soundLayer.pitch,
-                                soundLayer.spread);
+                            fxGroup.audio = AudioUtility.CreateSource(audioParent, soundLayer, true);
                             launchClampSource = fxGroup.audio;
                         }
                     }
@@ -83,6 +79,10 @@ namespace RocketSoundEnhancement
             }
 
             if(launchClampSource != null) {
+                if(launchClampSource.isPlaying){
+                    launchClampSource.volume = SoundLayers.Find(x => x.name == fxGroup.name).volume * Settings.Instance.ExteriorVolume * GameSettings.SHIP_VOLUME;
+                }
+
                 if(AudioMuffler.EnableMuffling) {
                     switch(AudioMuffler.MufflerQuality) {
                         case AudioMufflerQuality.Lite:
