@@ -34,7 +34,6 @@ namespace RocketSoundEnhancement
         public float MaxCombMix = 0.25f;
         public float MaxDistortion = 0.5f;
 
-
         float distance;
         float angle;
         float machPass;
@@ -97,30 +96,26 @@ namespace RocketSoundEnhancement
 
         public override void OnUpdate()
         {
-            if(!initialized)
+            if (!initialized || Sources.Count == 0)
                 return;
 
-            if(Sources.Count > 0) {
-                var sourceKeys = Sources.Keys.ToList();
-
-                foreach(var source in sourceKeys) {
-                    if(AirSimFilters.ContainsKey(source) && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim) {
-                        UnityEngine.Object.Destroy(AirSimFilters[source]);
-                        AirSimFilters.Remove(source);
-                    }
-
-                    if(!Sources[source].isPlaying) {
-                        if(AirSimFilters.ContainsKey(source)) {
-                            UnityEngine.Object.Destroy(AirSimFilters[source]);
-                            AirSimFilters.Remove(source);
-                        }
-
-                        UnityEngine.Object.Destroy(Sources[source]);
-                        
-                        Sources.Remove(source);
-                        Controls.Remove(source);
-                    }
+            var sourceKeys = Sources.Keys.ToList();
+            foreach (var source in sourceKeys)
+            {
+                if (AirSimFilters.ContainsKey(source) && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+                {
+                    UnityEngine.Object.Destroy(AirSimFilters[source]);
+                    AirSimFilters.Remove(source);
                 }
+
+                if (Sources[source].isPlaying)
+                    continue;
+
+                UnityEngine.Object.Destroy(Sources[source].gameObject);
+
+                if (AirSimFilters.ContainsKey(source)) { AirSimFilters.Remove(source); }
+                Sources.Remove(source);
+                Controls.Remove(source);
             }
         }
 
