@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Audio;
 
 namespace RocketSoundEnhancement
 {
@@ -28,16 +27,17 @@ namespace RocketSoundEnhancement
         public bool EnableWaveShaperFilter = false;
         public AirSimulationUpdate AirSimUpdateMode;
         public float MaxDistance = 2500;
-        public float FarLowpass = 1000f;
+        public float FarLowpass = 2500;
         public float AngleHighpass = 0;
         public float MaxCombDelay = 20;
         public float MaxCombMix = 0.25f;
         public float MaxDistortion = 0.5f;
 
+        float doppler = 1;
         float distance;
         float angle;
         float machPass;
-        float speedOfSound = 340.29f;
+        float lastDistance;
 
         public ConfigNode configNode;
         public bool getSoundLayersandGroups = true;
@@ -60,31 +60,25 @@ namespace RocketSoundEnhancement
 
                 node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
-                if (!float.TryParse(node.GetValue("MaxDistance"), out MaxDistance)) MaxDistance = 2500;
-                if (!float.TryParse(node.GetValue("FarLowpass"), out FarLowpass)) FarLowpass = 1000f;
-                if (!float.TryParse(node.GetValue("AngleHighpass"), out AngleHighpass)) AngleHighpass = 0;
-                if (!float.TryParse(node.GetValue("MaxCombDelay"), out MaxCombDelay)) MaxCombDelay = 20;
-                if (!float.TryParse(node.GetValue("MaxCombMix"), out MaxCombMix)) MaxCombMix = 0.25f;
-                if (!float.TryParse(node.GetValue("MaxDistortion"), out MaxDistortion)) MaxDistortion = 0.5f;
+                if (node.HasValue("MaxDistance")) MaxDistance = float.Parse(node.GetValue("MaxDistance"));
+                if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
+                if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
+                if (node.HasValue("MaxCombDelay")) MaxCombDelay = float.Parse(node.GetValue("MaxCombDelay"));
+                if (node.HasValue("MaxCombMix")) MaxCombMix = float.Parse(node.GetValue("MaxCombMix"));
+                if (node.HasValue("MaxDistortion")) MaxDistortion = float.Parse(node.GetValue("MaxDistortion"));
             }
 
             if (getSoundLayersandGroups)
             {
                 foreach (var node in configNode.GetNodes())
                 {
-                    string groupName = node.name;
                     var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                    if (soundLayers.Count > 0)
-                    {
-                        if (SoundLayerGroups.ContainsKey(groupName))
-                        {
-                            SoundLayerGroups[groupName].AddRange(soundLayers);
-                        }
-                        else
-                        {
-                            SoundLayerGroups.Add(groupName, soundLayers);
-                        }
-                    }
+                    if (soundLayers.Count == 0) continue;
+
+                    var groupName = node.name;
+                    if (SoundLayerGroups.ContainsKey(groupName)) { SoundLayerGroups[groupName].AddRange(soundLayers); continue; }
+
+                    SoundLayerGroups.Add(groupName, soundLayers);
                 }
 
                 SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
@@ -126,32 +120,27 @@ namespace RocketSoundEnhancement
 
             if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite)
             {
+                //  Calculate Doppler
+                var speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-                speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
+                var relativeSpeed = (lastDistance - distance) / TimeWarp.fixedDeltaTime;
+                lastDistance = distance;
+
+                var dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 1 - (DopplerFactor * 0.5f), 1 + DopplerFactor);
+                doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
+
+                if (AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+                    return;
+
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
-
+                
                 if (vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled))
                 {
-                    machPass = 1;
                     angle = 0;
+                    machPass = 1;
                 }
-
-                CalculateDoppler();
             }
-        }
-
-        public float Doppler = 1;
-        float dopplerRaw = 1;
-        float relativeSpeed = 0;
-        float lastDistance = 0;
-        public void CalculateDoppler()
-        {
-            relativeSpeed = (lastDistance - distance) / TimeWarp.fixedDeltaTime;
-            lastDistance = distance;
-            dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 1 - (DopplerFactor * 0.5f), 1 + DopplerFactor);
-
-            Doppler = Mathf.MoveTowards(Doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
         }
 
         float pitchVariation = 1;
@@ -160,18 +149,12 @@ namespace RocketSoundEnhancement
             float control = Mathf.Round(controlInput * 1000.0f) * 0.001f;
             float finalVolume, finalPitch;
 
-            if(soundLayer.useFloatCurve) {
-                finalVolume = soundLayer.volumeFC.Evaluate(control);
-                finalPitch = soundLayer.pitchFC.Evaluate(control);
-            } else {
-                finalVolume = soundLayer.volume.Value(control);
-                finalPitch = soundLayer.pitch.Value(control);
-            }
+            finalVolume = soundLayer.volumeFC != null ? soundLayer.volumeFC.Evaluate(control) : soundLayer.volume.Value(control);
+            finalPitch = soundLayer.pitchFC != null ? soundLayer.pitchFC.Evaluate(control) : soundLayer.pitch.Value(control);
 
-            if (soundLayer.massToVolume != null) { finalVolume *= soundLayer.massToVolume.Value((float)part.physicsMass); }
-            if (soundLayer.massToPitch != null) { finalPitch *= soundLayer.massToPitch.Value((float)part.physicsMass); }
-            if (AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite) { finalPitch *= Doppler; }
-            if (soundLayer.distance != null) { finalVolume *= soundLayer.distance.Value(distance); }
+            finalVolume *= soundLayer.massToVolume?.Value((float)part.physicsMass) ?? 1;
+            finalPitch *= soundLayer.massToPitch?.Value((float)part.physicsMass) ?? 1;
+            finalPitch *= AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite ? doppler : 1;
 
             if(finalVolume < float.Epsilon) {
                 if(Sources.ContainsKey(sourceLayerName)) {
@@ -180,27 +163,23 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            AudioSource source;
-            if(!Sources.ContainsKey(sourceLayerName)) {
-                GameObject sourceGameObject = new GameObject(sourceLayerName);
+            AudioSource source = Sources.ContainsKey(sourceLayerName) ? Sources[sourceLayerName] : null;
+            if (!source)
+            {
+                var sourceGameObject = new GameObject(sourceLayerName);
                 sourceGameObject.transform.parent = audioParent.transform;
                 sourceGameObject.transform.position = audioParent.transform.position;
                 sourceGameObject.transform.rotation = audioParent.transform.rotation;
 
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
-
                 Sources.Add(sourceLayerName, source);
-                if(soundLayer.pitchVariation) {
-                    pitchVariation = UnityEngine.Random.Range(0.95f, 1.05f);
-                }
 
-            } else {
-                source = Sources[sourceLayerName];
+                pitchVariation = !soundLayer.loopAtRandom ? UnityEngine.Random.Range(0.95f, 1.05f) : 1;
             }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior) {
                 if(UseAirSimulation){
-                    ProcessAirSimulation(sourceLayerName, ref source);
+                    ProcessAirSimulation(sourceLayerName, source);
                 } else {
                     float machPassLog = Mathf.Log(Mathf.Lerp(1, 10, machPass), 10);
                     finalVolume *= Mathf.Min(machPassLog, Mathf.Pow(1 - Mathf.Clamp01(distance / MaxDistance), 2) * 0.5f);
@@ -208,26 +187,21 @@ namespace RocketSoundEnhancement
             }
 
             source.volume = finalVolume * GameSettings.SHIP_VOLUME * volume;
-            source.pitch = finalPitch * (soundLayer.pitchVariation && !soundLayer.loopAtRandom ? pitchVariation : 1);
+            source.pitch = finalPitch * pitchVariation;
 
-            if(oneShot) {
-                int index = 0;
-                if(soundLayer.audioClips.Length > 1) {
-                    index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
-                }
-                AudioClip clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-                float volumeScale = rndOneShotVol ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
+            float volumeScale = rndOneShotVol && oneShot ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
+            int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
+            var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, false, false,true, volumeScale, clip);
-            } else {
-                AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel, soundLayer.loop, soundLayer.loopAtRandom);
-            }
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, soundLayer.loopAtRandom, oneShot, volumeScale, clip);
         }
 
-        public void ProcessAirSimulation(string sourceLayerName, ref AudioSource source){
-            AirSimulationFilter airSimFilter;
-
-            if(!AirSimFilters.ContainsKey(sourceLayerName)) {
+        public void ProcessAirSimulation(string sourceLayerName, AudioSource source)
+        {
+            AirSimulationFilter airSimFilter = AirSimFilters.ContainsKey(sourceLayerName) ? AirSimFilters[sourceLayerName] : null;
+            if (!airSimFilter)
+            {
+                airSimFilter = new AirSimulationFilter();
                 airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
                 airSimFilter.enabled = true;
 
@@ -244,8 +218,6 @@ namespace RocketSoundEnhancement
                 airSimFilter.MaxDistortion = MaxDistortion;
 
                 AirSimFilters.Add(sourceLayerName, airSimFilter);
-            } else {
-                airSimFilter = AirSimFilters[sourceLayerName];
             }
 
             airSimFilter.Distance = distance;
@@ -257,35 +229,28 @@ namespace RocketSoundEnhancement
 
         public void onGamePause()
         {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.Pause();
-                }
-            }
+            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
             gamePaused = true;
         }
 
         public void onGameUnpause()
         {
-            if(Sources.Count > 0) {
-                foreach(var source in Sources.Values) {
-                    source.UnPause();
-                }
-            }
+            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
             gamePaused = false;
         }
 
         public void OnDestroy()
         {
-            if(!initialized)
+            if (!initialized)
                 return;
 
             if(Sources.Count > 0) {
                 foreach(var source in Sources.Values) {
                     source.Stop();
-                    UnityEngine.Object.Destroy(source);
                 }
             }
+
+            UnityEngine.Object.Destroy(audioParent);
 
             GameEvents.onGamePause.Remove(onGamePause);
             GameEvents.onGameUnpause.Remove(onGameUnpause);

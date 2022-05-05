@@ -72,7 +72,7 @@ namespace RocketSoundEnhancement
             if(moduleDecoupler != null && SoundLayerGroups.ContainsKey("Decouple")) {
                 if(moduleDecoupler.isDecoupled && !hasDecoupled) {
                     foreach(var soundlayer in SoundLayerGroups["Decouple"]) {
-                        PlaySoundLayer(soundlayer.name, soundlayer, 1, 1, false, true);
+                        PlaySoundLayer(soundlayer.name, soundlayer, 1, 1, true, false);
                     }
                     hasDecoupled = moduleDecoupler.isDecoupled;
                 }
@@ -83,19 +83,7 @@ namespace RocketSoundEnhancement
                     launchClampSource.volume = SoundLayers.Find(x => x.name == fxGroup.name).volume * Settings.Instance.ExteriorVolume * GameSettings.SHIP_VOLUME;
                 }
 
-                if(AudioMuffler.EnableMuffling) {
-                    switch(AudioMuffler.MufflerQuality) {
-                        case AudioMufflerQuality.Lite:
-                            if(launchClampSource.outputAudioMixerGroup != null) {
-                                launchClampSource.outputAudioMixerGroup = null;
-                            }
-                            break;
-                        case AudioMufflerQuality.Full:
-                        case AudioMufflerQuality.AirSim:
-                            launchClampSource.outputAudioMixerGroup = vessel.isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
-                            break;
-                    }
-                }
+                launchClampSource.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, vessel.isActiveVessel);
             }
 
             base.OnUpdate();

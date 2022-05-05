@@ -134,17 +134,18 @@ namespace RocketSoundEnhancement
             GameEvents.onGameUnpause.Add(() => gamePaused = false);
             GameEvents.onPartDeCoupleNewVesselComplete.Add(onNewVessel);
         }
+
         private void onNewVessel(Vessel data0, Vessel data1)
         {
             var se1 = data0.GetComponent<ShipEffects>();
             var se2 = data1.GetComponent<ShipEffects>();
 
             if(data0.launchTime > data1.launchTime) {
-                se1.SonicBoomed1 = se2.SonicBoomed1;
-                se1.SonicBoomed2 = se2.SonicBoomed2;
+                se1.SonicBoomTip = se2.SonicBoomTip;
+                se1.SonicBoomedRear = se2.SonicBoomedRear;
             } else {
-                se2.SonicBoomed1 = se1.SonicBoomed1;
-                se2.SonicBoomed2 = se1.SonicBoomed2;
+                se2.SonicBoomTip = se1.SonicBoomTip;
+                se2.SonicBoomedRear = se1.SonicBoomedRear;
             }
         }
 
@@ -465,8 +466,8 @@ namespace RocketSoundEnhancement
                         "- MachAngle: " + seModule.MachAngle.ToString("0.00") + "\r\n" +
                         "- MachPass: " + seModule.MachPass.ToString("0.00") + "\r\n" +
                         "- MachPassRear: " + seModule.MachPassRear.ToString("0.00") + "\r\n" +
-                        "- SonicBoom1: " + seModule.SonicBoomed1 + "\r\n" +
-                        "- SonicBoom2: " + seModule.SonicBoomed2 + "\r\n\r\n";
+                        "- SonicBoom1: " + seModule.SonicBoomTip + "\r\n" +
+                        "- SonicBoom2: " + seModule.SonicBoomedRear + "\r\n\r\n";
                 }
 
                 GUILayout.Label(info);
@@ -569,9 +570,13 @@ namespace RocketSoundEnhancement
                 return;
 
             if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite && Mixer != null) {
-                var soundSources = GameObject.FindObjectsOfType<AudioSource>().ToList();
+                var soundSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
+
                 foreach(var soundSource in soundSources) {
                     if(soundSource == null || StockSources.Contains(soundSource) || ChattererSources.Contains(soundSource))
+                        continue;
+                    
+                    if(soundSource.gameObject.GetComponentInParent<PartModule>() || soundSource.gameObject.GetComponent<PartModule>())
                         continue;
 
                     if(soundSource.outputAudioMixerGroup == null) {
@@ -579,6 +584,24 @@ namespace RocketSoundEnhancement
                         if(!cachSources.Contains(soundSource)) {
                             cachSources.Add(soundSource);
                         }
+                    }
+
+                    if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
+                    {
+                        if (soundSource.gameObject.GetComponents<AudioSource>().Length > 1)
+                            continue;
+                            
+                        var airSim = soundSource.gameObject.AddOrGetComponent<AirSimulationFilter>();
+                        airSim.enabled = true;
+                        airSim.EnableLowpassFilter = true;
+                        airSim.SimulationUpdate = AirSimulationUpdate.Basic;
+                        airSim.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, soundSource.transform.position);
+                        continue;
+                    }
+
+                    if (soundSource.gameObject.GetComponent<AirSimulationFilter>() != null)
+                    {
+                        UnityEngine.Object.Destroy(soundSource.gameObject.GetComponent<AirSimulationFilter>());
                     }
                 }
 
@@ -624,36 +647,35 @@ namespace RocketSoundEnhancement
                         source.outputAudioMixerGroup = InternalCamera.Instance.isActive ? InternalMixer : FocusMixer;
                     }
                 }
-            } else {
-                if(lowpassFilter != null && lowpassFilter.enabled) {
-                    if(bypassAutomaticFiltering)
-                        return;
+                return;
+            }
 
-                    float atmDensity = (float)FlightGlobals.ActiveVessel.atmDensity;
-                    float interiorMuffling = AudioMuffler.InteriorMuffling;
-                    float exteriorMuffling = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensity);
+            if (lowpassFilter != null && lowpassFilter.enabled)
+            {
+                if (bypassAutomaticFiltering)
+                    return;
 
-                    float targetFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
-                    if(MapView.MapCamera.isActiveAndEnabled) {
-                        targetFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
-                    }
+                float atmDensity = (float)FlightGlobals.ActiveVessel.atmDensity;
+                float interiorMuffling = AudioMuffler.InteriorMuffling;
+                float exteriorMuffling = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensity);
 
-                    float smoothCutoff = Mathf.MoveTowards(lastCutoffFreq, targetFrequency, 5000);
-                    lastCutoffFreq = smoothCutoff;
+                float targetFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
+                if (MapView.MapCamera.isActiveAndEnabled)
+                {
+                    targetFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
+                }
 
-                    lowpassFilter.CutoffFrequency = smoothCutoff;
+                float smoothCutoff = Mathf.MoveTowards(lastCutoffFreq, targetFrequency, 5000);
+                lastCutoffFreq = smoothCutoff;
+                lowpassFilter.CutoffFrequency = smoothCutoff;
 
-                    if(AudioMuffler.AffectChatterer) {
-                        foreach(var source in ChattererSources) {
-
-                            if(source == null)
-                                continue;
-
-                            source.bypassListenerEffects = InternalCamera.Instance.isActive;
-                            if(source.outputAudioMixerGroup != null) {
-                                source.outputAudioMixerGroup = null;
-                            }
-                        }
+                if (AudioMuffler.AffectChatterer)
+                {
+                    foreach (var source in ChattererSources)
+                    {
+                        if (source == null) continue;
+                        source.bypassListenerEffects = InternalCamera.Instance.isActive;
+                        if (source.outputAudioMixerGroup != null) { source.outputAudioMixerGroup = null; }
                     }
                 }
             }

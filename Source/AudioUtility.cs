@@ -8,9 +8,9 @@ namespace RocketSoundEnhancement
 {
     public enum CollidingObject
     {
-        Vessel,
+        Dirt,
         Concrete,
-        Dirt
+        Vessel
     }
 
     public enum FXChannel
@@ -40,21 +40,20 @@ namespace RocketSoundEnhancement
         public FXChannel channel;
         public bool loop;
         public bool loopAtRandom;
-        public bool pitchVariation;
         public bool spool;
         public bool useFloatCurve;
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
         public float MaxDistance;
-        public AudioRolloffMode RolloffMode;
+        public AudioRolloffMode rolloffMode;
         public FXCurve volume;
         public FXCurve pitch;
         public FloatCurve volumeFC;
         public FloatCurve pitchFC;
         public FXCurve massToVolume;
         public FXCurve massToPitch;
-        public FXCurve distance;
+        public FloatCurve rollOffCurve;
     }
 
     public static class AudioUtility
@@ -93,120 +92,96 @@ namespace RocketSoundEnhancement
 
             soundLayer.name = node.GetValue("name");
 
-            if(node.HasValue("audioClip")) {
+            if (node.HasValue("audioClip"))
+            {
                 soundLayer.audioClips = new string[node.GetValues("audioClip").Length];
-                for(int i = 0; i < soundLayer.audioClips.Length; i++) {
+                for (int i = 0; i < soundLayer.audioClips.Length; i++)
+                {
                     soundLayer.audioClips[i] = node.GetValue("audioClip", i);
                 }
             }
 
+            if (!node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom)) { soundLayer.loopAtRandom = true; }
             node.TryGetValue("loop", ref soundLayer.loop);
-
-            if(!node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom)){
-                soundLayer.loopAtRandom = soundLayer.loop;
-            }
-
-            if(!node.TryGetValue("pitchVariation", ref soundLayer.pitchVariation)) {
-                soundLayer.pitchVariation = true;
-            }
-
             node.TryGetValue("spool", ref soundLayer.spool);
-
             node.TryGetValue("spoolSpeed", ref soundLayer.spoolSpeed);
-
             node.TryGetValue("spoolIdle", ref soundLayer.spoolIdle);
             node.TryGetValue("spread", ref soundLayer.spread);
+            node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.Exterior);
+            node.TryGetEnum("rolloffMode", ref soundLayer.rolloffMode, AudioRolloffMode.Logarithmic);
+            if (!node.TryGetValue("MaxDistance", ref soundLayer.MaxDistance)) soundLayer.MaxDistance = 500;
 
-            if(!node.TryGetValue("MaxDistance", ref soundLayer.MaxDistance)) {
-                soundLayer.MaxDistance = 5000;
-            }
-
-            if(!Enum.TryParse(node.GetValue("RolloffMode"),out soundLayer.RolloffMode)) {
-                soundLayer.RolloffMode = AudioRolloffMode.Logarithmic;
+            if (node.HasNode("rolloffCurve"))
+            {
+                soundLayer.rollOffCurve = new FloatCurve();
+                soundLayer.rollOffCurve.Load(node.GetNode("rolloffCurve"));
             }
 
             soundLayer.volume = new FXCurve("volume", 1);
             soundLayer.pitch = new FXCurve("pitch", 1);
-
-            node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.Exterior);
-
             soundLayer.volume.Load("volume", node);
             soundLayer.pitch.Load("pitch", node);
 
-            if(node.TryGetValue("useFloatCurve", ref soundLayer.useFloatCurve)) {
+            if (node.HasNode("volumeFC"))
+            {
                 soundLayer.volumeFC = new FloatCurve();
-                soundLayer.pitchFC = new FloatCurve();
-
-                if(node.HasNode("volumeFC"))
-                    soundLayer.volumeFC.Load(node.GetNode("volumeFC"));
-
-                if(node.HasNode("pitchFC"))
-                    soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
-
-                soundLayer.volumeFC.fCurve.preWrapMode = WrapMode.ClampForever;
-                soundLayer.volumeFC.fCurve.postWrapMode = WrapMode.ClampForever;
-                soundLayer.pitchFC.fCurve.preWrapMode = WrapMode.ClampForever;
-                soundLayer.pitchFC.fCurve.postWrapMode = WrapMode.ClampForever;  
+                soundLayer.volumeFC.Load(node.GetNode("volumeFC"));
+                soundLayer.volumeFC.Curve.preWrapMode = WrapMode.ClampForever;
+                soundLayer.volumeFC.Curve.postWrapMode = WrapMode.ClampForever;
             }
 
-            if(node.HasValue("massToVolume")) {
+            if (node.HasNode("pitchFC"))
+            {
+                soundLayer.pitchFC = new FloatCurve();
+                soundLayer.pitchFC.Load(node.GetNode("pitchFC"));
+                soundLayer.pitchFC.Curve.preWrapMode = WrapMode.ClampForever;
+                soundLayer.pitchFC.Curve.postWrapMode = WrapMode.ClampForever;
+            }
+            
+            if (node.HasValue("massToVolume"))
+            {
                 soundLayer.massToVolume = new FXCurve("massToVolume", 1);
                 soundLayer.massToVolume.Load("massToVolume", node);
             }
 
-            if(node.HasValue("massToPitch")) {
+            if (node.HasValue("massToPitch"))
+            {
                 soundLayer.massToPitch = new FXCurve("massToPitch", 1);
                 soundLayer.massToPitch.Load("massToPitch", node);
             }
 
-            if(node.HasValue("distance")) {
-                soundLayer.distance = new FXCurve("distance", 1);
-                soundLayer.distance.Load("distance", node);
-            }
-
-            if(node.HasValue("data")) {
-                soundLayer.data = node.GetValue("data");
-            } else {
-                soundLayer.data = "";
-            }
+            soundLayer.data = node.HasValue("data") ? node.GetValue("data") : "";
 
             return soundLayer;
         }
 
-        public static AudioSource CreateSource(GameObject gameObject, SoundLayer soundLayer, bool oneShot = false)
+        public static AudioSource CreateSource(GameObject sourceGameObject, SoundLayer soundLayer, bool oneShot = false)
         {
-            var source = gameObject.AddComponent<AudioSource>();
-            source.name = RSETag + "_" + gameObject.name;
+            var source = sourceGameObject.AddComponent<AudioSource>();
+            source.name = RSETag + "_" + sourceGameObject.name;
             source.playOnAwake = false;
 
-            if (!oneShot)
+            if (!oneShot && soundLayer.audioClips != null)
             {
-                if (soundLayer.audioClips != null)
-                {
-                    int index = 0;
-                    if (soundLayer.audioClips.Length > 1)
-                    {
-                        index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
-                    }
-                    source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-
-                }
-
-                if (source.clip == null)
-                    return null;
+                int index = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
+                source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+                if (!source.clip) return null;
             }
 
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
             source.loop = soundLayer.loop;
             source.spatialBlend = 1;
-            source.rolloffMode = soundLayer.RolloffMode;
 
-            if (soundLayer.spread != 0)
-                source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0));
+            source.rolloffMode = soundLayer.rolloffMode;
+            if (soundLayer.rolloffMode > AudioRolloffMode.Logarithmic) { source.maxDistance = soundLayer.MaxDistance; }
+            if (soundLayer.rolloffMode == AudioRolloffMode.Custom && soundLayer.rollOffCurve != null)
+            {
+                source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, soundLayer.rollOffCurve.Curve);
+            }
 
-            if (soundLayer.RolloffMode == AudioRolloffMode.Linear)
-                source.maxDistance = soundLayer.MaxDistance;
+            if (soundLayer.spread > 0) { source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0)); }
+
 
             return source;
         }
@@ -237,7 +212,7 @@ namespace RocketSoundEnhancement
         public static GameObject CreateAudioParent(Part part, string partName)
         {
             var audioParent = part.gameObject.GetChild(partName);
-            if (audioParent == null)
+            if (!audioParent)
             {
                 audioParent = new GameObject(partName);
                 audioParent.transform.rotation = part.transform.rotation;
@@ -253,16 +228,14 @@ namespace RocketSoundEnhancement
             {
                 switch (channel)
                 {
-                    case FXChannel.Interior:
-                        return RSE.Instance.InternalMixer;
-                    case FXChannel.Exterior:
-                        return isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                    case FXChannel.Interior: return RSE.Instance.InternalMixer;
+                    case FXChannel.Exterior: return isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
                 }
             }
             return null;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volume = 1.0f, AudioClip audioclip = null)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volumeScale = 1.0f, AudioClip audioclip = null)
         {
             if (source == null || !source.isActiveAndEnabled) return;
 
@@ -284,7 +257,7 @@ namespace RocketSoundEnhancement
                     break;
             }
 
-            if (oneshot) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volume); return; }
+            if (oneshot) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volumeScale); return; }
 
             if (loop && !source.isPlaying)
             {
