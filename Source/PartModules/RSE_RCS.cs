@@ -27,7 +27,6 @@ namespace RocketSoundEnhancement
             var thrustTransforms = moduleRCSFX.thrusterTransforms;
             var thrustForces = moduleRCSFX.thrustForces;
 
-            //Cheaper to use one AudioSource.
             float control = 0;
             for(int i = 0; i < thrustTransforms.Count; i++) {
                 control += thrustForces[i] / moduleRCSFX.thrusterPower;
