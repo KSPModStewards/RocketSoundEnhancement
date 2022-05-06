@@ -41,7 +41,6 @@ namespace RocketSoundEnhancement
         public bool loop;
         public bool loopAtRandom;
         public bool spool;
-        public bool useFloatCurve;
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
