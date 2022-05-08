@@ -203,7 +203,7 @@ namespace RocketSoundEnhancement
                         if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
                         {
                             float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / 2500), 10), 0.1f) * MachPass;
+                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / AudioMuffler.AirSimMaxDistance), 10), 0.1f) * MachPass;
                             source.minDistance = stockSources[source] * distanceAttenuation;
                             continue;
                         }

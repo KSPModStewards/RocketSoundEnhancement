@@ -198,6 +198,10 @@ namespace RocketSoundEnhancement
                     AudioMuffler.Preset = audioMufflerNode.GetValue("Preset");
                 }
 
+                if(audioMufflerNode.HasValue("AirSimMaxDistance")){
+                    AudioMuffler.AirSimMaxDistance = float.Parse(audioMufflerNode.GetValue("AirSimMaxDistance"));
+                }
+
                 foreach(var presetNode in audioMufflerNode.GetNodes()) {
                     string presetName = presetNode.name;
                     LowpassFilterPreset lowpassFilterPreset = new LowpassFilterPreset();

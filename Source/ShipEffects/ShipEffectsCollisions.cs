@@ -73,6 +73,9 @@ namespace RocketSoundEnhancement
                         if(layerMaskName != "") {
                             switch(collidingObject) {
                                 case CollidingObject.Vessel:
+                                    if(collision?.gameObject.GetComponentInParent<KerbalEVA>() && collisionType == CollisionType.CollisionStay)
+                                        finalControl = 0;
+
                                     if(!layerMaskName.Contains("vessel"))
                                         finalControl = 0;
                                     break;
@@ -87,7 +90,7 @@ namespace RocketSoundEnhancement
                             }
                         }
 
-                        PlaySoundLayer(soundLayerName, soundLayer, control, Volume, collisionType != CollisionType.CollisionStay);
+                        PlaySoundLayer(soundLayerName, soundLayer, finalControl, Volume, collisionType != CollisionType.CollisionStay);
                     }
                 }
             } else {

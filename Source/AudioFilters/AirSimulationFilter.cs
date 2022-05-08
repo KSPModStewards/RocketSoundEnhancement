@@ -18,7 +18,7 @@ namespace RocketSoundEnhancement
         public bool EnableLowpassFilter { get; set; }
         public bool EnableWaveShaperFilter { get; set; }
         public AirSimulationUpdate SimulationUpdate { get; set; }
-        public float MaxDistance { get; set; } = 2500;
+        public float MaxDistance { get; set; } = AudioMuffler.AirSimMaxDistance;
         public float FarLowpass { get; set; } = 2500;
         public float AngleHighPass { get; set; } = 0;
         public float MaxCombDelay { get; set; } = 20;

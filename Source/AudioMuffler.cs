@@ -36,6 +36,7 @@ namespace RocketSoundEnhancement
         public static string Preset;
         public static float InteriorMuffling = 1500;
         public static float ExteriorMuffling = 22200;
+        public static float AirSimMaxDistance = 5000;
 
         public static void ApplyPreset()
         {
