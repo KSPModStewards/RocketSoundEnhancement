@@ -98,6 +98,7 @@ namespace RocketSoundEnhancement
             if(SoundLayerGroups.Count > 0) {
                 float intakeMultiplier = 1;
                 bool motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked;
+                bool motorRunning = rotorModule.totalTorque > 0;
                 
                 if(resourceIntake != null){
                     motorEngaged = rotorModule.servoMotorIsEngaged && !rotorModule.servoIsLocked && resourceIntake.intakeEnabled;
@@ -114,7 +115,7 @@ namespace RocketSoundEnhancement
                             control = rpm;
                             break;
                         case "Motor":
-                            control = motorEngaged ? rpm * intakeMultiplier: 0;
+                            control = motorEngaged && motorRunning ? rpm * intakeMultiplier: 0;
                             if(rotorModule.servoIsBraking){
                                 control *= 0.25f;
                             }
