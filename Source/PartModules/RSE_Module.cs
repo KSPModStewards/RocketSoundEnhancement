@@ -25,7 +25,7 @@ namespace RocketSoundEnhancement
         public bool EnableCombFilter = false;
         public bool EnableLowpassFilter = false;
         public bool EnableWaveShaperFilter = false;
-        public AirSimulationUpdate AirSimUpdateMode;
+        public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
         public float MaxDistance = 2500;
         public float FarLowpass = 2500;
         public float AngleHighpass = 0;
@@ -50,15 +50,15 @@ namespace RocketSoundEnhancement
             if (!float.TryParse(configNode.GetValue("volume"), out Volume)) Volume = 1;
             if (!float.TryParse(configNode.GetValue("DopplerFactor"), out DopplerFactor)) DopplerFactor = 0.5f;
 
-            if (UseAirSimulation = configNode.HasNode("AIRSIMULATION"))
+            if (configNode.HasNode("AIRSIMULATION"))
             {
                 var node = configNode.GetNode("AIRSIMULATION");
 
-                bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
-                bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
-                bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
+                if(node.HasValue("EnableCombFilter")) bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
+                if(node.HasValue("EnableLowpassFilter")) bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
+                if(node.HasValue("EnableWaveShaperFilter")) bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
 
-                node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
+                if(node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
                 if (node.HasValue("MaxDistance")) MaxDistance = float.Parse(node.GetValue("MaxDistance"));
                 if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
@@ -67,6 +67,8 @@ namespace RocketSoundEnhancement
                 if (node.HasValue("MaxCombMix")) MaxCombMix = float.Parse(node.GetValue("MaxCombMix"));
                 if (node.HasValue("MaxDistortion")) MaxDistortion = float.Parse(node.GetValue("MaxDistortion"));
             }
+
+            UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableWaveShaperFilter);
 
             if (getSoundLayersandGroups)
             {

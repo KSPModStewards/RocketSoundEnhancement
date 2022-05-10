@@ -28,7 +28,7 @@ namespace RocketSoundEnhancement
                 return;
 
             getSoundLayersandGroups = false;
-
+            EnableLowpassFilter = true;
             base.OnStart(state);
 
             foreach(var node in configNode.GetNodes()) {

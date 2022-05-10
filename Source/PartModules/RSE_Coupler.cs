@@ -17,6 +17,8 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            EnableLowpassFilter = true;
+            EnableWaveShaperFilter = true;
             base.OnStart(state);
 
             if(part.isLaunchClamp()) {

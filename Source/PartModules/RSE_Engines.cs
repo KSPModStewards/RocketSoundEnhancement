@@ -17,6 +17,9 @@ namespace RocketSoundEnhancement
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
+            EnableLowpassFilter = true;
+            EnableCombFilter = true;
+            EnableWaveShaperFilter = true;
             base.OnStart(state);
 
             engineModules = part.Modules.GetModules<ModuleEngines>();
