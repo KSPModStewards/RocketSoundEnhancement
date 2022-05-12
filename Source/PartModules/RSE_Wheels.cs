@@ -9,7 +9,18 @@ namespace RocketSoundEnhancement
     {
         ModuleWheelBase moduleWheel;
         ModuleWheelMotor moduleMotor;
+        ModuleWheelDamage moduleWheelDamage;
         ModuleWheelDeployment moduleDeploy;
+
+        float motorOutput = 0;
+        float wheelSpeed = 0;
+        float slipDisplacement = 0;
+        bool retracted = false;
+        bool motorRunning = false;
+        CollidingObject collidingObject;
+
+        Dictionary<string, float> offLoadVolumeScale = new Dictionary<string, float>();
+        Dictionary<string, float> volumeScaleSpools = new Dictionary<string, float>();
 
         public override void OnStart(StartState state)
         {
@@ -19,19 +30,35 @@ namespace RocketSoundEnhancement
             EnableLowpassFilter = true;
             base.OnStart(state);
 
+            if (configNode.HasNode("Motor"))
+            {
+                ConfigNode offLoadVolumeScaleNode;
+                if ((offLoadVolumeScaleNode = configNode.GetNode("Motor").GetNode("offLoadVolumeScale")) != null && offLoadVolumeScaleNode.HasValues())
+                {
+                    foreach (ConfigNode.Value node in offLoadVolumeScaleNode.values)
+                    {
+                        string soundLayerName = node.name;
+                        float value = float.Parse(node.value);
+
+                        if (offLoadVolumeScale.ContainsKey(soundLayerName))
+                        {
+                            offLoadVolumeScale[soundLayerName] = value;
+                            continue;
+                        }
+
+                        offLoadVolumeScale.Add(soundLayerName, value);
+                    }
+                }
+            }
+
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
+            moduleWheelDamage = part.GetComponent<ModuleWheelDamage>();
 
             initialized = true;
         }
 
-        float motorOutput = 0;
-        float wheelSpeed = 0;
-        float slipDisplacement = 0;
-        bool retracted = false;
-        bool motorRunning = false;
-        CollidingObject collidingObject;
         public override void OnUpdate()
         {
             if(!HighLogic.LoadedSceneIsFlight || !initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
@@ -39,7 +66,7 @@ namespace RocketSoundEnhancement
 
             if(moduleMotor) {
                 motorRunning = moduleMotor.motorEnabled && moduleMotor.state > ModuleWheelMotor.MotorState.Disabled;
-                motorOutput = moduleMotor.state == ModuleWheelMotor.MotorState.Running ? wheelSpeed / moduleMotor.wheelSpeedMax : 0;
+                motorOutput = motorRunning ? Mathf.Clamp(wheelSpeed / moduleMotor.wheelSpeedMax, 0, 2f) : 0;
             }
 
             if(moduleDeploy) {
@@ -72,6 +99,8 @@ namespace RocketSoundEnhancement
                 foreach(var soundLayer in soundLayerGroup.Value) {
                     string sourceLayerName = soundLayerGroupKey + "_" + soundLayer.name;
                     float finalControl = control;
+                    float volumeScale = 1;
+
                     if(soundLayerGroupKey == "Ground" || soundLayerGroupKey == "Slip") {
                         string layerMaskName = soundLayer.data;
                         if(layerMaskName != "") {
@@ -101,16 +130,28 @@ namespace RocketSoundEnhancement
                         float spoolSpeed = Mathf.Max(soundLayer.spoolSpeed, finalControl * 0.5f);
 
                         if(soundLayerGroupKey == "Motor" && moduleWheel.wheel.brakeState > 0 && Controls[sourceLayerName] > spoolControl){
-                            spoolSpeed = moduleWheel.wheel.brakeState * 0.5f;
+                            spoolSpeed = soundLayer.spoolSpeed;
                         }
 
-                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed * TimeWarp.deltaTime);
+                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, soundLayer.spoolSpeed * TimeWarp.deltaTime);
                     } else {
                         float smoothControl = AudioUtility.SmoothControl.Evaluate(Mathf.Max(Controls[sourceLayerName], finalControl)) * (60 * Time.deltaTime);
                         Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], finalControl, smoothControl);
                     }
 
-                    PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume);
+                    if(soundLayerGroupKey == "Motor" && offLoadVolumeScale.ContainsKey(soundLayer.name)){
+                        volumeScale = moduleMotor.state == ModuleWheelMotor.MotorState.Running ? 1 : offLoadVolumeScale[soundLayer.name];
+                        if (soundLayer.spool)
+                        {
+                            if (!volumeScaleSpools.Keys.Contains(sourceLayerName))
+                                volumeScaleSpools.Add(sourceLayerName, 0);
+
+                            volumeScaleSpools[sourceLayerName] = Mathf.MoveTowards(volumeScaleSpools[sourceLayerName], volumeScale, soundLayer.spoolSpeed * TimeWarp.deltaTime);
+                            volumeScale = volumeScaleSpools[sourceLayerName];
+                        }
+                    }
+
+                    PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume * volumeScale);
                 }
             }
 
@@ -122,10 +163,21 @@ namespace RocketSoundEnhancement
             if(!initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused)
                 return;
 
+            base.FixedUpdate();
+
+            if(moduleWheelDamage != null && moduleWheelDamage.isDamaged){
+                wheelSpeed = 0;
+                slipDisplacement = 0;
+                return;
+            }
+
             WheelHit hit;
-            if(moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit)) {
+            if (moduleWheel.Wheel.wheelCollider.GetGroundHit(out hit))
+            {
                 collidingObject = AudioUtility.GetCollidingObject(hit.collider.gameObject);
-            }else{
+            }
+            else
+            {
                 collidingObject = CollidingObject.Dirt;
             }
 
@@ -135,8 +187,6 @@ namespace RocketSoundEnhancement
             float y = (moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) - moduleWheel.Wheel.currentState.localWheelVelocity.y;
 
             slipDisplacement = Mathf.Sqrt(x * x + y * y);
-
-            base.FixedUpdate();
         }
     }
 }
