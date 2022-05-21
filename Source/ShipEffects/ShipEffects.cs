@@ -339,6 +339,8 @@ namespace RocketSoundEnhancement
                 sourceGameObject.transform.rotation = gameObject.transform.rotation;
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                 Sources.Add(sourceLayerName, source);
+
+                source.time = soundLayer.loopAtRandom ? UnityEngine.Random.Range(0, source.clip.length / 2) : 0;
             }
 
             if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
@@ -376,7 +378,7 @@ namespace RocketSoundEnhancement
             int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
             var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, soundLayer.loopAtRandom, oneShot, 1, clip);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, oneShot, 1, clip);
         }
 
         public float GetController(PhysicsControl physControl)

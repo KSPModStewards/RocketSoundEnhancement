@@ -176,7 +176,15 @@ namespace RocketSoundEnhancement
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                 Sources.Add(sourceLayerName, source);
 
-                pitchVariation = !soundLayer.loopAtRandom ? UnityEngine.Random.Range(0.95f, 1.05f) : 1;
+                if (soundLayer.loopAtRandom)
+                {
+                    source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
+                    pitchVariation = 1;
+                }
+                else
+                {
+                    pitchVariation = UnityEngine.Random.Range(0.95f, 1.05f);
+                }
             }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior) {
@@ -195,7 +203,7 @@ namespace RocketSoundEnhancement
             int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
             var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, soundLayer.loopAtRandom, oneShot, volumeScale, clip);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, oneShot, volumeScale, clip);
         }
 
         public void ProcessAirSimulation(string sourceLayerName, AudioSource source)

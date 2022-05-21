@@ -234,7 +234,7 @@ namespace RocketSoundEnhancement
             return null;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, bool loopAtRandom = false, bool oneshot = false, float volumeScale = 1.0f, AudioClip audioclip = null)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, bool oneshot = false, float volumeScale = 1.0f, AudioClip audioclip = null)
         {
             if (source == null || !source.isActiveAndEnabled) return;
 
@@ -259,10 +259,7 @@ namespace RocketSoundEnhancement
             if (oneshot) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volumeScale); return; }
 
             if (loop && !source.isPlaying)
-            {
-                source.time = loopAtRandom ? UnityEngine.Random.Range(0, source.clip.length / 2) : 0;
                 source.Play();
-            }
         }
     }
 }
