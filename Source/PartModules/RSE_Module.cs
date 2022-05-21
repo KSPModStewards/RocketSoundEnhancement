@@ -38,6 +38,7 @@ namespace RocketSoundEnhancement
         float angle;
         float machPass;
         float lastDistance;
+        float loopRandomStart;
 
         public ConfigNode configNode;
         public bool getSoundLayersandGroups = true;
@@ -85,6 +86,8 @@ namespace RocketSoundEnhancement
 
                 SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
             }
+
+            loopRandomStart = UnityEngine.Random.Range(0f,1.0f);
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -145,7 +148,6 @@ namespace RocketSoundEnhancement
             }
         }
 
-        float pitchVariation = 1;
         public void PlaySoundLayer(string sourceLayerName, SoundLayer soundLayer, float controlInput, float volume, bool oneShot = false, bool rndOneShotVol = false)
         {
             float control = Mathf.Round(controlInput * 1000.0f) * 0.001f;
@@ -158,7 +160,7 @@ namespace RocketSoundEnhancement
             finalPitch *= soundLayer.massToPitch?.Value((float)part.physicsMass) ?? 1;
             finalPitch *= AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite ? doppler : 1;
 
-            if(finalVolume < float.Epsilon) {
+            if(control < float.Epsilon) {
                 if(Sources.ContainsKey(sourceLayerName)) {
                     Sources[sourceLayerName].Stop();
                 }
@@ -176,15 +178,7 @@ namespace RocketSoundEnhancement
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                 Sources.Add(sourceLayerName, source);
 
-                if (soundLayer.loopAtRandom)
-                {
-                    source.time = UnityEngine.Random.Range(0, source.clip.length / 2);
-                    pitchVariation = 1;
-                }
-                else
-                {
-                    pitchVariation = UnityEngine.Random.Range(0.95f, 1.05f);
-                }
+                source.time = soundLayer.loopAtRandom ? loopRandomStart * source.clip.length : 0;
             }
 
             if(AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior) {
@@ -197,7 +191,7 @@ namespace RocketSoundEnhancement
             }
 
             source.volume = finalVolume * GameSettings.SHIP_VOLUME * volume;
-            source.pitch = finalPitch * pitchVariation;
+            source.pitch = finalPitch;
 
             float volumeScale = rndOneShotVol && oneShot ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
             int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
