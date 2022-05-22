@@ -197,7 +197,7 @@ namespace RocketSoundEnhancement
             int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
             var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, oneShot, volumeScale, clip);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, oneShot, volumeScale, clip);
         }
 
         public void ProcessAirSimulation(string sourceLayerName, AudioSource source)

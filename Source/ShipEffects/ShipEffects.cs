@@ -113,9 +113,8 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused || noPhysics)
                 return;
 
-            Acceleration = Mathf.Abs(pastVelocity - (float)vessel.speed) / Time.fixedDeltaTime;
-            Acceleration += (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
-            Acceleration = Mathf.Round(Acceleration * 10) * 0.1f;
+            Acceleration = Mathf.Abs(pastVelocity - (float)vessel.speed) + Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime;
+            Acceleration = Mathf.Round(Acceleration * 100) * 0.01f;
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
             DynamicPressure = (float)vessel.dynamicPressurekPa;
 
@@ -378,7 +377,7 @@ namespace RocketSoundEnhancement
             int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
             var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel.isActiveAndEnabled, soundLayer.loop, oneShot, 1, clip);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, oneShot, 1, clip);
         }
 
         public float GetController(PhysicsControl physControl)
