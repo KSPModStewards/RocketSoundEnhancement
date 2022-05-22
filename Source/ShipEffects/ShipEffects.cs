@@ -112,7 +112,8 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused || noPhysics)
                 return;
 
-            Acceleration = (float)vessel.acceleration.magnitude + (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
+            float accel = vessel.LandedOrSplashed ? (float)vessel.acceleration.magnitude : (float)(vessel.geeForce * PhysicsGlobals.GravitationalAcceleration);
+            Acceleration = accel + (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
             Acceleration = Mathf.Round(Acceleration * 100) * 0.01f;
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
             DynamicPressure = (float)vessel.dynamicPressurekPa;
