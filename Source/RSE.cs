@@ -33,7 +33,8 @@ namespace RocketSoundEnhancement
 
         List<AudioSource> ChattererSources = new List<AudioSource>();
         List<AudioSource> StockSources = new List<AudioSource>();
-        List<AudioSource> cachSources = new List<AudioSource>();
+        List<AudioSource> InternalSources = new List<AudioSource>();
+        List<AudioSource> ExternalSources = new List<AudioSource>();
 
         bool gamePaused;
 
@@ -524,49 +525,97 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
-            if(AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite || !AudioMuffler.EnableMuffling && cachSources.Count > 0) {
-                foreach(var source in cachSources.ToList()) {
-                    if(source != null) {
-                        source.outputAudioMixerGroup = null;
+            if (gamePaused)
+                return;
+            var soundSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
+            soundSources = soundSources.Where(x => !StockSources.Contains(x) || !ChattererSources.Contains(x)).ToList();
+
+            if (AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite || !AudioMuffler.EnableMuffling)
+            {
+                if(ExternalSources.Count > 0){
+                    foreach (var source in ExternalSources.ToList())
+                    {
+                        if (source != null)
+                        {
+                            source.outputAudioMixerGroup = null;
+                        }
+                        ExternalSources.Remove(source);
                     }
-                    cachSources.Remove(source);
+                }
+
+                foreach (var source in InternalSources)
+                {
+                    if (source != null)
+                    {
+                        source.outputAudioMixerGroup = null;
+                        source.bypassListenerEffects = true;
+                    }
                 }
             }
 
-            if(gamePaused || !AudioMuffler.EnableMuffling)
+            if (!AudioMuffler.EnableMuffling)
                 return;
+        
+            foreach (var soundSource in soundSources)
+            {
+                if (soundSource == null || soundSource.gameObject.GetComponentInParent<PartModule>() || soundSource.gameObject.GetComponent<PartModule>())
+                    continue;
+
+                if (ExternalSources.Contains(soundSource) || InternalSources.Contains(soundSource))
+                    continue;
+                
+                if (soundSource.GetComponent<InternalProp>() || soundSource.GetComponentInParent<InternalProp>())
+                {
+                    InternalSources.Add(soundSource);
+                    continue;
+                }
+
+                ExternalSources.Add(soundSource);
+            }
+
+            ExternalSources = ExternalSources.Where(x => x != null).ToList();
+            InternalSources = InternalSources.Where(x => x != null).ToList();
+
+            foreach (var source in InternalSources)
+            {
+                if (source == null)
+                    continue;
+
+                if (source.bypassListenerEffects = AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite)
+                    continue;
+
+                if (source.outputAudioMixerGroup == null)
+                {
+                    source.bypassListenerEffects = false;
+                    source.outputAudioMixerGroup = InternalMixer;
+                }
+            }
 
             if(AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite && Mixer != null) {
-                var soundSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
-                soundSources = soundSources.Where(x => !StockSources.Contains(x) || !ChattererSources.Contains(x)).ToList();
-
-                foreach(var soundSource in soundSources) {
-                    if(soundSource == null || soundSource.gameObject.GetComponentInParent<PartModule>() || soundSource.gameObject.GetComponent<PartModule>())
+                foreach(var source in ExternalSources) {
+                    if(source == null)
                         continue;
-
-                    if(soundSource.outputAudioMixerGroup == null) {
-                        soundSource.outputAudioMixerGroup = ExternalMixer;
-                        if(!cachSources.Contains(soundSource)) {
-                            cachSources.Add(soundSource);
-                        }
+                    
+                    if (source.outputAudioMixerGroup == null){
+                        source.outputAudioMixerGroup = ExternalMixer;
                     }
 
                     if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
                     {
-                        if (soundSource.gameObject.GetComponents<AudioSource>().Length > 1)
+                        if (source.gameObject.GetComponents<AudioSource>().Length > 1)
                             continue;
                             
-                        var airSim = soundSource.gameObject.AddOrGetComponent<AirSimulationFilter>();
+                        var airSim = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
                         airSim.enabled = true;
                         airSim.EnableLowpassFilter = true;
                         airSim.SimulationUpdate = AirSimulationUpdate.Basic;
-                        airSim.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, soundSource.transform.position);
+                        airSim.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
                         continue;
                     }
 
-                    if (soundSource.gameObject.GetComponent<AirSimulationFilter>() != null)
+                    if (source.gameObject.GetComponent<AirSimulationFilter>() != null)
                     {
-                        UnityEngine.Object.Destroy(soundSource.gameObject.GetComponent<AirSimulationFilter>());
+                        UnityEngine.Object.Destroy(source.gameObject.GetComponent<AirSimulationFilter>());
                     }
                 }
 

@@ -196,7 +196,7 @@ namespace RocketSoundEnhancement
                             stockSources.Add(source, source.minDistance);
                         }
 
-                        source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, vessel.isActiveVessel);
+                        source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, vessel == FlightGlobals.ActiveVessel);
 
                         if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
                         {
