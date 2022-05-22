@@ -399,10 +399,14 @@ namespace RocketSoundEnhancement
                     controller = (float)vessel.dynamicPressurekPa;
                     break;
                 case PhysicsControl.THRUST:
-                    var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>());
+                    var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>()).ToList();
                     if (engines.Count() == 0) { ThrustToWeight = 0; break; }
-                    float totalThrust = engines.Sum(x => x.GetComponent<ModuleEngines>().GetCurrentThrust());
-                    controller = (totalThrust * 1000) / (VesselMass * 1000);
+                    float totalThrust = 0;
+                    foreach (var engine in engines)
+                    {
+                        totalThrust += engine.GetComponents<ModuleEngines>().Sum(x => x.GetCurrentThrust());
+                    }
+                    controller = totalThrust / VesselMass;
                     ThrustToWeight = controller;
                     break;
                 case PhysicsControl.REENTRYHEAT:
