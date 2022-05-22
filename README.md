@@ -11,11 +11,12 @@ Get the Default Config here:
 
 
 ## Features
-### Settings Window
-![Settings Window](https://i.imgur.com/QlJZvNf.png)
 
-### Built-In Basic Audio Muffler
-A Lightweight Lowpass Filter.
+### Audio Muffler
+
+- Lite: The Old Basic Muffler
+- Full: Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect.
+- AirSim: Works on top of Full Quality, Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, mach effects, sonic booms and distortion. Stock sound sources has basic mach and distance attenuation (volume or filter based) support.
 
 **Presets:**
 
@@ -42,6 +43,7 @@ For eg: Using a different Loop sample for low thrust compared to High Thrust on 
 - RSE_Engines
 - RSE_RCS
 - RSE_Wheels
+- RSE_RotorEngines
 
 Replace and/or Add Sounds to Decouplers, Launch Clamps and Docking Ports.
 - RSE_Coupler
