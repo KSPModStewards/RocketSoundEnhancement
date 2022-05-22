@@ -350,7 +350,7 @@ namespace RocketSoundEnhancement
 
             if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
 
-            if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
+            if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
             {
                 AirSimulationFilter airSimFilter = AirSimFilters.ContainsKey(sourceLayerName) ? AirSimFilters[sourceLayerName] : null;
                 if (!airSimFilter)
