@@ -94,7 +94,6 @@ namespace RocketSoundEnhancement
                             }
                             break;
                         case "Flameout":
-                            control = currentThrust;
                             if(engineFlameout && !flameouts[engineID]) {
                                 flameouts[engineID] = true;
                             } else {
