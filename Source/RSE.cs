@@ -84,7 +84,7 @@ namespace RocketSoundEnhancement
                 if(source.clip != null)
                     source.bypassListenerEffects = false;
 
-                if(source.name.Contains("Music") || source.name.ToLower().Contains("soundtrackeditor") || source.name.Contains("PartActionController")) {
+                if(source.name.Contains("Music") || source.name.ToLower().Contains("soundtrackeditor") || source.name.ToLower().Contains("partactioncontroller")) {
                     source.bypassListenerEffects = true;
                 } else {
                     StockSources.Add(source);
@@ -559,6 +559,9 @@ namespace RocketSoundEnhancement
             foreach (var soundSource in soundSources)
             {
                 if (soundSource == null || soundSource.gameObject.GetComponentInParent<PartModule>() || soundSource.gameObject.GetComponent<PartModule>())
+                    continue;
+
+                if(soundSource.name.Contains("Music") || soundSource.name.ToLower().Contains("soundtrackeditor") || soundSource.name.ToLower().Contains("partactioncontroller"))
                     continue;
 
                 if (ExternalSources.Contains(soundSource) || InternalSources.Contains(soundSource))
