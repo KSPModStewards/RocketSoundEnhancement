@@ -9,7 +9,6 @@
     <AssemblyName>RocketSoundEnhancement</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <TargetFrameworkProfile/>
     <NoWin32Manifest>False</NoWin32Manifest>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
@@ -27,35 +26,28 @@
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>..\..\..\KSP 1.9.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+    <OutputPath>bin\Debug</OutputPath>
     <DebugSymbols>True</DebugSymbols>
-    <DebugType>Full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;ENABLE_PROFILER;DEVELOPMENT</DefineConstants>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>..\..\..\KSP 1.9.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+    <OutputPath>..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
     <DebugSymbols>False</DebugSymbols>
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <Prefer32Bit>false</Prefer32Bit>
-    <OutputPath>..\..\..\KSP 1.9.1\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>preview</LangVersion>
-    <OutputPath>..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
-    <DebugType>none</DebugType>
-  </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"</PostBuildEvent>
+    <PostBuildEvent>
+      "D:\Games\KSP Mod Projects\pdb2mdb\pdb2mdb.exe" "RocketSoundEnhancement.dll"
+      copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"
+    </PostBuildEvent>
+    <!--<PostBuildEvent>copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"</PostBuildEvent>-->
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">

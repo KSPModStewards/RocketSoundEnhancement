@@ -1,6 +1,7 @@
 Distribution
 Assets
 Unity
+.vscode
 *.zip
 
 ## Ignore Visual Studio temporary files, build results, and
