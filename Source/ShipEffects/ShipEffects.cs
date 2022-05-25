@@ -178,51 +178,6 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite)
-            {
-                foreach (var part in vessel.parts)
-                {
-                    var partSources = part.gameObject.GetComponents<AudioSource>().ToList();
-                    partSources.AddRange(part.gameObject.GetComponentsInChildren<AudioSource>());
-                    partSources = partSources.Where(x => !x.name.Contains(AudioUtility.RSETag)).ToList();
-
-                    foreach (var source in partSources)
-                    {
-                        if (source == null)
-                            continue;
-
-                        if (!stockSources.ContainsKey(source))
-                        {
-                            stockSources.Add(source, source.minDistance);
-                        }
-
-                        source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, vessel == FlightGlobals.ActiveVessel);
-
-                        if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
-                        {
-                            float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / AudioMuffler.AirSimMaxDistance), 10), 0.1f) * MachPass;
-                            source.minDistance = stockSources[source] * distanceAttenuation;
-                            continue;
-                        }
-
-                        if (source.minDistance != stockSources[source]) { source.minDistance = stockSources[source]; }
-                    }
-
-                }
-            }
-            else
-            {
-                if (stockSources.Count > 0)
-                {
-                    foreach (var source in stockSources.Keys.ToList())
-                    {
-                        source.outputAudioMixerGroup = null;
-                        stockSources.Remove(source);
-                    }
-                }
-            }
-
             if (ignoreVessel || SoundLayerGroups.Count() == 0)
                 return;
 
