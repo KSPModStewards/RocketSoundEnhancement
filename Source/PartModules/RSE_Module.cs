@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RocketSoundEnhancement.AudioFilters;
 using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_Module : PartModule
     {

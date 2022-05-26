@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.PartModules
 {
     class RSE_Wheels : RSE_Module
     {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.AudioFilters
 {
     /// <summary>
     /// Thanks to Iron-Warrior for source: https://forum.unity.com/threads/custom-low-pass-filter-using-onaudiofilterread.976326/

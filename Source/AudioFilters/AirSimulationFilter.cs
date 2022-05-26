@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.AudioFilters
 {
     public enum AirSimulationUpdate
     {

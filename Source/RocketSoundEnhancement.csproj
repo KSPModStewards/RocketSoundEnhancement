@@ -109,13 +109,14 @@
     <Compile Include="PartModules\RSE_Engines.cs"/>
     <Compile Include="PartModules\RSE_Wheels.cs"/>
     <Compile Include="PartModules\RSE_RCS.cs"/>
+    <Compile Include="PartModules\ShipEffectsCollisions.cs"/>
     <Compile Include="AudioUtility.cs"/>
     <Compile Include="AudioMuffler.cs"/>
-    <Compile Include="RSE.cs"/>
+    <Compile Include="RocketSoundEnhancement.cs"/>
+    <Compile Include="GUI.cs"/>
     <Compile Include="Settings.cs"/>
     <Compile Include="Startup.cs"/>
-    <Compile Include="ShipEffects\ShipEffects.cs"/>
-    <Compile Include="ShipEffects\ShipEffectsCollisions.cs"/>
+    <Compile Include="ShipEffects.cs"/>
     <Compile Include="Properties\AssemblyInfo.cs"/>
   </ItemGroup>
   <ItemGroup>

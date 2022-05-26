@@ -1,4 +1,5 @@
 ﻿using KSP.UI.Screens;
+using RocketSoundEnhancement.AudioFilters;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -6,8 +7,7 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    //[KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class Settings : MonoBehaviour
+    public class Settings
     {
         public static Settings Instance { get; private set; } = new Settings();
 

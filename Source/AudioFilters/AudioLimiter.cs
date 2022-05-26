@@ -28,7 +28,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.AudioFilters
 {
     public struct AudioLimiterPreset
     {

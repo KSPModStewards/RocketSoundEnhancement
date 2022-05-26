@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using RocketSoundEnhancement.AudioFilters;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -44,7 +44,8 @@ namespace RocketSoundEnhancement
 
         void Initialize()
         {
-            if(Sources.Count() > 0){
+            if (Sources.Count() > 0)
+            {
                 Sources.Where(x => x.Value != null).ToList().ForEach(x => UnityEngine.Object.Destroy(x.Value));
             }
             Sources.Clear();
@@ -366,7 +367,7 @@ namespace RocketSoundEnhancement
                     ThrustToWeight = controller;
                     break;
                 case PhysicsControl.REENTRYHEAT:
-                    if (RSE.Instance.AeroFX != null) { controller = RSE.Instance.AeroFX.FxScalar * RSE.Instance.AeroFX.state; }
+                    if (RocketSoundEnhancement.Instance.AeroFX != null) { controller = RocketSoundEnhancement.Instance.AeroFX.FxScalar * RocketSoundEnhancement.Instance.AeroFX.state; }
                     break;
                 case PhysicsControl.None:
                     controller = 1;
@@ -378,7 +379,7 @@ namespace RocketSoundEnhancement
         public void onGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
-            
+
             gamePaused = true;
         }
 

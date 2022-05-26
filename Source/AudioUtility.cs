@@ -227,8 +227,8 @@ namespace RocketSoundEnhancement
             {
                 switch (channel)
                 {
-                    case FXChannel.Interior: return RSE.Instance.InternalMixer;
-                    case FXChannel.Exterior: return isActiveVessel ? RSE.Instance.FocusMixer : RSE.Instance.ExternalMixer;
+                    case FXChannel.Interior: return RocketSoundEnhancement.Instance.InternalMixer;
+                    case FXChannel.Exterior: return isActiveVessel ? RocketSoundEnhancement.Instance.FocusMixer : RocketSoundEnhancement.Instance.ExternalMixer;
                 }
             }
             return null;

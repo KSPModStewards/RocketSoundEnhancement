@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace RocketSoundEnhancement
+namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_Coupler : RSE_Module
     {
