@@ -116,7 +116,6 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Add(() => gamePaused = true);
             GameEvents.onGameUnpause.Add(() => gamePaused = false);
-            GameEvents.onPartDeCoupleNewVesselComplete.Add(onNewVessel);
         }
 
         public void ApplySettings()
@@ -171,23 +170,6 @@ namespace RocketSoundEnhancement
                 }
 
                 source.outputAudioMixerGroup = fullMuffling ? ExternalMixer : null;
-            }
-        }
-
-        void onNewVessel(Vessel vessel1, Vessel vessel2)
-        {
-            var se1 = vessel1.GetComponent<ShipEffects>();
-            var se2 = vessel2.GetComponent<ShipEffects>();
-
-            if (vessel1.launchTime > vessel2.launchTime)
-            {
-                se1.SonicBoomTip = se2.SonicBoomTip;
-                se1.SonicBoomedRear = se2.SonicBoomedRear;
-            }
-            else
-            {
-                se2.SonicBoomTip = se1.SonicBoomTip;
-                se2.SonicBoomedRear = se1.SonicBoomedRear;
             }
         }
 
@@ -305,7 +287,6 @@ namespace RocketSoundEnhancement
             }
 
             float atmDensityClamped = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-
             if (AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite && Mixer != null)
             {
                 if (!overrideFiltering)
@@ -358,7 +339,6 @@ namespace RocketSoundEnhancement
         {
             GameEvents.onGamePause.Remove(() => gamePaused = true);
             GameEvents.onGameUnpause.Remove(() => gamePaused = false);
-            GameEvents.onPartDeCoupleNewVesselComplete.Remove(onNewVessel);
         }
     }
 }

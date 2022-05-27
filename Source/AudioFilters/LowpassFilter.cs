@@ -22,9 +22,7 @@ namespace RocketSoundEnhancement.AudioFilters
         private void Awake()
         {
             SampleRate = AudioSettings.outputSampleRate;
-
-            InvokeRepeating("UpdateFilter", 0, 0.05f);
-
+            
             inputHistoryLeft[1] = 0;
             inputHistoryLeft[0] = 0;
 
@@ -40,7 +38,7 @@ namespace RocketSoundEnhancement.AudioFilters
             outputHistoryRight[0] = 0;
         }
 
-        public void UpdateFilter()
+        public void LateUpdate()
         {
             float finalCutOff = Mathf.Clamp(CutoffFrequency, 10, 22200);
             float finalResonance = Mathf.Sqrt(2);

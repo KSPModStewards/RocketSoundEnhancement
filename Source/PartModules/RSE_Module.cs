@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace RocketSoundEnhancement.PartModules
 {
@@ -38,12 +37,15 @@ namespace RocketSoundEnhancement.PartModules
         float doppler = 1;
         float distance;
         float angle;
+        float mach;
+        float machAngle;
         float machPass;
         float lastDistance;
         float loopRandomStart;
 
         public ConfigNode configNode;
         public bool prepareSoundLayers = true;
+        bool airSimFiltersEnabled;
 
         public override void OnStart(StartState state)
         {
@@ -124,6 +126,24 @@ namespace RocketSoundEnhancement.PartModules
                     var source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                     source.enabled = false;
                     Sources.Add(soundLayerName, source);
+
+                    var airSimFilter = new AirSimulationFilter();
+                    airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
+                    airSimFilter.enabled = false;
+
+                    airSimFilter.EnableCombFilter = EnableCombFilter;
+                    airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
+                    airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+                    airSimFilter.SimulationUpdate = AirSimUpdateMode;
+
+                    airSimFilter.MaxDistance = MaxDistance;
+                    airSimFilter.FarLowpass = FarLowpass;
+                    airSimFilter.AngleHighPass = AngleHighpass;
+                    airSimFilter.MaxCombDelay = MaxCombDelay;
+                    airSimFilter.MaxCombMix = MaxCombMix;
+                    airSimFilter.MaxDistortion = MaxDistortion;
+
+                    AirSimFilters.Add(soundLayerName, airSimFilter);
                 }
                 yield return null;
             }
@@ -131,10 +151,24 @@ namespace RocketSoundEnhancement.PartModules
 
         public virtual void LateUpdate()
         {
-            if (AirSimFilters.Count > 0 && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+            if (Sources.Count > 0)
             {
-                AirSimFilters.Values.ToList().ForEach(x => UnityEngine.Object.Destroy(x));
-                AirSimFilters.Clear();
+                foreach(var source in Sources.Keys)
+                {
+                    if (Sources[source].isPlaying || !Sources[source].enabled)
+                        continue;
+
+                    if (AirSimFilters.ContainsKey(source))
+                        AirSimFilters[source].enabled = false;
+
+                    Sources[source].enabled = false;
+                }
+            }
+
+            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+            {
+                AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
+                airSimFiltersEnabled = false;
             }
         }
 
@@ -157,7 +191,7 @@ namespace RocketSoundEnhancement.PartModules
                 if (AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
                     return;
 
-                angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachOriginCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
+                angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
                 
                 if (vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled))
@@ -165,6 +199,8 @@ namespace RocketSoundEnhancement.PartModules
                     angle = 0;
                     machPass = 1;
                 }
+                mach = vessel.GetComponent<ShipEffects>().Mach;
+                machAngle = vessel.GetComponent<ShipEffects>().MachAngle;
             }
         }
 
@@ -181,18 +217,7 @@ namespace RocketSoundEnhancement.PartModules
             if (finalVolume < float.Epsilon)
             {
                 if (Sources[soundLayerName].isPlaying && soundLayer.loop)
-                {
                     Sources[soundLayerName].Stop();
-                }
-
-                if (!Sources[soundLayerName].isPlaying)
-                {
-                    Sources[soundLayerName].enabled = false;
-                    if (AirSimFilters.ContainsKey(soundLayerName))
-                    {
-                        AirSimFilters[soundLayerName].enabled = false;
-                    }
-                }
 
                 return;
             }
@@ -201,14 +226,19 @@ namespace RocketSoundEnhancement.PartModules
             finalPitch *= soundLayer.massToPitch?.Value((float)part.physicsMass) ?? 1;
             finalPitch *= AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite ? doppler : 1;
 
-            var source = Sources[soundLayerName];
+            AudioSource source = Sources[soundLayerName];
             source.enabled = true;
-
             if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
             {
-                if (UseAirSimulation)
+                if (UseAirSimulation && AirSimFilters.ContainsKey(soundLayerName))
                 {
-                    ProcessAirSimulation(soundLayerName, source);
+                    AirSimFilters[soundLayerName].enabled = true;
+                    AirSimFilters[soundLayerName].Distance = distance;
+                    AirSimFilters[soundLayerName].Mach = mach;
+                    AirSimFilters[soundLayerName].Angle = angle;
+                    AirSimFilters[soundLayerName].MachAngle = machAngle;
+                    AirSimFilters[soundLayerName].MachPass = machPass;
+                    airSimFiltersEnabled = true;
                 }
                 else
                 {
@@ -234,37 +264,6 @@ namespace RocketSoundEnhancement.PartModules
             AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, volumeScale, !soundLayer.loop ? soundLayer.audioClips[index] : null);
         }
 
-        public void ProcessAirSimulation(string soundLayerName, AudioSource source)
-        {
-            AirSimulationFilter airSimFilter = AirSimFilters.ContainsKey(soundLayerName) ? AirSimFilters[soundLayerName] : null;
-            if (!airSimFilter)
-            {
-                airSimFilter = new AirSimulationFilter();
-                airSimFilter = source.gameObject.AddComponent<AirSimulationFilter>();
-
-                airSimFilter.EnableCombFilter = EnableCombFilter;
-                airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
-                airSimFilter.SimulationUpdate = AirSimUpdateMode;
-
-                airSimFilter.MaxDistance = MaxDistance;
-                airSimFilter.FarLowpass = FarLowpass;
-                airSimFilter.AngleHighPass = AngleHighpass;
-                airSimFilter.MaxCombDelay = MaxCombDelay;
-                airSimFilter.MaxCombMix = MaxCombMix;
-                airSimFilter.MaxDistortion = MaxDistortion;
-
-                AirSimFilters.Add(soundLayerName, airSimFilter);
-            }
-
-            airSimFilter.enabled = true;
-            airSimFilter.Distance = distance;
-            airSimFilter.Mach = vessel.GetComponent<ShipEffects>().Mach;
-            airSimFilter.Angle = angle;
-            airSimFilter.MachAngle = vessel.GetComponent<ShipEffects>().MachAngle;
-            airSimFilter.MachPass = machPass;
-        }
-
         public void onGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
@@ -279,13 +278,9 @@ namespace RocketSoundEnhancement.PartModules
 
         public virtual void OnDestroy()
         {
-            if (!initialized)
-                return;
-
+            if (!initialized) return;
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
-
             UnityEngine.Object.Destroy(audioParent);
-
             GameEvents.onGamePause.Remove(onGamePause);
             GameEvents.onGameUnpause.Remove(onGameUnpause);
         }

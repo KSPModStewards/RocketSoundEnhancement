@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace RocketSoundEnhancement.PartModules
@@ -42,7 +41,6 @@ namespace RocketSoundEnhancement.PartModules
                             sharedSoundLayers.Add(soundLayer.name, 1);
                             continue;
                         }
-
                         soundLayersCache.Add(soundLayer.name);
                     }
                 }

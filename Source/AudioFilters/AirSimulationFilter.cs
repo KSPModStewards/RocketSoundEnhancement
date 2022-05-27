@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace RocketSoundEnhancement.AudioFilters
 {
@@ -42,17 +43,22 @@ namespace RocketSoundEnhancement.AudioFilters
         int SampleRate;
         float lowpassFade;
         double combDelaySamples;
+        AudioSource source;
+        bool sourceActiveAndEnabled;
 
         float distanceLog, machVelocityClamped, angleAbsolute, anglePositive, machPass;
 
         void Awake()
         {
             SampleRate = AudioSettings.outputSampleRate;
-            InvokeRepeating("UpdateFilters", 0.0f, 0.05f);
+            source = GetComponent<AudioSource>();
         }
 
-        public void UpdateFilters()
+        public void LateUpdate()
         {
+            sourceActiveAndEnabled = source != null && source.enabled && source.isPlaying;
+            if (!sourceActiveAndEnabled) return;
+
             if (SimulationUpdate != AirSimulationUpdate.None)
             {
                 distanceLog = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
@@ -127,8 +133,10 @@ namespace RocketSoundEnhancement.AudioFilters
 
         void OnAudioFilterRead(float[] data, int channels)
         {
+            if (!sourceActiveAndEnabled) return;
+            
             for(int i = 0; i < data.Length; i++) {
-                data[i] *= lowpassFade;
+                if(EnableLowpassFilter) data[i] *= lowpassFade;
                 if(EnableCombFilter) {
                     CombFilter(ref data[i]);
                 }

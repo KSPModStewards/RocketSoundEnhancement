@@ -261,7 +261,6 @@ namespace RocketSoundEnhancement
             Settings.Instance.InteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.Instance.InteriorVolume, 2), 0, 2);
             GUILayout.Label(Settings.Instance.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
             GUILayout.EndHorizontal();
-
             GUILayout.FlexibleSpace();
             Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
 
@@ -299,13 +298,13 @@ namespace RocketSoundEnhancement
             {
                 string info =
                     "SHIPEFFECTS CONTROLS \r\n" +
-                    "- ACCELERATION: " + shipEffectsModule.GetController(PhysicsControl.ACCELERATION).ToString("0.00") + "\r\n" +
-                    "- JERK: " + shipEffectsModule.GetController(PhysicsControl.JERK).ToString("0.00") + "\r\n" +
-                    "- AIRSPEED: " + shipEffectsModule.GetController(PhysicsControl.AIRSPEED).ToString("0.00") + "\r\n" +
-                    "- GROUNDSPEED: " + shipEffectsModule.GetController(PhysicsControl.GROUNDSPEED).ToString("0.00") + "\r\n" +
-                    "- DYNAMICPRESSSURE: " + shipEffectsModule.GetController(PhysicsControl.DYNAMICPRESSURE).ToString("0.00") + "\r\n" +
-                    "- THRUST: " + shipEffectsModule.GetController(PhysicsControl.THRUST).ToString("0.00") + "\r\n" +
-                    "- REENTRYHEAT: " + shipEffectsModule.GetController(PhysicsControl.REENTRYHEAT).ToString("0.00") + "\r\n" +
+                    "- ACCELERATION: " + shipEffectsModule.GetPhysicsController(PhysicsControl.ACCELERATION).ToString("0.00") + "\r\n" +
+                    "- JERK: " + shipEffectsModule.GetPhysicsController(PhysicsControl.JERK).ToString("0.00") + "\r\n" +
+                    "- AIRSPEED: " + shipEffectsModule.GetPhysicsController(PhysicsControl.AIRSPEED).ToString("0.00") + "\r\n" +
+                    "- GROUNDSPEED: " + shipEffectsModule.GetPhysicsController(PhysicsControl.GROUNDSPEED).ToString("0.00") + "\r\n" +
+                    "- DYNAMICPRESSSURE: " + shipEffectsModule.GetPhysicsController(PhysicsControl.DYNAMICPRESSURE).ToString("0.00") + "\r\n" +
+                    "- THRUST: " + shipEffectsModule.GetPhysicsController(PhysicsControl.THRUST).ToString("0.00") + "\r\n" +
+                    "- REENTRYHEAT: " + shipEffectsModule.GetPhysicsController(PhysicsControl.REENTRYHEAT).ToString("0.00") + "\r\n" +
                     "- Mass: " + shipEffectsModule.VesselMass.ToString("0.00") + "\r\n\r\n";
 
                 if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
@@ -318,7 +317,7 @@ namespace RocketSoundEnhancement
                         "- MachAngle: " + shipEffectsModule.MachAngle.ToString("0.00") + "\r\n" +
                         "- MachPass: " + shipEffectsModule.MachPass.ToString("0.00") + "\r\n" +
                         "- MachPassRear: " + shipEffectsModule.MachPassRear.ToString("0.00") + "\r\n" +
-                        "- SonicBoom1: " + shipEffectsModule.SonicBoomTip + "\r\n" +
+                        "- SonicBoom1: " + shipEffectsModule.SonicBoomedTip + "\r\n" +
                         "- SonicBoom2: " + shipEffectsModule.SonicBoomedRear + "\r\n\r\n";
                 }
                 GUILayout.Label(info);
