@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RocketSoundEnhancement.AudioFilters;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -36,7 +37,7 @@ namespace RocketSoundEnhancement
     {
         public string name;
         public string data;
-        public string[] audioClips;
+        public AudioClip[] audioClips;
         public FXChannel channel;
         public bool loop;
         public bool loopAtRandom;
@@ -93,11 +94,18 @@ namespace RocketSoundEnhancement
 
             if (node.HasValue("audioClip"))
             {
-                soundLayer.audioClips = new string[node.GetValues("audioClip").Length];
-                for (int i = 0; i < soundLayer.audioClips.Length; i++)
+                var clips = new List<AudioClip>();
+                var clipValues = node.GetValues("audioClip");
+                for (int i = 0; i < clipValues.Length; i++)
                 {
-                    soundLayer.audioClips[i] = node.GetValue("audioClip", i);
+                    string value = clipValues[i];
+                    AudioClip clip;
+                    if (clip = GameDatabase.Instance.GetAudioClip(value))
+                    {
+                        clips.Add(clip);
+                    }
                 }
+                soundLayer.audioClips = clips.ToArray();
             }
 
             if (!node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom)) { soundLayer.loopAtRandom = true; }
@@ -154,19 +162,11 @@ namespace RocketSoundEnhancement
             return soundLayer;
         }
 
-        public static AudioSource CreateSource(GameObject sourceGameObject, SoundLayer soundLayer, bool oneShot = false)
+        public static AudioSource CreateSource(GameObject sourceGameObject, SoundLayer soundLayer)
         {
             var source = sourceGameObject.AddComponent<AudioSource>();
             source.name = RSETag + "_" + sourceGameObject.name;
             source.playOnAwake = false;
-
-            if (!oneShot && soundLayer.audioClips != null)
-            {
-                int index = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
-                source.clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-                if (!source.clip) return null;
-            }
-
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
             source.loop = soundLayer.loop;
@@ -180,8 +180,7 @@ namespace RocketSoundEnhancement
             }
 
             if (soundLayer.spread > 0) { source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0)); }
-
-
+            
             return source;
         }
 
@@ -234,7 +233,7 @@ namespace RocketSoundEnhancement
             return null;
         }
 
-        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, bool oneshot = false, float volumeScale = 1.0f, AudioClip audioclip = null)
+        public static void PlayAtChannel(AudioSource source, FXChannel channel, bool isActiveVessel, bool loop = false, float volumeScale = 1.0f, AudioClip audioclip = null)
         {
             if (source == null || !source.isActiveAndEnabled) return;
 
@@ -256,10 +255,9 @@ namespace RocketSoundEnhancement
                     break;
             }
 
-            if (oneshot) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volumeScale); return; }
+            if (!loop) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volumeScale); return; }
 
-            if (loop && !source.isPlaying)
-                source.Play();
+            if (loop && !source.isPlaying) source.Play();
         }
     }
 }

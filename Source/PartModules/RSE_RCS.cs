@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace RocketSoundEnhancement.PartModules
 {
@@ -20,9 +18,9 @@ namespace RocketSoundEnhancement.PartModules
             initialized = true;
         }
 
-        public override void OnUpdate()
+        public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
                 return;
 
             var thrustTransforms = moduleRCSFX.thrusterTransforms;
@@ -45,10 +43,10 @@ namespace RocketSoundEnhancement.PartModules
                 float smoothControl = AudioUtility.SmoothControl.Evaluate(control) * (30 * Time.deltaTime);
                 Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, smoothControl);
                 
-                PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
+                PlaySoundLayer(soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
             }
 
-            base.OnUpdate();
+            base.LateUpdate();
         }
     }
 }

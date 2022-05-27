@@ -46,10 +46,10 @@ namespace RocketSoundEnhancement.PartModules
         void SetupBlades()
         {
             if(PropellerBlades.Count > 0) {
-                foreach(var data in PropellerBlades.Keys.ToList()) {
-                    var cleanData = PropellerBlades[data];
+                foreach(var propellerBlade in PropellerBlades.Keys.ToList()) {
+                    var cleanData = PropellerBlades[propellerBlade];
                     cleanData.bladeCount = 0;
-                    PropellerBlades[data] = cleanData;
+                    PropellerBlades[propellerBlade] = cleanData;
                 }
             }
 
@@ -90,12 +90,17 @@ namespace RocketSoundEnhancement.PartModules
                 }
             }
 
+            foreach (var propSoundLayers in PropellerBlades.Values)
+            {
+                StartCoroutine(SetupAudioSources(propSoundLayers.soundLayers));
+            }
+
             initialized = true;
         }
 
-        public override void OnUpdate()
+        public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
                 return;
                 
             if(SoundLayerGroups.Count > 0) {
@@ -126,23 +131,23 @@ namespace RocketSoundEnhancement.PartModules
                     }
 
                     foreach(var soundLayer in soundLayerGroup.Value) {
-                        string sourceLayerName = soundLayerGroup.Key + "_" + soundLayer.name;
+                        string soundLayerName = soundLayerGroup.Key + "_" + soundLayer.name;
 
-                        if(!Controls.ContainsKey(sourceLayerName)) {
-                            Controls.Add(sourceLayerName, 0);
+                        if(!Controls.ContainsKey(soundLayerName)) {
+                            Controls.Add(soundLayerName, 0);
                         }
                         
                         if(soundLayer.spool) {
                             float spoolSpeed = Mathf.Max(soundLayer.spoolSpeed, control) * TimeWarp.deltaTime;
                             float spoolControl = Mathf.Lerp(motorEngaged ? soundLayer.spoolIdle : 0, 1, control); 
 
-                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], spoolControl, spoolSpeed);
+                            Controls[soundLayerName] = Mathf.MoveTowards(Controls[soundLayerName], spoolControl, spoolSpeed);
                         } else {
                             float smoothControl = AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime);
-                            Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, smoothControl);
+                            Controls[soundLayerName] = Mathf.MoveTowards(Controls[soundLayerName], control, smoothControl);
                         }
                         
-                        PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], Volume);
+                        PlaySoundLayer(soundLayer, Controls[soundLayerName], Volume);
                     }
                 }
             }
@@ -156,27 +161,27 @@ namespace RocketSoundEnhancement.PartModules
                     SetupBlades();
                 }
 
-                foreach(var propBlade in PropellerBlades.Keys.ToList()) {
-                    float propControl = rotorRPM / PropellerBlades[propBlade].baseRPM;
-                    float propOverallVolume = PropellerBlades[propBlade].volume.Value(propControl) * atm;
-                    float bladeMultiplier = Mathf.Clamp((float)PropellerBlades[propBlade].bladeCount / PropellerBlades[propBlade].maxBlades,0, 2);
+                foreach(var propellerBlade in PropellerBlades.Values) {
+                    float propControl = rotorRPM / propellerBlade.baseRPM;
+                    float propOverallVolume = propellerBlade.volume.Value(propControl) * atm;
+                    float bladeMultiplier = Mathf.Clamp((float)propellerBlade.bladeCount / propellerBlade.maxBlades,0, 2);
                     float control = propControl * bladeMultiplier;
 
-                    foreach(var soundLayer in PropellerBlades[propBlade].soundLayers) {
-                        string sourceLayerName = propBlade + "_" + "_" + soundLayer.name;
+                    foreach(var soundLayer in propellerBlade.soundLayers) {
+                        string soundLayerName = propellerBlade + "_" + "_" + soundLayer.name;
 
-                        if(!Controls.ContainsKey(sourceLayerName)) {
-                            Controls.Add(sourceLayerName, 0);
+                        if(!Controls.ContainsKey(soundLayerName)) {
+                            Controls.Add(soundLayerName, 0);
                         }
 
-                        Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
+                        Controls[soundLayerName] = Mathf.MoveTowards(Controls[soundLayerName], control, AudioUtility.SmoothControl.Evaluate(control) * (60 * Time.deltaTime));
 
-                        PlaySoundLayer(sourceLayerName, soundLayer, Controls[sourceLayerName], propOverallVolume);
+                        PlaySoundLayer(soundLayer, Controls[soundLayerName], propOverallVolume);
                     }
                 }
             }
 
-            base.OnUpdate();
+            base.LateUpdate();
         }
     }
 }

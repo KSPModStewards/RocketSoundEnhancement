@@ -1,5 +1,4 @@
-﻿using ModuleWheels;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -21,92 +20,85 @@ namespace RocketSoundEnhancement.PartModules
         Collision collision;
         CollidingObject collidingObject;
         CollisionType collisionType;
-        
+
         public override void OnStart(StartState state)
         {
-            if(state == StartState.Editor || state == StartState.None)
+            if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            getSoundLayersandGroups = false;
+            prepareSoundLayers = false;
             EnableLowpassFilter = true;
             base.OnStart(state);
 
-            foreach(var node in configNode.GetNodes()) {
+            foreach (var node in configNode.GetNodes())
+            {
                 var soundLayerNodes = node.GetNodes("SOUNDLAYER");
                 CollisionType collisionType;
 
-                if(Enum.TryParse(node.name, out collisionType)) {
-                    var soundLayers = AudioUtility.CreateSoundLayerGroup(soundLayerNodes);
-                    if(SoundLayerColGroups.ContainsKey(collisionType)) {
-                        SoundLayerColGroups[collisionType].AddRange(soundLayers);
-                    } else {
-                        SoundLayerColGroups.Add(collisionType, soundLayers);
-                    }
+                if (Enum.TryParse(node.name, out collisionType))
+                {
+                    SoundLayerColGroups.Add(collisionType, AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
+                }
+            }
+
+            if (SoundLayerColGroups.Count > 0)
+            {
+                foreach (var soundLayerGroup in SoundLayerColGroups)
+                {
+                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value));
                 }
             }
 
             initialized = true;
         }
 
-        public override void OnUpdate()
+        public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || gamePaused || !initialized)
+            if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
                 return;
-            
-            if(collided) {
-                if(SoundLayerColGroups.ContainsKey(collisionType)) {
+
+            if (collided)
+            {
+                if (SoundLayerColGroups.ContainsKey(collisionType))
+                {
                     float control = 0;
 
-                    if(collision != null) {
+                    if (collision != null)
+                    {
                         control = collision.relativeVelocity.magnitude;
                     }
 
-                    if(collisionType == CollisionType.CollisionExit) {
-                        control = collision.relativeVelocity.magnitude;
-                    }
-
-                    foreach(var soundLayer in SoundLayerColGroups[collisionType]) {
-                        string soundLayerName = collisionType + "_" + soundLayer.name;
+                    foreach (var soundLayer in SoundLayerColGroups[collisionType])
+                    {
+                        string collidingObjectString = collidingObject.ToString().ToLower();
                         float finalControl = control;
+                        if (soundLayer.data != "" && !soundLayer.data.Contains(collidingObjectString))
+                            finalControl = 0;
 
-                        var layerMaskName = soundLayer.data.ToLower();
-                        if(layerMaskName != "") {
-                            switch(collidingObject) {
-                                case CollidingObject.Vessel:
-                                    if(collision?.gameObject.GetComponentInParent<KerbalEVA>() && collisionType == CollisionType.CollisionStay)
-                                        finalControl = 0;
+                        if (collidingObject == CollidingObject.Vessel && collision?.gameObject.GetComponentInParent<KerbalEVA>() && collisionType == CollisionType.CollisionStay)
+                            finalControl = 0;
 
-                                    if(!layerMaskName.Contains("vessel"))
-                                        finalControl = 0;
-                                    break;
-                                case CollidingObject.Concrete:
-                                    if(!layerMaskName.Contains("concrete"))
-                                        finalControl = 0;
-                                    break;
-                                case CollidingObject.Dirt:
-                                    if(!layerMaskName.Contains("dirt"))
-                                        finalControl = 0;
-                                    break;
-                            }
-                        }
-
-                        PlaySoundLayer(soundLayerName, soundLayer, finalControl, Volume, collisionType != CollisionType.CollisionStay);
+                        PlaySoundLayer(soundLayer, finalControl, Volume, true);
                     }
                 }
-            } else {
-                foreach(var source in Sources.Values) {
-                    if(source.isPlaying && source.loop) {
+            }
+            else
+            {
+                foreach (var source in Sources.Values)
+                {
+                    if (source.isPlaying && source.loop)
+                    {
                         source.Stop();
                     }
                 }
             }
-            
-            base.OnUpdate();
+
+            base.LateUpdate();
         }
 
         public override void FixedUpdate()
         {
-            if(!initialized || gamePaused)
+            if (!initialized || gamePaused || !vessel.loaded)
                 return;
 
             collided = false;

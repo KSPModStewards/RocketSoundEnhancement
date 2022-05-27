@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -6,9 +7,7 @@ namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_Coupler : RSE_Module
     {
-        AudioSource launchClampSource;
         ModuleDecouplerBase moduleDecoupler;
-        FXGroup fxGroup;
         bool isDecoupler;
         bool hasDecoupled;
 
@@ -21,28 +20,22 @@ namespace RocketSoundEnhancement.PartModules
             EnableWaveShaperFilter = true;
             base.OnStart(state);
 
-            if(part.isLaunchClamp()) {
-                fxGroup = part.findFxGroup("activate");
-            }
-
             if(part.GetComponent<ModuleDecouplerBase>()) {
                 moduleDecoupler = part.GetComponent<ModuleDecouplerBase>();
                 hasDecoupled = moduleDecoupler.isDecoupled;
                 isDecoupler = true;
             }
 
-            if(fxGroup != null) {
-                if(SoundLayers.Where(x => x.name == fxGroup.name).Count() > 0) {
-                    var soundLayer = SoundLayers.Find(x => x.name == fxGroup.name);
-                    if(soundLayer.audioClips != null) {
-                        int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
-                        var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
-                        if(clip != null) {
-                            fxGroup.sfx = clip;
-                            fxGroup.audio = AudioUtility.CreateSource(audioParent, soundLayer, true);
-                            launchClampSource = fxGroup.audio;
-                        }
-                    }
+            if (SoundLayerGroups.ContainsKey("LaunchClamp") && part.isLaunchClamp())
+            {
+                var clampSoundLayer = SoundLayerGroups["LaunchClamp"].FirstOrDefault();
+                if (clampSoundLayer.audioClips != null)
+                {
+                    var fxGroup = part.GetComponent<LaunchClamp>().releaseFx;
+                    int index = clampSoundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, clampSoundLayer.audioClips.Length) : 0;
+                    fxGroup.sfx = clampSoundLayer.audioClips[index];
+                    fxGroup.audio = AudioUtility.CreateSource(audioParent, clampSoundLayer);
+                    Sources.Add("launchClamp", fxGroup.audio);
                 }
             }
 
@@ -66,48 +59,40 @@ namespace RocketSoundEnhancement.PartModules
             }
         }
 
-        public override void OnUpdate()
+        public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight && !initialized)
+            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
                 return;
 
             if(moduleDecoupler != null && SoundLayerGroups.ContainsKey("Decouple")) {
                 if(moduleDecoupler.isDecoupled && !hasDecoupled) {
                     foreach(var soundlayer in SoundLayerGroups["Decouple"]) {
-                        PlaySoundLayer(soundlayer.name, soundlayer, 1, 1, true, false);
+                        PlaySoundLayer(soundlayer, 1, 1);
                     }
                     hasDecoupled = moduleDecoupler.isDecoupled;
                 }
             }
 
-            if(launchClampSource != null) {
-                if(launchClampSource.isPlaying){
-                    launchClampSource.volume = SoundLayers.Find(x => x.name == fxGroup.name).volume * Settings.Instance.ExteriorVolume * GameSettings.SHIP_VOLUME;
-                }
-
-                launchClampSource.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, vessel.isActiveVessel);
-            }
-
-            base.OnUpdate();
+            base.LateUpdate();
         }
 
         public void PlaySound(string action)
         {
-            if(SoundLayerGroups.ContainsKey(action)) {
-                foreach(var soundLayer in SoundLayerGroups[action]) {
-                    PlaySoundLayer(action + "_" + soundLayer.name, soundLayer, 1, 1, true);
+            if (SoundLayerGroups.ContainsKey(action))
+            {
+                foreach (var soundLayer in SoundLayerGroups[action])
+                {
+                    PlaySoundLayer(soundLayer, 1, 1);
                 }
             }
         }
 
-        public new void OnDestroy()
+        public override void OnDestroy()
         {
-            foreach(var source in Sources.Keys) {
-                GameObject.Destroy(Sources[source]);
-            }
-
             GameEvents.onDockingComplete.Remove(onDock);
             GameEvents.onPartUndockComplete.Remove(onUnDock);
+
+            base.OnDestroy();
         }
     }
 }

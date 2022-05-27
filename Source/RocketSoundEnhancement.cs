@@ -66,7 +66,7 @@ namespace RocketSoundEnhancement
             "PartActionController(Clone)"
         };
 
-        bool gamePaused;
+        private bool gamePaused;
 
         void Awake()
         {
@@ -233,8 +233,8 @@ namespace RocketSoundEnhancement
                     continue;
                 }
 
-                if (preservedSourceNames.Any(source.gameObject.name.Contains) 
-                || chatterer_PlayerNames.Any(source.gameObject.name.Contains) 
+                if (preservedSourceNames.Any(source.gameObject.name.Contains)
+                || chatterer_PlayerNames.Any(source.gameObject.name.Contains)
                 || chattererSources.Contains(source))
                     continue;
 

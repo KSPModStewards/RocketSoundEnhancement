@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace RocketSoundEnhancement
 {
@@ -293,8 +294,6 @@ namespace RocketSoundEnhancement
                 sourceGameObject.transform.rotation = gameObject.transform.rotation;
                 source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                 Sources.Add(sourceLayerName, source);
-
-                source.time = soundLayer.loopAtRandom ? UnityEngine.Random.Range(0, source.clip.length / 2) : 0;
             }
 
             if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
@@ -329,10 +328,14 @@ namespace RocketSoundEnhancement
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
-            int index = UnityEngine.Random.Range(0, soundLayer.audioClips.Length);
-            var clip = GameDatabase.Instance.GetAudioClip(soundLayer.audioClips[index]);
+            int index = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
+            if (!oneShot && soundLayer.audioClips != null && (source.clip == null || source.clip != soundLayer.audioClips[index]))
+            {
+                source.clip = soundLayer.audioClips[index];
+                source.time = soundLayer.loopAtRandom ? UnityEngine.Random.Range(0, soundLayer.audioClips[index].length) : 0;
+            }
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, oneShot, 1, clip);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, 1, soundLayer.audioClips[index]);
         }
 
         public float GetController(PhysicsControl physControl)
