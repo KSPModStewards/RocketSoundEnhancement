@@ -120,8 +120,8 @@ namespace RocketSoundEnhancement.PartModules
                 {
                     var sourceGameObject = new GameObject(soundLayerName);
                     sourceGameObject.transform.parent = audioParent.transform;
-                    sourceGameObject.transform.position = audioParent.transform.position;
-                    sourceGameObject.transform.rotation = audioParent.transform.rotation;
+                    sourceGameObject.transform.localPosition = Vector3.zero;
+                    sourceGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
 
                     var source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
                     source.enabled = false;
@@ -157,15 +157,14 @@ namespace RocketSoundEnhancement.PartModules
                 {
                     if (Sources[source].isPlaying || !Sources[source].enabled)
                         continue;
-
+                        
+                    Sources[source].enabled = false;
                     if (AirSimFilters.ContainsKey(source))
                         AirSimFilters[source].enabled = false;
-
-                    Sources[source].enabled = false;
                 }
             }
 
-            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
                 AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
                 airSimFiltersEnabled = false;
@@ -176,8 +175,8 @@ namespace RocketSoundEnhancement.PartModules
         {
             if (!initialized || !vessel.loaded)
                 return;
-
-            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite)
+            
+            if (Settings.AudioEffectsEnabled)
             {
                 //  Calculate Doppler
                 var speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
@@ -188,8 +187,7 @@ namespace RocketSoundEnhancement.PartModules
                 var dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 1 - (DopplerFactor * 0.5f), 1 + DopplerFactor);
                 doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
 
-                if (AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
-                    return;
+                if (Settings.MufflerQuality != AudioMufflerQuality.AirSim) return;
 
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
@@ -212,23 +210,29 @@ namespace RocketSoundEnhancement.PartModules
             float finalVolume, finalPitch;
             finalVolume = soundLayer.volumeFC?.Evaluate(control) ?? soundLayer.volume.Value(control);
             finalVolume *= soundLayer.massToVolume?.Value((float)part.physicsMass) ?? 1;
-            finalVolume = Mathf.Round(finalVolume * 1000) * 0.001f;
-
-            if (finalVolume < float.Epsilon)
-            {
-                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
-                    Sources[soundLayerName].Stop();
-
-                return;
-            }
 
             finalPitch = soundLayer.pitchFC?.Evaluate(control) ?? soundLayer.pitch.Value(control);
             finalPitch *= soundLayer.massToPitch?.Value((float)part.physicsMass) ?? 1;
-            finalPitch *= AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite ? doppler : 1;
+            finalPitch *= Settings.AudioEffectsEnabled ? doppler : 1;
+
+            if (finalVolume < float.Epsilon)
+            {
+                if (Sources[soundLayerName].volume == 0 && soundLayer.loop)
+                {
+                    Sources[soundLayerName].Stop();
+                }
+
+                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
+                {
+                    Sources[soundLayerName].volume = 0;
+                }
+                return;
+            }
 
             AudioSource source = Sources[soundLayerName];
             source.enabled = true;
-            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
+
+            if (Settings.AudioEffectsEnabled && Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
             {
                 if (UseAirSimulation && AirSimFilters.ContainsKey(soundLayerName))
                 {
@@ -273,6 +277,7 @@ namespace RocketSoundEnhancement.PartModules
         public void onGameUnpause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
+
             gamePaused = false;
         }
 

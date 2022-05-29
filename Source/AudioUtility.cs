@@ -197,11 +197,11 @@ namespace RocketSoundEnhancement
 
             if (gameObject.tag.ToLower() != "untagged")
             {
-                if (Settings.Instance.CollisionData.ContainsKey(gameObject.name))
-                    return Settings.Instance.CollisionData[gameObject.name];
+                if (Settings.CollisionData.ContainsKey(gameObject.name))
+                    return Settings.CollisionData[gameObject.name];
 
-                if (Settings.Instance.CollisionData.ContainsKey("default"))
-                    return Settings.Instance.CollisionData["default"];
+                if (Settings.CollisionData.ContainsKey("default"))
+                    return Settings.CollisionData["default"];
             }
 
             return CollidingObject.Dirt;
@@ -213,21 +213,21 @@ namespace RocketSoundEnhancement
             if (!audioParent)
             {
                 audioParent = new GameObject(partName);
-                audioParent.transform.rotation = part.transform.rotation;
-                audioParent.transform.position = part.transform.position;
                 audioParent.transform.parent = part.transform;
+                audioParent.transform.localRotation = Quaternion.Euler(0, 0, 0);
+                audioParent.transform.localPosition = Vector3.zero;
             }
             return audioParent;
         }
 
         public static AudioMixerGroup GetMixerGroup(FXChannel channel, bool isActiveVessel)
         {
-            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite)
+            if (Settings.AudioEffectsEnabled)
             {
                 switch (channel)
                 {
-                    case FXChannel.Interior: return RocketSoundEnhancement.Instance.InternalMixer;
-                    case FXChannel.Exterior: return isActiveVessel ? RocketSoundEnhancement.Instance.FocusMixer : RocketSoundEnhancement.Instance.ExternalMixer;
+                    case FXChannel.Interior: return RocketSoundEnhancement.Instance.InteriorMixer;
+                    case FXChannel.Exterior: return isActiveVessel ? RocketSoundEnhancement.Instance.FocusMixer : RocketSoundEnhancement.Instance.ExteriorMixer;
                 }
             }
             return null;
@@ -243,15 +243,11 @@ namespace RocketSoundEnhancement
             switch (channel)
             {
                 case FXChannel.Exterior:
-                    source.volume *= Settings.Instance.ExteriorVolume;
+                    source.volume *= Settings.ExteriorVolume;
                     break;
                 case FXChannel.Interior:
-                    source.volume *= Settings.Instance.InteriorVolume;
+                    source.volume *= Settings.InteriorVolume;
                     source.mute = isActiveVessel ? !InternalCamera.Instance.isActive : true;
-
-                    bool bypassFX = !AudioMuffler.EnableMuffling || AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
-                    source.bypassListenerEffects = bypassFX;
-                    source.bypassEffects = bypassFX;
                     break;
             }
 

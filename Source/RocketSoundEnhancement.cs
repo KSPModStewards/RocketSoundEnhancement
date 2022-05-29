@@ -14,7 +14,6 @@ namespace RocketSoundEnhancement
         public static RocketSoundEnhancement Instance { get { return _instance; } }
 
         public AerodynamicsFX AeroFX;
-
         private AudioMixer mixer;
         public AudioMixer Mixer
         {
@@ -30,11 +29,9 @@ namespace RocketSoundEnhancement
 
         public AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
         public AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
-        public AudioMixerGroup InternalMixer { get { return Mixer.FindMatchingGroups("INTERNAL")[0]; } }
-        public AudioMixerGroup ExternalMixer { get { return Mixer.FindMatchingGroups("EXTERNAL")[0]; } }
+        public AudioMixerGroup InteriorMixer { get { return Mixer.FindMatchingGroups("INTERIOR")[0]; } }
+        public AudioMixerGroup ExteriorMixer { get { return Mixer.FindMatchingGroups("EXTERIOR")[0]; } }
 
-        public LowpassFilter LowpassFilter;
-        public AudioLimiter AudioLimiter;
         public float MufflingFrequency { get; set; } = 22200;
         public float FocusMufflingFrequency { get; set; } = 22200;
         public bool overrideFiltering;
@@ -46,14 +43,7 @@ namespace RocketSoundEnhancement
 
         List<AudioSource> preservedSources = new List<AudioSource>();
         List<AudioSource> chattererSources = new List<AudioSource>();
-        List<AudioSource> otherSources = new List<AudioSource>();
-
-        string[] chatterer_PlayerNames = {
-            "rbr_chatter_player",
-            "rbr_sstv_player",
-            "rbr_background_player_",
-            "rbr_beep_player_"
-        };
+        List<AudioSource> stockSources = new List<AudioSource>();
 
         string[] aae_chatterer_clipNames = {
             "breathing",
@@ -75,7 +65,7 @@ namespace RocketSoundEnhancement
 
         void Start()
         {
-            Settings.Instance.Load();
+            Settings.Load();
 
             AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
 
@@ -85,32 +75,15 @@ namespace RocketSoundEnhancement
                 if (source == null) continue;
                 if (source.name.Contains(AudioUtility.RSETag)) continue;
 
-                if (preservedSourceNames.Any(source.gameObject.name.Contains))
-                {
-                    preservedSources.Add(source);
-                    continue;
-                }
-
-                if (chatterer_PlayerNames.Any(source.gameObject.name.Contains))
-                {
-                    chattererSources.Add(source);
-                    continue;
-                }
-
                 if (source.clip != null && aae_chatterer_clipNames.Any(source.clip.name.Contains))
                 {
                     chattererSources.Add(source);
                     continue;
                 }
 
-                if ((source.name == "FX Sound" || source.name == "airspeedNoise"))
-                    otherSources.Add(source);
+                if (source.name == "FX Sound" || source.name == "airspeedNoise" || source.clip != null && source.clip.name.ToLower().Contains("wind"))
+                    stockSources.Add(source);
             }
-
-            AudioListener listenerDummy = gameObject.AddOrGetComponent<AudioListener>();
-            listenerDummy.enabled = false;
-            LowpassFilter = gameObject.AddOrGetComponent<LowpassFilter>();
-            AudioLimiter = gameObject.AddOrGetComponent<AudioLimiter>();
 
             ApplySettings();
 
@@ -120,26 +93,10 @@ namespace RocketSoundEnhancement
 
         public void ApplySettings()
         {
-            LowpassFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
-            AudioLimiter.enabled = AudioLimiter.EnableLimiter;
-
-            bool fullMuffling = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite;
-            bool liteMuffling = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
-
             var stageSource = StageManager.Instance.GetComponent<AudioSource>();
             if (stageSource)
             {
-                stageSource.enabled = !Settings.Instance.DisableStagingSound;
-                if (AudioMuffler.EnableMuffling)
-                {
-                    stageSource.outputAudioMixerGroup = fullMuffling ? InternalMixer : null;
-                    stageSource.bypassListenerEffects = liteMuffling;
-                }
-            }
-
-            foreach (var preservedSources in preservedSources)
-            {
-                preservedSources.bypassListenerEffects = AudioMuffler.EnableMuffling;
+                stageSource.enabled = !Settings.DisableStagingSound;
             }
 
             foreach (var chattererSource in chattererSources)
@@ -147,30 +104,34 @@ namespace RocketSoundEnhancement
                 if (chattererSource.clip != null && aae_chatterer_clipNames.Any(chattererSource.clip.name.Contains))
                 {
                     bool isBreathSounds = chattererSource.clip.name.ToLower().Contains("breathing");
-                    chattererSource.outputAudioMixerGroup = fullMuffling ? (isBreathSounds ? InternalMixer : FocusMixer) : null;
-                    chattererSource.bypassListenerEffects = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
+                    chattererSource.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? (isBreathSounds ? InteriorMixer : FocusMixer) : null;
                     continue;
                 }
-
-                chattererSource.bypassListenerEffects = !AudioMuffler.AffectChatterer;
             }
 
-            foreach (var source in otherSources)
+            foreach (var source in stockSources)
             {
                 if (source == null) continue;
 
-                if (source.transform.position == Vector3.zero)
-                {
-                    source.bypassListenerEffects = true;
-                }
-
                 if (source.clip != null && source.clip.name != "sound_wind_constant")
                 {
-                    source.mute = Settings.Instance.MuteStockAeroSounds;
+                    source.mute = Settings.MuteStockAeroSounds;
                 }
 
-                source.outputAudioMixerGroup = fullMuffling ? ExternalMixer : null;
+                source.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? ExteriorMixer : null;
             }
+
+            UpdateNormalizer();
+        }
+
+        public void UpdateNormalizer()
+        {
+            if (Mixer == null)
+                return;
+            
+            Mixer.SetFloat("NormalizerFadeInTime", Settings.NormalizerPreset.FadeInTime);
+            Mixer.SetFloat("NormalizerLowestVolume", Settings.NormalizerPreset.LowestVolume);
+            Mixer.SetFloat("NormalizerMaximumAmp", Settings.NormalizerPreset.MaximumAmp);
         }
 
         public float WindModulation()
@@ -185,7 +146,7 @@ namespace RocketSoundEnhancement
         {
             if (gamePaused) return;
 
-            if (!AudioMuffler.EnableMuffling)
+            if (!Settings.AudioEffectsEnabled || Mixer == null)
             {
                 if (managedSources.Count > 0)
                 {
@@ -215,33 +176,20 @@ namespace RocketSoundEnhancement
                     continue;
                 }
 
-                if (preservedSourceNames.Any(source.gameObject.name.Contains)
-                || chatterer_PlayerNames.Any(source.gameObject.name.Contains)
-                || chattererSources.Contains(source))
+                if (preservedSourceNames.Any(source.gameObject.name.Contains) || chattererSources.Contains(source))
                     continue;
 
                 int managedSourceID = source.GetInstanceID();
+                // assume this source is a GUI source and ignore
+                if (source.transform.position == Vector3.zero || source.spatialBlend == 0) continue;
 
                 if (source.GetComponent<InternalProp>() || source.GetComponentInParent<InternalProp>())
                 {
-                    source.outputAudioMixerGroup = AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite ? InternalMixer : null;
-                    source.bypassListenerEffects = AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
-
+                    source.outputAudioMixerGroup = InteriorMixer;
                     if (!managedSources.Contains(source))
                     {
                         managedSources.Add(source);
                     }
-                    continue;
-                }
-
-                if (AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite)
-                {
-                    if (managedSources.Contains(source))
-                    {
-                        source.outputAudioMixerGroup = null;
-                        managedSources.Remove(source);
-                    }
-
                     continue;
                 }
 
@@ -250,16 +198,16 @@ namespace RocketSoundEnhancement
                 Part sourcePart;
                 if ((sourcePart = source.GetComponent<Part>()) || (sourcePart = source.GetComponentInParent<Part>()))
                 {
-                    source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExternalMixer;
+                    source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExteriorMixer;
 
-                    if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
+                    if (Settings.MufflerQuality == AudioMufflerQuality.AirSim)
                     {
                         if (!managedMinDistance.ContainsKey(managedSourceID))
                             managedMinDistance.Add(managedSourceID, source.minDistance);
 
                         float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
                         float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                        float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / AudioMuffler.AirSimMaxDistance), 10), 0.1f) * machPass;
+                        float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
                         source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
 
                         continue;
@@ -274,9 +222,9 @@ namespace RocketSoundEnhancement
                     continue;
                 }
 
-                source.outputAudioMixerGroup = ExternalMixer;
+                source.outputAudioMixerGroup = ExteriorMixer;
 
-                if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && source.name.StartsWith("Explosion"))
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && source.name.StartsWith("Explosion"))
                 {
                     var airSim = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
                     airSim.enabled = true;
@@ -287,52 +235,23 @@ namespace RocketSoundEnhancement
             }
 
             float atmDensityClamped = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-            if (AudioMuffler.MufflerQuality > AudioMufflerQuality.Lite && Mixer != null)
-            {
-                if (!overrideFiltering)
-                {
-                    float atmCutOff = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensityClamped) * WindModulation();
-                    float focusMuffling = InternalCamera.Instance.isActive ? AudioMuffler.InteriorMuffling : atmCutOff;
+            Mixer.SetFloat("ExteriorCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
+            Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 10, 22000));
 
-                    if (MapView.MapCamera.isActiveAndEnabled)
-                    {
-                        focusMuffling = Mathf.Min(AudioMuffler.InteriorMuffling, atmCutOff);
-                    }
+            Mixer.SetFloat("ExteriorVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(MufflingFrequency / 50)));
+            Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
 
-                    MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, Mathf.Min(atmCutOff, focusMuffling), 5000);
-                    FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);
-                    lastCutoffFreq = MufflingFrequency;
-                    lastInteriorCutoffFreq = FocusMufflingFrequency;
-                }
-                else
-                {
-                    FocusMufflingFrequency = MufflingFrequency;
-                }
+            if (overrideFiltering) { FocusMufflingFrequency = MufflingFrequency; return; }
 
-                Mixer.SetFloat("ExternalCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
-                Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 10, 22000));
+            float atmCutOff = Mathf.Lerp(Settings.MufflerPreset.ExteriorMuffling, 22200, atmDensityClamped) * WindModulation();
+            float focusMuffling = InternalCamera.Instance.isActive ? Settings.MufflerPreset.InteriorMuffling : atmCutOff;
 
-                Mixer.SetFloat("ExternalVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(MufflingFrequency / 50)));
-                Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
+            if (MapView.MapCamera.isActiveAndEnabled) focusMuffling = Mathf.Min(Settings.MufflerPreset.InteriorMuffling, atmCutOff);
 
-                return;
-            }
-
-            if (AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite && LowpassFilter != null && LowpassFilter.enabled && !overrideFiltering)
-            {
-                float interiorMuffling = AudioMuffler.InteriorMuffling;
-                float exteriorMuffling = Mathf.Lerp(AudioMuffler.ExteriorMuffling, 22200, atmDensityClamped);
-
-                float targetFrequency = InternalCamera.Instance.isActive ? interiorMuffling : exteriorMuffling;
-                if (MapView.MapCamera.isActiveAndEnabled)
-                {
-                    targetFrequency = interiorMuffling < exteriorMuffling ? interiorMuffling : exteriorMuffling;
-                }
-
-                float smoothCutoff = Mathf.MoveTowards(lastCutoffFreq, targetFrequency, 5000);
-                lastCutoffFreq = smoothCutoff;
-                LowpassFilter.CutoffFrequency = smoothCutoff;
-            }
+            MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, Mathf.Min(atmCutOff, focusMuffling), 5000);
+            FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);
+            lastCutoffFreq = MufflingFrequency;
+            lastInteriorCutoffFreq = FocusMufflingFrequency;
         }
 
         void OnDestroy()

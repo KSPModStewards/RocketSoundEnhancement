@@ -1,32 +1,135 @@
 ﻿using KSP.UI.Screens;
-using RocketSoundEnhancement.AudioFilters;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
 {
-    public class Settings
+    public struct AudioMufflerPreset
     {
-        public static Settings Instance { get; private set; } = new Settings();
+        public float InteriorMuffling;
+        public float ExteriorMuffling;
+    }
 
-        public string ModPath = "GameData/RocketSoundEnhancement/";
-        public string SettingsName = "RSE_SETTINGS";
+    public struct AudioNormalizerPreset
+    {
+        public float FadeInTime;
+        public float LowestVolume;
+        public float MaximumAmp;
+    }
 
-        public Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
+    public enum AudioMufflerQuality
+    {
+        Normal = 0,
+        AirSim = 1
+    }
 
-        public bool DisableStagingSound = false;
-        public bool MuteStockAeroSounds = false;
+    public static class Settings
+    {
+        public static string ModPath = "GameData/RocketSoundEnhancement/";
+        public static string SettingsName = "RSE_SETTINGS";
 
-        public float ExteriorVolume = 1;
-        public float InteriorVolume = 1;
+        public static Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
 
-        private List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
-        public List<ConfigNode> ShipEffectsNodes()
+        public static bool DisableStagingSound = false;
+        public static bool MuteStockAeroSounds = false;
+
+        public static float ExteriorVolume = 1;
+        public static float InteriorVolume = 1;
+
+        public static Dictionary<string, AudioMufflerPreset> MufflerPresets = new Dictionary<string, AudioMufflerPreset>();
+        public static Dictionary<string, AudioNormalizerPreset> NormalizerPresets = new Dictionary<string, AudioNormalizerPreset>();
+
+        public static bool AudioEffectsEnabled = true;
+        public static AudioMufflerQuality MufflerQuality = AudioMufflerQuality.Normal;
+        public static AudioMufflerPreset MufflerPreset;
+        public static AudioNormalizerPreset NormalizerPreset;
+        public static string MufflerPresetName;
+        public static string NormalizerPresetName;
+        public static float AirSimMaxDistance = 5000;
+
+        public static AudioMufflerPreset DefaultAudioMufflerPreset
         {
-            if(_shipEffectsNodes.Count == 0) {
-                foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
+            get
+            {
+                var defaultPreset = new AudioMufflerPreset
+                {
+                    InteriorMuffling = 1500,
+                    ExteriorMuffling = 22200,
+                };
+                return defaultPreset;
+            }
+        }
+
+        public static AudioNormalizerPreset DefaultAudioNormalizerPreset
+        {
+            get
+            {
+                var defaultPreset = new AudioNormalizerPreset
+                {
+                    FadeInTime = 2500,
+                    LowestVolume = 0.5f,
+                    MaximumAmp = 4
+                };
+                return defaultPreset;
+            }
+        }
+
+        public static void ApplyMufflerPreset()
+        {
+            Debug.Log("[RSE]: Audio Muffler: Quality = " + MufflerQuality.ToString());
+            if (MufflerPresetName != string.Empty && MufflerPresets.ContainsKey(MufflerPresetName))
+            {
+                MufflerPreset = MufflerPresets[MufflerPresetName];
+                Debug.Log("[RSE]: Audio Muffler: " + MufflerPresetName + " Preset Applied");
+                return;
+            }
+            else
+            {
+                DefaultMuffler();
+                Debug.Log("[RSE]: Audio Muffler: Preset Not Found = " + MufflerPresetName + ". Using Default Settings");
+            }
+        }
+
+        public static void ApplyNormalizerPreset()
+        {
+            if (NormalizerPresetName != string.Empty && NormalizerPresets.ContainsKey(NormalizerPresetName))
+            {
+                NormalizerPreset = NormalizerPresets[NormalizerPresetName];
+                Debug.Log("[RSE]: Audio Normalizer: " + NormalizerPresetName + " Preset Applied");
+            }
+            else
+            {
+                DefaultNormalizer();
+                Debug.Log("[RSE]: Audio Normalizer: Preset Not Found = " + NormalizerPresetName + ". Using Default Settings");
+            }
+        }
+
+        public static void DefaultMuffler()
+        {
+            MufflerPreset = DefaultAudioMufflerPreset;
+            if (!MufflerPresets.ContainsKey("Custom"))
+            {
+                MufflerPresets.Add("Custom", DefaultAudioMufflerPreset);
+            }
+        }
+
+        public static void DefaultNormalizer()
+        {
+            NormalizerPreset = DefaultAudioNormalizerPreset;
+            if (!NormalizerPresets.ContainsKey("Custom"))
+            {
+                NormalizerPresets.Add("Custom", DefaultAudioNormalizerPreset);
+            }
+        }
+
+        private static List<ConfigNode> _shipEffectsNodes = new List<ConfigNode>();
+        public static List<ConfigNode> ShipEffectsNodes()
+        {
+            if (_shipEffectsNodes.Count == 0)
+            {
+                foreach (var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS"))
+                {
                     _shipEffectsNodes.AddRange(configNode.GetNodes());
                 }
             }
@@ -34,256 +137,236 @@ namespace RocketSoundEnhancement
             return _shipEffectsNodes;
         }
 
-        ConfigNode _settings;
-        public void Load()
+        static ConfigNode _settings;
+        public static void Load()
         {
             CollisionData.Clear();
-            AudioLimiter.Presets.Clear();
-            AudioMuffler.Presets.Clear();
+            NormalizerPresets.Clear();
+            MufflerPresets.Clear();
 
-            foreach(var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS")) {
-                if(configNode.HasValue("MuteStockAeroSounds")) {
+            foreach (var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS"))
+            {
+                if (configNode.HasValue("MuteStockAeroSounds"))
+                {
                     bool.TryParse(configNode.GetValue("MuteStockAeroSounds"), out MuteStockAeroSounds);
                 }
 
-                if(configNode.HasValue("nextStageClip")) {
+                if (configNode.HasValue("nextStageClip"))
+                {
                     StageManager.Instance.nextStageClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("nextStageClip"));
                 }
-                if(configNode.HasValue("cannotSeparateClip")) {
+                if (configNode.HasValue("cannotSeparateClip"))
+                {
                     StageManager.Instance.cannotSeparateClip = GameDatabase.Instance.GetAudioClip(configNode.GetValue("cannotSeparateClip"));
                 }
             }
 
             _settings = ConfigNode.Load(ModPath + "Settings.cfg");
 
-            if(_settings == null) {
+            if (_settings == null)
+            {
                 Debug.LogError("[RSE]: Settings.cfg not found! using internal settings");
                 _settings = new ConfigNode();
                 _settings.AddNode(SettingsName);
             }
 
             ConfigNode settingsNode = _settings.GetNode(SettingsName);
-            if(settingsNode.HasValue("ExteriorVolume")) {
-                if(!float.TryParse(settingsNode.GetValue("ExteriorVolume"), out ExteriorVolume)) {
-                    ExteriorVolume = 1;
-                }
-            }
+            if (!settingsNode.HasValue("EnableAudioEffects")) settingsNode.AddValue("EnableAudioEffects", true);
 
-            if(settingsNode.HasValue("InteriorVolume")) {
-                if(!float.TryParse(settingsNode.GetValue("InteriorVolume"), out InteriorVolume)) {
-                    InteriorVolume = 1;
-                }
-            }
+            bool.TryParse(settingsNode.GetValue("EnableAudioEffects"), out AudioEffectsEnabled);
 
-            if(settingsNode.HasValue("DisableStagingSound")) {
-                if(!bool.TryParse(settingsNode.GetValue("DisableStagingSound"), out DisableStagingSound)) {
-                    DisableStagingSound = false; 
-                }
-            } else {
+            if (settingsNode.HasValue("ExteriorVolume") && !float.TryParse(settingsNode.GetValue("ExteriorVolume"), out ExteriorVolume)) ExteriorVolume = 1;
+
+            if (settingsNode.HasValue("InteriorVolume") && !float.TryParse(settingsNode.GetValue("InteriorVolume"), out InteriorVolume)) InteriorVolume = 1;
+
+            if (settingsNode.HasValue("DisableStagingSound"))
+            {
+                if (!bool.TryParse(settingsNode.GetValue("DisableStagingSound"), out DisableStagingSound)) DisableStagingSound = false;
+            }
+            else
+            {
                 settingsNode.AddValue("DisableStagingSound", DisableStagingSound);
             }
 
-            if(settingsNode.HasNode("Colliders")) {
+            if (settingsNode.HasNode("Colliders"))
+            {
                 var colNode = settingsNode.GetNode("Colliders");
-                foreach(ConfigNode.Value node in colNode.values) {
+                foreach (ConfigNode.Value node in colNode.values)
+                {
                     CollidingObject colDataType = (CollidingObject)Enum.Parse(typeof(CollidingObject), node.value, true);
-                    if(!CollisionData.ContainsKey(node.name)) {
+                    if (!CollisionData.ContainsKey(node.name))
+                    {
                         CollisionData.Add(node.name, colDataType);
-                    } else {
+                    }
+                    else
+                    {
                         CollisionData[node.name] = colDataType;
                     }
                 }
-            } else {
-                //Add the default Collider Collection
+            }
+            else
+            {
                 var defaultColNode = settingsNode.AddNode("Colliders");
                 defaultColNode.AddValue("default", CollidingObject.Concrete);
                 CollisionData.Add("default", CollidingObject.Concrete);
-
-                //runway_lev1_v2 = CollidingObject.Dirt
             }
 
-            #region AUDIOLIMITER
-            if(settingsNode.HasNode("AUDIOLIMITER")) {
-                var audioLimiterNode = settingsNode.GetNode("AUDIOLIMITER");
+            #region NORMALIZER
+            if (settingsNode.HasNode("NORMALIZER"))
+            {
+                var normalizerNode = settingsNode.GetNode("NORMALIZER");
+                if (normalizerNode.HasValue("Preset")) { NormalizerPresetName = normalizerNode.GetValue("Preset"); }
 
-                if(!audioLimiterNode.HasValue("EnableLimiter")) {
-                    audioLimiterNode.AddValue("EnableLimiter", true);
-                }
-
-                bool.TryParse(audioLimiterNode.GetValue("EnableLimiter"), out AudioLimiter.EnableLimiter);
-
-                if(audioLimiterNode.HasValue("Preset")) {
-                    AudioLimiter.Preset = audioLimiterNode.GetValue("Preset");
-                }
-
-                foreach(var presetNode in audioLimiterNode.GetNodes()) {
+                foreach (var presetNode in normalizerNode.GetNodes())
+                {
                     string presetName = presetNode.name;
-                    AudioLimiterPreset limiterPreset = new AudioLimiterPreset();
+                    AudioNormalizerPreset normalizerPreset = new AudioNormalizerPreset();
 
-                    if(AudioLimiter.Preset == string.Empty) {
-                        AudioLimiter.Preset = presetName;
-                    }
+                    if (NormalizerPresetName == string.Empty) { NormalizerPresetName = presetName; }
 
-                    if(!float.TryParse(presetNode.GetValue("Threshold"), out limiterPreset.Threshold)) {
-                        limiterPreset.Threshold = AudioLimiter.Threshold;
-                    }
-                    if(!float.TryParse(presetNode.GetValue("Bias"), out limiterPreset.Bias)) {
-                        limiterPreset.Bias = AudioLimiter.Bias;
-                    }
-                    if(!float.TryParse(presetNode.GetValue("Ratio"), out limiterPreset.Ratio)) {
-                        limiterPreset.Ratio = AudioLimiter.Ratio;
-                    }
-                    if(!float.TryParse(presetNode.GetValue("Gain"), out limiterPreset.Gain)) {
-                        limiterPreset.Gain = AudioLimiter.Gain;
-                    }
-                    if(!int.TryParse(presetNode.GetValue("TimeConstant"), out limiterPreset.TimeConstant)) {
-                        limiterPreset.TimeConstant = AudioLimiter.TimeConstant;
-                    }
-                    if(!int.TryParse(presetNode.GetValue("LevelDetectorRMSWindow"), out limiterPreset.LevelDetectorRMSWindow)) {
-                        limiterPreset.LevelDetectorRMSWindow = AudioLimiter.LevelDetectorRMSWindow;
+                    if (!float.TryParse(presetNode.GetValue("FadeInTime"), out normalizerPreset.FadeInTime))
+                        normalizerPreset.FadeInTime = NormalizerPreset.FadeInTime;
+
+                    if (!float.TryParse(presetNode.GetValue("LowestVolume"), out normalizerPreset.LowestVolume))
+                        normalizerPreset.LowestVolume = NormalizerPreset.LowestVolume;
+
+                    if (!float.TryParse(presetNode.GetValue("MaximumAmp"), out normalizerPreset.MaximumAmp))
+                        normalizerPreset.MaximumAmp = NormalizerPreset.MaximumAmp;
+
+                    if (NormalizerPresets.ContainsKey(presetName))
+                    {
+                        NormalizerPresets[presetName] = normalizerPreset;
+                        continue;
                     }
 
-                    if(!AudioLimiter.Presets.ContainsKey(presetName)) {
-                        AudioLimiter.Presets.Add(presetName, limiterPreset);
-                    } else {
-                        AudioLimiter.Presets[presetName] = limiterPreset;
-                    }
+                    NormalizerPresets.Add(presetName, normalizerPreset);
                 }
+            }
+            else
+            {
+                NormalizerPresetName = "Custom";
+                DefaultNormalizer();
 
-                AudioLimiter.ApplyPreset();
-            } else {
-                var defaultLimiterNode = settingsNode.AddNode("AUDIOLIMITER");
-                defaultLimiterNode.AddValue("EnableLimiter", AudioLimiter.EnableLimiter);
-                defaultLimiterNode.AddValue("Preset", "Custom");
-                AudioLimiter.Preset = "Custom";
+                var defaultNormalizerNode = settingsNode.AddNode("NORMALIZER");
+                defaultNormalizerNode.AddValue("Preset", "Custom");
 
-                AudioLimiter.Default();
-                var defaultPresetNode = defaultLimiterNode.AddNode("Custom");
-                defaultPresetNode.AddValue("Threshold", AudioLimiter.DefaultLimiterPreset.Threshold);
-                defaultPresetNode.AddValue("Bias", AudioLimiter.DefaultLimiterPreset.Bias);
-                defaultPresetNode.AddValue("Ratio", AudioLimiter.DefaultLimiterPreset.Ratio);
-                defaultPresetNode.AddValue("Gain", AudioLimiter.DefaultLimiterPreset.Gain);
-                defaultPresetNode.AddValue("TimeConstant", AudioLimiter.DefaultLimiterPreset.TimeConstant);
-                defaultPresetNode.AddValue("LevelDetectorRMSWindow", AudioLimiter.DefaultLimiterPreset.LevelDetectorRMSWindow);
+                var defaultPresetNode = defaultNormalizerNode.AddNode("Custom");
+                defaultPresetNode.AddValue("FadeInTime", DefaultAudioNormalizerPreset.FadeInTime);
+                defaultPresetNode.AddValue("LowestVolume", DefaultAudioNormalizerPreset.LowestVolume);
+                defaultPresetNode.AddValue("MaximumAmp", DefaultAudioNormalizerPreset.MaximumAmp);
             }
             #endregion
-            
-            #region AUDIOMUFFLER
-            if(settingsNode.HasNode("AUDIOMUFFLER")) {
-                var audioMufflerNode = settingsNode.GetNode("AUDIOMUFFLER");
 
-                if(!audioMufflerNode.HasValue("EnableMuffling")) {
-                    audioMufflerNode.AddValue("EnableMuffling", true);
-                }
+            #region MUFFLER
+            if (settingsNode.HasNode("MUFFLER"))
+            {
+                var mufflerNode = settingsNode.GetNode("MUFFLER");
 
-                if(audioMufflerNode.HasValue("MufflerQuality")) {
-                    if(!Enum.TryParse(audioMufflerNode.GetValue("MufflerQuality"), true,out AudioMuffler.MufflerQuality)) {
-                        AudioMuffler.MufflerQuality = AudioMufflerQuality.Lite;
+                if (mufflerNode.HasValue("MufflerQuality"))
+                {
+                    if (!Enum.TryParse(mufflerNode.GetValue("MufflerQuality"), true, out MufflerQuality))
+                    {
+                        MufflerQuality = AudioMufflerQuality.Normal;
                     }
-                } else {
-                    audioMufflerNode.AddValue("MufflerQuality", AudioMuffler.MufflerQuality);
+                }
+                else
+                {
+                    mufflerNode.AddValue("MufflerQuality", MufflerQuality);
                 }
 
-                if(audioMufflerNode.HasValue("AffectChatterer")) {
-                    if(!bool.TryParse(audioMufflerNode.GetValue("AffectChatterer"), out AudioMuffler.AffectChatterer)) {
-                        AudioMuffler.AffectChatterer = false;
-                    }
-                } else {
-                    audioMufflerNode.AddValue("AffectChatterer", AudioMuffler.AffectChatterer);
-                }
+                if (mufflerNode.HasValue("Preset")) { MufflerPresetName = mufflerNode.GetValue("Preset"); }
+                if (mufflerNode.HasValue("AirSimMaxDistance")) { AirSimMaxDistance = float.Parse(mufflerNode.GetValue("AirSimMaxDistance")); }
 
-                bool.TryParse(audioMufflerNode.GetValue("EnableMuffling"), out AudioMuffler.EnableMuffling);
-
-                if(audioMufflerNode.HasValue("Preset")) {
-                    AudioMuffler.Preset = audioMufflerNode.GetValue("Preset");
-                }
-
-                if(audioMufflerNode.HasValue("AirSimMaxDistance")){
-                    AudioMuffler.AirSimMaxDistance = float.Parse(audioMufflerNode.GetValue("AirSimMaxDistance"));
-                }
-
-                foreach(var presetNode in audioMufflerNode.GetNodes()) {
+                foreach (var presetNode in mufflerNode.GetNodes())
+                {
                     string presetName = presetNode.name;
-                    LowpassFilterPreset lowpassFilterPreset = new LowpassFilterPreset();
+                    AudioMufflerPreset mufflerPreset = new AudioMufflerPreset();
 
-                    if(AudioMuffler.Preset == string.Empty) {
-                        AudioMuffler.Preset = presetName;
-                    }
-
-                    if(!float.TryParse(presetNode.GetValue("InteriorMuffling"), out lowpassFilterPreset.InteriorMuffling)) {
-                        lowpassFilterPreset.InteriorMuffling = AudioMuffler.InteriorMuffling;
-                    }
-                    if(!float.TryParse(presetNode.GetValue("ExteriorMuffling"), out lowpassFilterPreset.ExteriorMuffling)) {
-                        lowpassFilterPreset.ExteriorMuffling = AudioMuffler.ExteriorMuffling;
+                    if (MufflerPresetName == string.Empty)
+                    {
+                        MufflerPresetName = presetName;
                     }
 
-                    if(!AudioMuffler.Presets.ContainsKey(presetName)) {
-                        AudioMuffler.Presets.Add(presetName, lowpassFilterPreset);
-                    } else {
-                        AudioMuffler.Presets[presetName] = lowpassFilterPreset;
+                    if (!float.TryParse(presetNode.GetValue("InteriorMuffling"), out mufflerPreset.InteriorMuffling))
+                    {
+                        mufflerPreset.InteriorMuffling = MufflerPreset.InteriorMuffling;
                     }
+                    if (!float.TryParse(presetNode.GetValue("ExteriorMuffling"), out mufflerPreset.ExteriorMuffling))
+                    {
+                        mufflerPreset.ExteriorMuffling = MufflerPreset.ExteriorMuffling;
+                    }
+
+                    if (MufflerPresets.ContainsKey(presetName))
+                    {
+                        MufflerPresets[presetName] = mufflerPreset;
+                        continue;
+                    }
+
+                    MufflerPresets.Add(presetName, mufflerPreset);
                 }
+            }
+            else
+            {
+                MufflerPresetName = "Custom";
+                DefaultMuffler();
 
-                AudioMuffler.ApplyPreset();
-            } else {
-                var defaultLowpassFilterNode = settingsNode.AddNode("AUDIOMUFFLER");
-                defaultLowpassFilterNode.AddValue("EnableMuffling", AudioMuffler.EnableMuffling);
-                defaultLowpassFilterNode.AddValue("Preset", "Custom");
-                AudioMuffler.Preset = "Custom";
+                var defaultMufflerNode = settingsNode.AddNode("MUFFLER");
+                defaultMufflerNode.AddValue("Preset", "Custom");
 
-                AudioMuffler.Default();
-                var defaultPresetNode = defaultLowpassFilterNode.AddNode("Custom");
-                defaultPresetNode.AddValue("InteriorMuffling", AudioMuffler.DefaultLowpassFilterPreset.InteriorMuffling);
-                defaultPresetNode.AddValue("ExteriorMuffling", AudioMuffler.DefaultLowpassFilterPreset.ExteriorMuffling);
+                var defaultPresetNode = defaultMufflerNode.AddNode("Custom");
+                defaultPresetNode.AddValue("InteriorMuffling", DefaultAudioMufflerPreset.InteriorMuffling);
+                defaultPresetNode.AddValue("ExteriorMuffling", DefaultAudioMufflerPreset.ExteriorMuffling);
             }
             #endregion
+
+            ApplyNormalizerPreset();
+            ApplyMufflerPreset();
 
             _settings.Save(ModPath + "Settings.cfg");
         }
 
-        public void Save()
+        public static void Save()
         {
             var settingsNode = _settings.GetNode(SettingsName);
+
+            settingsNode.SetValue("EnableAudioEffects", AudioEffectsEnabled, true);
             settingsNode.SetValue("ExteriorVolume", ExteriorVolume, true);
             settingsNode.SetValue("InteriorVolume", InteriorVolume, true);
             settingsNode.SetValue("DisableStagingSound", DisableStagingSound, true);
 
-            if(settingsNode.HasNode("AUDIOLIMITER")) {
-                var limiterNode = settingsNode.GetNode("AUDIOLIMITER");
+            if (settingsNode.HasNode("NORMALIZER"))
+            {
+                var normalizerNode = settingsNode.GetNode("NORMALIZER");
+                normalizerNode.SetValue("Preset", NormalizerPresetName, true);
 
-                limiterNode.SetValue("EnableLimiter", AudioLimiter.EnableLimiter, true);
-                limiterNode.SetValue("Preset", AudioLimiter.Preset, true);
+                if (NormalizerPresetName == "Custom")
+                {
+                    var customPreset = normalizerNode.GetNode("Custom");
 
-                if(AudioLimiter.Preset == "Custom") {
-                    var customPreset = limiterNode.GetNode("Custom");
-
-                    customPreset.SetValue("Threshold", AudioLimiter.Threshold, true);
-                    customPreset.SetValue("Bias", AudioLimiter.Bias, true);
-                    customPreset.SetValue("Ratio", AudioLimiter.Ratio, true);
-                    customPreset.SetValue("Gain", AudioLimiter.Gain, true);
-                    customPreset.SetValue("TimeConstant", AudioLimiter.TimeConstant, true);
-                    customPreset.SetValue("LevelDetectorRMSWindow", AudioLimiter.LevelDetectorRMSWindow, true);
+                    customPreset.SetValue("FadeInTime", NormalizerPreset.FadeInTime, true);
+                    customPreset.SetValue("LowestVolume", NormalizerPreset.LowestVolume, true);
+                    customPreset.SetValue("MaximumAmp", NormalizerPreset.MaximumAmp, true);
                 }
             }
 
-            if(settingsNode.HasNode("AUDIOMUFFLER")) {
-                var lowpassFilterNode = settingsNode.GetNode("AUDIOMUFFLER");
+            if (settingsNode.HasNode("MUFFLER"))
+            {
+                var mufflerNode = settingsNode.GetNode("MUFFLER");
 
-                lowpassFilterNode.SetValue("EnableMuffling", AudioMuffler.EnableMuffling, true);
-                lowpassFilterNode.SetValue("MufflerQuality", AudioMuffler.MufflerQuality.ToString(), true);
-                lowpassFilterNode.SetValue("AffectChatterer", AudioMuffler.AffectChatterer, true);
+                mufflerNode.SetValue("MufflerQuality", MufflerQuality.ToString(), true);
 
-                lowpassFilterNode.SetValue("Preset", AudioMuffler.Preset, true);
+                mufflerNode.SetValue("Preset", MufflerPresetName, true);
 
-                if(AudioMuffler.Preset == "Custom") {
-                    var customPreset = lowpassFilterNode.GetNode("Custom");
+                if (MufflerPresetName == "Custom")
+                {
+                    var customPreset = mufflerNode.GetNode("Custom");
 
-                    customPreset.SetValue("InteriorMuffling", AudioMuffler.InteriorMuffling, true);
-                    customPreset.SetValue("ExteriorMuffling", AudioMuffler.ExteriorMuffling, true);
+                    customPreset.SetValue("InteriorMuffling", MufflerPreset.InteriorMuffling, true);
+                    customPreset.SetValue("ExteriorMuffling", MufflerPreset.ExteriorMuffling, true);
                 }
             }
 
-            _settings.Save(ModPath  + "Settings.cfg");
+            _settings.Save(ModPath + "Settings.cfg");
         }
     }
 }
