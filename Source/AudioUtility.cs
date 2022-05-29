@@ -11,7 +11,8 @@ namespace RocketSoundEnhancement
     {
         Dirt,
         Concrete,
-        Vessel
+        Vessel,
+        KerbalEVA
     }
 
     public enum FXChannel
@@ -189,21 +190,15 @@ namespace RocketSoundEnhancement
             var part = Part.FromGO(gameObject);
             if (part)
             {
-                if (part.GetComponent<ModuleAsteroid>())
-                    return CollidingObject.Dirt;
-
+                if (part.GetComponent<ModuleAsteroid>()) return CollidingObject.Dirt;
+                if (part.isVesselEVA) return CollidingObject.KerbalEVA;
                 return CollidingObject.Vessel;
             }
-
             if (gameObject.tag.ToLower() != "untagged")
             {
-                if (Settings.CollisionData.ContainsKey(gameObject.name))
-                    return Settings.CollisionData[gameObject.name];
-
-                if (Settings.CollisionData.ContainsKey("default"))
-                    return Settings.CollisionData["default"];
+                if (Settings.CollisionData.ContainsKey(gameObject.name)) return Settings.CollisionData[gameObject.name];
+                if (Settings.CollisionData.ContainsKey("default")) return Settings.CollisionData["default"];
             }
-
             return CollidingObject.Dirt;
         }
 

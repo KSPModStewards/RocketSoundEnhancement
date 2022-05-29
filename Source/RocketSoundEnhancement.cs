@@ -98,7 +98,6 @@ namespace RocketSoundEnhancement
             {
                 stageSource.enabled = !Settings.DisableStagingSound;
             }
-
             foreach (var chattererSource in chattererSources)
             {
                 if (chattererSource.clip != null && aae_chatterer_clipNames.Any(chattererSource.clip.name.Contains))
@@ -108,7 +107,6 @@ namespace RocketSoundEnhancement
                     continue;
                 }
             }
-
             foreach (var source in stockSources)
             {
                 if (source == null) continue;
@@ -120,14 +118,12 @@ namespace RocketSoundEnhancement
 
                 source.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? ExteriorMixer : null;
             }
-
             UpdateNormalizer();
         }
 
         public void UpdateNormalizer()
         {
-            if (Mixer == null)
-                return;
+            if (Mixer == null) return;
             
             Mixer.SetFloat("NormalizerFadeInTime", Settings.NormalizerPreset.FadeInTime);
             Mixer.SetFloat("NormalizerLowestVolume", Settings.NormalizerPreset.LowestVolume);
@@ -202,13 +198,32 @@ namespace RocketSoundEnhancement
 
                     if (Settings.MufflerQuality == AudioMufflerQuality.AirSim)
                     {
-                        if (!managedMinDistance.ContainsKey(managedSourceID))
-                            managedMinDistance.Add(managedSourceID, source.minDistance);
+                        if (source.gameObject.GetComponents<AudioSource>().Length > 1)
+                        {
+                            if (!managedMinDistance.ContainsKey(managedSourceID))
+                                managedMinDistance.Add(managedSourceID, source.minDistance);
 
-                        float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
-                        float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                        float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
-                        source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
+                            float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
+                            float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
+                            source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
+                            continue;
+                        }
+
+                        if (managedMinDistance.ContainsKey(managedSourceID) && source.minDistance != managedMinDistance[managedSourceID])
+                            source.minDistance = managedMinDistance[managedSourceID];
+
+                        var shipEffects = sourcePart.vessel.GetComponent<ShipEffects>();
+                        var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
+                        airSimFilter.enabled = source.isPlaying;
+                        airSimFilter.EnableLowpassFilter = true;
+                        airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
+
+                        airSimFilter.Distance = shipEffects.Distance;
+                        airSimFilter.Mach = shipEffects.Mach;
+                        airSimFilter.Angle = shipEffects.Angle;
+                        airSimFilter.MachAngle = shipEffects.MachAngle;
+                        airSimFilter.MachPass = shipEffects.MachPass;
 
                         continue;
                     }
@@ -219,18 +234,19 @@ namespace RocketSoundEnhancement
                         managedMinDistance.Remove(managedSourceID);
                     }
 
+                    if (source.GetComponent<AirSimulationFilter>()) UnityEngine.Object.Destroy(source.GetComponent<AirSimulationFilter>());
+
                     continue;
                 }
 
                 source.outputAudioMixerGroup = ExteriorMixer;
-
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && source.name.StartsWith("Explosion"))
                 {
-                    var airSim = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
-                    airSim.enabled = true;
-                    airSim.EnableLowpassFilter = true;
-                    airSim.SimulationUpdate = AirSimulationUpdate.Basic;
-                    airSim.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                    var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
+                    airSimFilter.enabled = true;
+                    airSimFilter.EnableLowpassFilter = true;
+                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
+                    airSimFilter.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
                 }
             }
 

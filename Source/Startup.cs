@@ -10,7 +10,6 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
     class Startup : MonoBehaviour
     {
-
         private static AssetBundle rse_Bundle;
 
         public static AssetBundle RSE_Bundle

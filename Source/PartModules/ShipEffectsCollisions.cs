@@ -14,7 +14,7 @@ namespace RocketSoundEnhancement.PartModules
 
     public class ShipEffectsCollisions : RSE_Module
     {
-        Dictionary<CollisionType, List<SoundLayer>> SoundLayerColGroups = new Dictionary<CollisionType, List<SoundLayer>>();
+        Dictionary<CollisionType, List<SoundLayer>> SoundLayerCollisionGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
         bool collided;
         Collision collision;
@@ -37,13 +37,13 @@ namespace RocketSoundEnhancement.PartModules
 
                 if (Enum.TryParse(node.name, out collisionType))
                 {
-                    SoundLayerColGroups.Add(collisionType, AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
+                    SoundLayerCollisionGroups.Add(collisionType, AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
                 }
             }
 
-            if (SoundLayerColGroups.Count > 0)
+            if (SoundLayerCollisionGroups.Count > 0)
             {
-                foreach (var soundLayerGroup in SoundLayerColGroups)
+                foreach (var soundLayerGroup in SoundLayerCollisionGroups)
                 {
                     StartCoroutine(SetupAudioSources(soundLayerGroup.Value));
                 }
@@ -54,46 +54,27 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void LateUpdate()
         {
-            if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
-                return;
-
-            if (collided)
-            {
-                if (SoundLayerColGroups.ContainsKey(collisionType))
-                {
-                    float control = 0;
-
-                    if (collision != null)
-                    {
-                        control = collision.relativeVelocity.magnitude;
-                    }
-
-                    foreach (var soundLayer in SoundLayerColGroups[collisionType])
-                    {
-                        string collidingObjectString = collidingObject.ToString().ToLower();
-                        float finalControl = control;
-                        if (soundLayer.data != "" && !soundLayer.data.Contains(collidingObjectString))
-                            finalControl = 0;
-
-                        if (collidingObject == CollidingObject.Vessel && collision?.gameObject.GetComponentInParent<KerbalEVA>() && collisionType == CollisionType.CollisionStay)
-                            finalControl = 0;
-
-                        PlaySoundLayer(soundLayer, finalControl, Volume, true);
-                    }
-                }
-            }
-            else
-            {
-                foreach (var source in Sources.Values)
-                {
-                    if (source.isPlaying && source.loop)
-                    {
-                        source.Stop();
-                    }
-                }
-            }
+            if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused) return;
 
             base.LateUpdate();
+
+            if (!SoundLayerCollisionGroups.ContainsKey(collisionType)) return;
+
+            float control = 0;
+            string collidingObjectString = collidingObject.ToString().ToLower();
+
+            if (collided && collision != null)
+            {
+                control = collision.relativeVelocity.magnitude;
+            }
+
+            foreach (var soundLayer in SoundLayerCollisionGroups[collisionType])
+            {
+                float finalControl = control;
+                if (soundLayer.data != "" && !soundLayer.data.Contains(collidingObjectString)) finalControl = 0;
+
+                PlaySoundLayer(soundLayer, finalControl, Volume, true);
+            }
         }
 
         public override void FixedUpdate()

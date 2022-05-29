@@ -34,8 +34,8 @@ namespace RocketSoundEnhancement
         public Vector3 MachTipCameraNormal = new Vector3();
         public Vector3 MachRearCameraNormal = new Vector3();
 
-        public bool SonicBoomedTip;
-        public bool SonicBoomedRear;
+        public bool SonicBoomedTip = true;
+        public bool SonicBoomedRear = true;
 
         public bool initialized;
         bool gamePaused;
@@ -332,7 +332,6 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
-            GameEvents.onPartDeCoupleNewVesselComplete.Add(onNewVessel);
             return true;
         }
 
@@ -361,17 +360,6 @@ namespace RocketSoundEnhancement
                 }
                 yield return null;
             }
-        }
-
-        void onNewVessel(Vessel vessel1, Vessel vessel2)
-        {
-            if(vessel == vessel1  && vessel.launchTime > vessel2.launchTime) return;
-            if(vessel == vessel2  && vessel.launchTime > vessel1.launchTime) return;
-
-            ShipEffects olderVessel = vessel != vessel1 ? vessel1.GetComponent<ShipEffects>() : vessel2.GetComponent<ShipEffects>();
-
-            SonicBoomedTip = olderVessel.SonicBoomedTip;
-            SonicBoomedRear = olderVessel.SonicBoomedTip;
         }
 
         public void Unload()
@@ -418,7 +406,6 @@ namespace RocketSoundEnhancement
             UnityEngine.Object.Destroy(audioParent);
             GameEvents.onGamePause.Remove(onGamePause);
             GameEvents.onGameUnpause.Remove(onGameUnpause);
-            GameEvents.onPartDeCoupleNewVesselComplete.Remove(onNewVessel);
         }
     }
 }

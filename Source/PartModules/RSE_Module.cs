@@ -105,7 +105,7 @@ namespace RocketSoundEnhancement.PartModules
                 }
             }
 
-            loopRandomStart = UnityEngine.Random.Range(0f,1.0f);
+            loopRandomStart = Random.Range(0f, 1.0f);
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -161,6 +161,8 @@ namespace RocketSoundEnhancement.PartModules
                     Sources[source].enabled = false;
                     if (AirSimFilters.ContainsKey(source))
                         AirSimFilters[source].enabled = false;
+
+                    loopRandomStart = Random.Range(0f, 1f);
                 }
             }
 
