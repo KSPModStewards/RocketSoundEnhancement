@@ -233,6 +233,11 @@ namespace RocketSoundEnhancement
                 airSimFiltersEnabled = true;
             }
 
+            if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
+                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
+
+            if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
+
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
