@@ -216,11 +216,6 @@ namespace RocketSoundEnhancement
             AudioSource source = Sources[soundLayerName];
             source.enabled = true;
 
-            if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
-                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
-
-            if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
-
             if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior && AirSimFilters.ContainsKey(soundLayerName))
             {
                 AirSimFilters[soundLayerName].enabled = true;
@@ -232,6 +227,11 @@ namespace RocketSoundEnhancement
                 AirSimFilters[soundLayerName].MachAngle = Angle;
                 airSimFiltersEnabled = true;
             }
+
+            if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
+                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
+
+            if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
 
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
