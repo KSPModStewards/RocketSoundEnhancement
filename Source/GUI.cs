@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using KSP.UI.Screens;
 using UnityEngine;
-using RocketSoundEnhancement.AudioFilters;
 
 namespace RocketSoundEnhancement
 {
@@ -26,16 +25,15 @@ namespace RocketSoundEnhancement
         int windowWidth = 440;
         int windowHeight = 244;
         int leftWidth = 200;
-        int rightWidth = 60;
+        int rightWidth = 120;
         int smlRightWidth = 40;
         int smlLeftWidth = 125;
 
         Rect shipEffectsRect;
         Vector2 shipEffectsScrollPos;
-        bool _shipEffectsWindowToggle;
-        bool _settingsWindowToggle;
-        bool showAdvanceLimiter = false;
-        bool showAdvanceLowpass = false;
+        bool shipEffectsWindowToggle;
+        bool settingsWindowToggle;
+        bool showAdvanceMuffler = false;
 
         private void Awake()
         {
@@ -50,8 +48,8 @@ namespace RocketSoundEnhancement
             if (AppButton == null)
             {
                 AppButton = ApplicationLauncher.Instance.AddModApplication(
-                    () => _settingsWindowToggle = true,
-                    () => _settingsWindowToggle = false,
+                    () => settingsWindowToggle = true,
+                    () => settingsWindowToggle = false,
                     null, null,
                     null, null,
                     ApplicationLauncher.AppScenes.FLIGHT, AppIcon
@@ -61,11 +59,11 @@ namespace RocketSoundEnhancement
 
         void OnGUI()
         {
-            if (_settingsWindowToggle)
+            if (settingsWindowToggle)
             {
                 settingsRect = GUILayout.Window(52534500, settingsRect, settingsWindow, "");
             }
-            if (_shipEffectsWindowToggle)
+            if (shipEffectsWindowToggle)
             {
                 shipEffectsRect = GUILayout.Window(52534501, shipEffectsRect, shipEffectsWindow, "ShipEffects Info");
             }
@@ -76,205 +74,154 @@ namespace RocketSoundEnhancement
             GUILayout.BeginVertical();
             GUILayout.Label(AppTitle);
             settingsScrollPos = GUILayout.BeginScrollView(settingsScrollPos, false, true, GUILayout.Height(windowHeight));
+            Settings.AudioEffectsEnabled = GUILayout.Toggle(Settings.AudioEffectsEnabled, "Enable Audio Effects");
+            
+            #region NORMALIZER SETTINGS
             GUILayout.BeginHorizontal();
-            AudioLimiter.EnableLimiter = GUILayout.Toggle(AudioLimiter.EnableLimiter, "Sound Effects Mastering", GUILayout.Width(leftWidth));
-            RocketSoundEnhancement.Instance.AudioLimiter.enabled = AudioLimiter.EnableLimiter;
-
-            #region AUDIOLIMITER SETTINGS
-            if (AudioLimiter.EnableLimiter)
+            GUILayout.Label("NORMALIZER", GUILayout.Width(leftWidth));
+            if (GUILayout.Button(Settings.NormalizerPresetName))
             {
-                if (GUILayout.Button(AudioLimiter.Preset))
+                int limiterPresetIndex = Settings.NormalizerPresets.Keys.ToList().IndexOf(Settings.NormalizerPresetName) + 1;
+
+                if (limiterPresetIndex >= Settings.NormalizerPresets.Count)
                 {
-                    int limiterPresetIndex = AudioLimiter.Presets.Keys.ToList().IndexOf(AudioLimiter.Preset) + 1;
-
-                    if (limiterPresetIndex >= AudioLimiter.Presets.Count)
-                    {
-                        limiterPresetIndex = 0;
-                    }
-
-                    AudioLimiter.Preset = AudioLimiter.Presets.Keys.ToList()[limiterPresetIndex];
-                    AudioLimiter.ApplyPreset();
+                    limiterPresetIndex = 0;
                 }
 
-                if (GUILayout.Button(showAdvanceLimiter ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth)))
-                {
-                    showAdvanceLimiter = !showAdvanceLimiter;
-                }
-                GUILayout.EndHorizontal();
-                if (showAdvanceLimiter)
-                {
-                    if (AudioLimiter.Preset == "Custom")
-                    {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Threshold", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.Threshold = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Threshold, -60f, 0f), 2);
-                        GUILayout.Label(AudioLimiter.Threshold.ToString() + "db", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Bias", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.Bias = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Bias, 0.1f, 100f), 2);
-                        GUILayout.Label(AudioLimiter.Bias.ToString(), GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Ratio", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.Ratio = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Ratio, 1f, 20f), 2);
-                        GUILayout.Label(AudioLimiter.Ratio.ToString(), GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Gain", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.Gain = (float)Math.Round(GUILayout.HorizontalSlider(AudioLimiter.Gain, -30f, 30f), 2);
-                        GUILayout.Label(AudioLimiter.Gain.ToString() + "db", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Time Constant", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.TimeConstant = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.TimeConstant, 1, 6));
-                        GUILayout.Label(AudioLimiter.TimeConstant.ToString(), GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("RMS Window", GUILayout.Width(smlLeftWidth));
-                        AudioLimiter.LevelDetectorRMSWindow = Mathf.RoundToInt(GUILayout.HorizontalSlider(AudioLimiter.LevelDetectorRMSWindow, 1, 1000));
-                        GUILayout.Label(AudioLimiter.LevelDetectorRMSWindow.ToString() + "ms", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                    }
-                    GUILayout.BeginHorizontal();
-                    if (AudioLimiter.Preset == "Custom")
-                    {
-                        if (GUILayout.Button("Reset"))
-                        {
-                            AudioLimiter.Default();
-                        }
-                    }
-                    GUILayout.Box("Compression Ratio: " + AudioLimiter.CurrentCompressionRatio.ToString("0.00"));
-                    GUILayout.Box("Gain Reduction: " + AudioLimiter.GainReduction.ToString("0.00") + "db");
-                    GUILayout.EndHorizontal();
-                }
+                Settings.NormalizerPresetName = Settings.NormalizerPresets.Keys.ToList()[limiterPresetIndex];
+                Settings.ApplyNormalizerPreset();
+                RocketSoundEnhancement.Instance.UpdateNormalizer();
             }
-            else
+
+            GUILayout.EndHorizontal();
+            
+            if (Settings.NormalizerPresetName == "Custom")
             {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("FadeInTime", GUILayout.Width(smlLeftWidth));
+                Settings.NormalizerPreset.FadeInTime = (float)Math.Round(GUILayout.HorizontalSlider(Settings.NormalizerPreset.FadeInTime, 0, 20000f), 2);
+                GUILayout.Label($"{Settings.NormalizerPreset.FadeInTime.ToString("0.00")} ms", GUILayout.Width(rightWidth));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("LowestVolume", GUILayout.Width(smlLeftWidth));
+                Settings.NormalizerPreset.LowestVolume = (float)Math.Round(GUILayout.HorizontalSlider(Settings.NormalizerPreset.LowestVolume, 0, 1f), 2);
+                GUILayout.Label($"{Settings.NormalizerPreset.LowestVolume.ToString("P")}", GUILayout.Width(rightWidth));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("MaximumAmp", GUILayout.Width(smlLeftWidth));
+                Settings.NormalizerPreset.MaximumAmp = (float)Math.Round(GUILayout.HorizontalSlider(Settings.NormalizerPreset.MaximumAmp, 0, 100f), 2);
+                GUILayout.Label($"{Settings.NormalizerPreset.MaximumAmp.ToString("0.00")} x", GUILayout.Width(rightWidth));
+                GUILayout.EndHorizontal();
+
+                RocketSoundEnhancement.Instance.UpdateNormalizer();
+            }
+
+            if (Settings.NormalizerPresetName == "Custom")
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Reset"))
+                {
+                    Settings.DefaultNormalizer();
+                }
                 GUILayout.EndHorizontal();
             }
             #endregion
 
-            #region AUDIOMUFFLER SETTINGS
+            #region MUFFLER SETTINGS
             GUILayout.BeginHorizontal();
-            AudioMuffler.EnableMuffling = GUILayout.Toggle(AudioMuffler.EnableMuffling, "Audio Muffler", GUILayout.Width(leftWidth));
-            if (AudioMuffler.EnableMuffling)
+            GUILayout.Label("MUFFLER", GUILayout.Width(leftWidth));
+            if (GUILayout.Button(Settings.MufflerPresetName))
             {
-                RocketSoundEnhancement.Instance.LowpassFilter.enabled = AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.Lite;
-
-                if (GUILayout.Button(AudioMuffler.Preset))
+                int lowpassPresetIndex = Settings.MufflerPresets.Keys.ToList().IndexOf(Settings.MufflerPresetName) + 1;
+                if (lowpassPresetIndex >= Settings.MufflerPresets.Count)
                 {
-                    int lowpassPresetIndex = AudioMuffler.Presets.Keys.ToList().IndexOf(AudioMuffler.Preset) + 1;
-                    if (lowpassPresetIndex >= AudioMuffler.Presets.Count)
-                    {
-                        lowpassPresetIndex = 0;
-                    }
-                    AudioMuffler.Preset = AudioMuffler.Presets.Keys.ToList()[lowpassPresetIndex];
-                    AudioMuffler.ApplyPreset();
+                    lowpassPresetIndex = 0;
                 }
-
-                if (GUILayout.Button(showAdvanceLowpass ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth)))
-                {
-                    showAdvanceLowpass = !showAdvanceLowpass;
-                }
-
-                GUILayout.EndHorizontal();
-                if (showAdvanceLowpass)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label("Muffling Quality", GUILayout.Width(smlLeftWidth));
-                    int qualitySlider = ((int)AudioMuffler.MufflerQuality);
-                    qualitySlider = Mathf.RoundToInt(GUILayout.HorizontalSlider(qualitySlider, 0, 2));
-
-                    switch (qualitySlider)
-                    {
-                        case 0:
-                            AudioMuffler.MufflerQuality = AudioMufflerQuality.Lite;
-                            break;
-                        case 1:
-                            AudioMuffler.MufflerQuality = AudioMufflerQuality.Full;
-                            break;
-                        case 2:
-                            AudioMuffler.MufflerQuality = AudioMufflerQuality.AirSim;
-                            break;
-                    }
-
-                    GUILayout.Label(AudioMuffler.MufflerQuality.ToString(), GUILayout.Width(rightWidth));
-                    GUILayout.EndHorizontal();
-
-                    if (AudioMuffler.Preset == "Custom")
-                    {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Exterior Muffling", GUILayout.Width(smlLeftWidth));
-                        AudioMuffler.ExteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.ExteriorMuffling, 0, 22200), 1);
-                        GUILayout.Label(AudioMuffler.ExteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label("Interior Muffling", GUILayout.Width(smlLeftWidth));
-                        AudioMuffler.InteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(AudioMuffler.InteriorMuffling, 0, 22200), 1);
-                        GUILayout.Label(AudioMuffler.InteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        if (GUILayout.Button("Reset", GUILayout.Width(smlLeftWidth)))
-                        {
-                            AudioMuffler.Default();
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    GUILayout.BeginHorizontal();
-                    RocketSoundEnhancement.Instance.overrideFiltering = GUILayout.Toggle(RocketSoundEnhancement.Instance.overrideFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
-                    if (RocketSoundEnhancement.Instance.LowpassFilter.enabled)
-                    {
-                        RocketSoundEnhancement.Instance.LowpassFilter.CutoffFrequency = GUILayout.HorizontalSlider(RocketSoundEnhancement.Instance.LowpassFilter.CutoffFrequency, 0, 22200);
-                        GUILayout.Label(RocketSoundEnhancement.Instance.LowpassFilter.CutoffFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
-                    }
-                    else
-                    {
-                        RocketSoundEnhancement.Instance.MufflingFrequency = GUILayout.HorizontalSlider(RocketSoundEnhancement.Instance.MufflingFrequency, 0, 22200);
-                        GUILayout.Label(RocketSoundEnhancement.Instance.MufflingFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
-                    }
-                    GUILayout.EndHorizontal();
-                    AudioMuffler.AffectChatterer = GUILayout.Toggle(AudioMuffler.AffectChatterer, "Affect Chatterer");
-                }
+                Settings.MufflerPresetName = Settings.MufflerPresets.Keys.ToList()[lowpassPresetIndex];
+                Settings.ApplyMufflerPreset();
             }
-            else
+
+            if (GUILayout.Button(showAdvanceMuffler ? upArrowUNI : downArrowUNI, GUILayout.Width(smlRightWidth)))
             {
+                showAdvanceMuffler = !showAdvanceMuffler;
+            }
+            GUILayout.EndHorizontal();
+
+            if (showAdvanceMuffler)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Muffling Quality", GUILayout.Width(smlLeftWidth));
+                int qualitySlider = ((int)Settings.MufflerQuality);
+                qualitySlider = Mathf.RoundToInt(GUILayout.HorizontalSlider(qualitySlider, 0, 1));
+
+                switch (qualitySlider)
+                {
+                    case 0:
+                        Settings.MufflerQuality = AudioMufflerQuality.Normal;
+                        break;
+                    case 1:
+                        Settings.MufflerQuality = AudioMufflerQuality.AirSim;
+                        break;
+                }
+
+                GUILayout.Label(Settings.MufflerQuality.ToString(), GUILayout.Width(rightWidth));
+                GUILayout.EndHorizontal();
+
+                if (Settings.MufflerPresetName == "Custom")
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Exterior Muffling", GUILayout.Width(smlLeftWidth));
+                    Settings.MufflerPreset.ExteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(Settings.MufflerPreset.ExteriorMuffling, 0, 22200), 1);
+                    GUILayout.Label(Settings.MufflerPreset.ExteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Interior Muffling", GUILayout.Width(smlLeftWidth));
+                    Settings.MufflerPreset.InteriorMuffling = (float)Math.Round(GUILayout.HorizontalSlider(Settings.MufflerPreset.InteriorMuffling, 0, 22200), 1);
+                    GUILayout.Label(Settings.MufflerPreset.InteriorMuffling.ToString() + "hz", GUILayout.Width(rightWidth));
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Reset", GUILayout.Width(smlLeftWidth)))
+                    {
+                        Settings.DefaultMuffler();
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.BeginHorizontal();
+                RocketSoundEnhancement.Instance.overrideFiltering = GUILayout.Toggle(RocketSoundEnhancement.Instance.overrideFiltering, "Test Muffling", GUILayout.Width(smlLeftWidth));
+                RocketSoundEnhancement.Instance.MufflingFrequency = GUILayout.HorizontalSlider(RocketSoundEnhancement.Instance.MufflingFrequency, 0, 22200);
+                GUILayout.Label(RocketSoundEnhancement.Instance.MufflingFrequency.ToString("0.0") + "hz", GUILayout.Width(rightWidth));
                 GUILayout.EndHorizontal();
             }
             #endregion
-
+            
             GUILayout.BeginHorizontal();
             GUILayout.Label("Exterior Volume", GUILayout.Width(smlLeftWidth));
-            Settings.Instance.ExteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.Instance.ExteriorVolume, 2), 0, 2);
-            GUILayout.Label(Settings.Instance.ExteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
+            Settings.ExteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.ExteriorVolume, 2), 0, 2);
+            GUILayout.Label(Settings.ExteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Interior Volume", GUILayout.Width(smlLeftWidth));
-            Settings.Instance.InteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.Instance.InteriorVolume, 2), 0, 2);
-            GUILayout.Label(Settings.Instance.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
+            Settings.InteriorVolume = GUILayout.HorizontalSlider((float)Math.Round(Settings.InteriorVolume, 2), 0, 2);
+            GUILayout.Label(Settings.InteriorVolume.ToString("0.00"), GUILayout.Width(smlRightWidth));
             GUILayout.EndHorizontal();
-            GUILayout.FlexibleSpace();
-            Settings.Instance.DisableStagingSound = GUILayout.Toggle(Settings.Instance.DisableStagingSound, "Disable Staging Sound");
 
-            _shipEffectsWindowToggle = GUILayout.Toggle(_shipEffectsWindowToggle, "ShipEffects Info");
+            GUILayout.FlexibleSpace();
+            Settings.DisableStagingSound = GUILayout.Toggle(Settings.DisableStagingSound, "Disable Staging Sound");
+            shipEffectsWindowToggle = GUILayout.Toggle(shipEffectsWindowToggle, "ShipEffects Info");
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Reload Settings"))
             {
-                Settings.Instance.Load();
+                Settings.Load();
                 RocketSoundEnhancement.Instance.ApplySettings();
             }
             if (GUILayout.Button("Save Settings"))
             {
-                Settings.Instance.Save();
+                Settings.Save();
                 RocketSoundEnhancement.Instance.ApplySettings();
             }
             GUILayout.EndHorizontal();
@@ -307,7 +254,7 @@ namespace RocketSoundEnhancement
                     "- REENTRYHEAT: " + shipEffectsModule.GetPhysicsController(PhysicsControl.REENTRYHEAT).ToString("0.00") + "\r\n" +
                     "- Mass: " + shipEffectsModule.VesselMass.ToString("0.00") + "\r\n\r\n";
 
-                if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
+                if (Settings.AudioEffectsEnabled && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
                 {
                     info +=
                         "AIR SIM PARAMETERS \r\n" +
@@ -387,7 +334,7 @@ namespace RocketSoundEnhancement
 
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            _shipEffectsWindowToggle = !GUILayout.Button("Close");
+            shipEffectsWindowToggle = !GUILayout.Button("Close");
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
 

@@ -59,7 +59,7 @@ namespace RocketSoundEnhancement
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
-            if (AudioMuffler.EnableMuffling && AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim)
+            if (Settings.AudioEffectsEnabled && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
             {
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
@@ -117,7 +117,7 @@ namespace RocketSoundEnhancement
 
                     if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
                     {
-                        if (!AudioMuffler.EnableMuffling || AudioMuffler.MufflerQuality < AudioMufflerQuality.AirSim)
+                        if (!Settings.AudioEffectsEnabled || Settings.MufflerQuality != AudioMufflerQuality.AirSim)
                             continue;
 
                         if (MachPass > 0.0 && !SonicBoomedTip)
@@ -158,7 +158,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && AudioMuffler.MufflerQuality != AudioMufflerQuality.AirSim)
+            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
                 AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
                 airSimFiltersEnabled = false;
@@ -201,19 +201,19 @@ namespace RocketSoundEnhancement
 
             if (finalVolume < float.Epsilon)
             {
-                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
+                if (Sources[soundLayerName].volume == 0 && soundLayer.loop)
+                {
                     Sources[soundLayerName].Stop();
+                }
+
+                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
+                {
+                    Sources[soundLayerName].volume = 0;
+                }
                 return;
             }
 
-            AudioSource source = Sources[soundLayerName];
-            source.enabled = true;
-            if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
-                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
-
-            if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
-
-            if (AudioMuffler.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior && AirSimFilters.ContainsKey(soundLayerName))
+            if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior && AirSimFilters.ContainsKey(soundLayerName))
             {
                 AirSimFilters[soundLayerName].enabled = true;
                 AirSimFilters[soundLayerName].SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
@@ -224,6 +224,14 @@ namespace RocketSoundEnhancement
                 AirSimFilters[soundLayerName].MachAngle = Angle;
                 airSimFiltersEnabled = true;
             }
+            
+            AudioSource source = Sources[soundLayerName];
+            source.enabled = true;
+
+            if (vessel.isActiveVessel && soundLayer.channel == FXChannel.Interior && InternalCamera.Instance.isActiveAndEnabled)
+                source.transform.localPosition = InternalCamera.Instance.transform.localPosition + Vector3.back;
+
+            if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
 
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
@@ -290,9 +298,9 @@ namespace RocketSoundEnhancement
                 return true;
             }
 
-            if (Settings.Instance.ShipEffectsNodes().Count > 0)
+            if (Settings.ShipEffectsNodes().Count > 0)
             {
-                foreach (var node in Settings.Instance.ShipEffectsNodes())
+                foreach (var node in Settings.ShipEffectsNodes())
                 {
                     if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
                     if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;
@@ -325,7 +333,6 @@ namespace RocketSoundEnhancement
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
             GameEvents.onPartDeCoupleNewVesselComplete.Add(onNewVessel);
-            Debug.Log($"[RSE]: ShipEffects: {vessel.GetDisplayName()} is Loaded");
             return true;
         }
 
@@ -377,7 +384,6 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Remove(onGamePause);
             GameEvents.onGameUnpause.Remove(onGameUnpause);
-            Debug.Log($"[RSE]: ShipEffects: {vessel.GetDisplayName()} is Unloaded");
             initialized = false;
         }
 

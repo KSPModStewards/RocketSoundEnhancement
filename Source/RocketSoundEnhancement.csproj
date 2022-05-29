@@ -101,8 +101,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioFilters\AirSimulationFilter.cs"/>
-    <Compile Include="AudioFilters\AudioLimiter.cs"/>
-    <Compile Include="AudioFilters\LowpassFilter.cs"/>
     <Compile Include="PartModules\RSE_Module.cs"/>
     <Compile Include="PartModules\RSE_RotorEngines.cs"/>
     <Compile Include="PartModules\RSE_Coupler.cs"/>
@@ -111,7 +109,6 @@
     <Compile Include="PartModules\RSE_RCS.cs"/>
     <Compile Include="PartModules\ShipEffectsCollisions.cs"/>
     <Compile Include="AudioUtility.cs"/>
-    <Compile Include="AudioMuffler.cs"/>
     <Compile Include="RocketSoundEnhancement.cs"/>
     <Compile Include="GUI.cs"/>
     <Compile Include="Settings.cs"/>
