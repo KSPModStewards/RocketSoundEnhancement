@@ -21,6 +21,14 @@ namespace RocketSoundEnhancement
         Interior
     }
 
+    public enum MixerGroup
+    {
+        Ignore,
+        Exterior,
+        Interior,
+        Focus
+    }
+
     public enum PhysicsControl
     {
         ACCELERATION,
@@ -213,6 +221,21 @@ namespace RocketSoundEnhancement
                 audioParent.transform.localPosition = Vector3.zero;
             }
             return audioParent;
+        }
+
+        public static AudioMixerGroup GetMixerGroup(MixerGroup group)
+        {
+            if (Settings.AudioEffectsEnabled)
+            {
+                switch (group)
+                {
+                    case MixerGroup.Exterior: return RocketSoundEnhancement.Instance.ExteriorMixer;
+                    case MixerGroup.Interior: return RocketSoundEnhancement.Instance.InteriorMixer;
+                    case MixerGroup.Focus: return RocketSoundEnhancement.Instance.FocusMixer;
+                    default: return null;
+                }
+            }
+            return null;
         }
 
         public static AudioMixerGroup GetMixerGroup(FXChannel channel, bool isActiveVessel)

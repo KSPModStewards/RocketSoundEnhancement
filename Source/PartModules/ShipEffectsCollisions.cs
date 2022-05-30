@@ -58,15 +58,22 @@ namespace RocketSoundEnhancement.PartModules
 
             base.LateUpdate();
 
+            if (!collided)
+            {
+                foreach (var source in Sources.Values)
+                {
+                    if (source.volume == 0 && source.loop)
+                        source.Stop();
+                    if (source.isPlaying && source.loop)
+                        source.volume = 0;
+                }
+                return;
+            }
+
             if (!SoundLayerCollisionGroups.ContainsKey(collisionType)) return;
 
-            float control = 0;
             string collidingObjectString = collidingObject.ToString().ToLower();
-
-            if (collided && collision != null)
-            {
-                control = collision.relativeVelocity.magnitude;
-            }
+            float control = collision != null ? collision.relativeVelocity.magnitude : 0;
 
             foreach (var soundLayer in SoundLayerCollisionGroups[collisionType])
             {

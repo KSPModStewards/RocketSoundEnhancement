@@ -46,6 +46,9 @@ namespace RocketSoundEnhancement.PartModules
         public ConfigNode configNode;
         public bool prepareSoundLayers = true;
         bool airSimFiltersEnabled;
+        int slowUpdate;
+
+        System.Random random;
 
         public override void OnStart(StartState state)
         {
@@ -105,7 +108,8 @@ namespace RocketSoundEnhancement.PartModules
                 }
             }
 
-            loopRandomStart = Random.Range(0f, 1.0f);
+            random = new System.Random(GetInstanceID());
+            loopRandomStart = (float)random.NextDouble();
 
             GameEvents.onGamePause.Add(onGamePause);
             GameEvents.onGameUnpause.Add(onGameUnpause);
@@ -151,19 +155,33 @@ namespace RocketSoundEnhancement.PartModules
 
         public virtual void LateUpdate()
         {
-            if (Sources.Count > 0)
+            slowUpdate++;
+            if (slowUpdate >= 60)
             {
-                foreach(var source in Sources.Keys)
+                if (Sources.Count > 0)
                 {
-                    if (Sources[source].isPlaying || !Sources[source].enabled)
-                        continue;
-                        
-                    Sources[source].enabled = false;
-                    if (AirSimFilters.ContainsKey(source))
-                        AirSimFilters[source].enabled = false;
+                    foreach (var source in Sources.Keys)
+                    {
+                        //disable the filter but keep the fields updated
+                        if (!Sources[source].enabled && AirSimFilters.ContainsKey(source))
+                        {
+                            AirSimFilters[source].enabled = false;
+                            AirSimFilters[source].Distance = distance;
+                            AirSimFilters[source].Mach = mach;
+                            AirSimFilters[source].Angle = angle;
+                            AirSimFilters[source].MachAngle = machAngle;
+                            AirSimFilters[source].MachPass = machPass;
+                        }
 
-                    loopRandomStart = Random.Range(0f, 1f);
+                        if (Sources[source].isPlaying || !Sources[source].enabled)
+                            continue;
+
+                        Sources[source].enabled = false;
+
+                        loopRandomStart = (float)random.NextDouble();
+                    }
                 }
+                slowUpdate = 0;
             }
 
             if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
@@ -220,14 +238,11 @@ namespace RocketSoundEnhancement.PartModules
             if (finalVolume < float.Epsilon)
             {
                 if (Sources[soundLayerName].volume == 0 && soundLayer.loop)
-                {
                     Sources[soundLayerName].Stop();
-                }
 
                 if (Sources[soundLayerName].isPlaying && soundLayer.loop)
-                {
                     Sources[soundLayerName].volume = 0;
-                }
+                    
                 return;
             }
 
@@ -238,7 +253,7 @@ namespace RocketSoundEnhancement.PartModules
             {
                 if (UseAirSimulation && AirSimFilters.ContainsKey(soundLayerName))
                 {
-                    AirSimFilters[soundLayerName].enabled = true;
+                    AirSimFilters[soundLayerName].enabled = source.isPlaying;
                     AirSimFilters[soundLayerName].Distance = distance;
                     AirSimFilters[soundLayerName].Mach = mach;
                     AirSimFilters[soundLayerName].Angle = angle;

@@ -50,7 +50,7 @@ namespace RocketSoundEnhancement.AudioFilters
             SampleRate = AudioSettings.outputSampleRate;
         }
 
-        void Update()
+        void LateUpdate()
         {
             if (SimulationUpdate != AirSimulationUpdate.None)
             {

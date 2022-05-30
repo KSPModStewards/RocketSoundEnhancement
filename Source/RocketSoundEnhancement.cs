@@ -38,12 +38,9 @@ namespace RocketSoundEnhancement
         float lastCutoffFreq;
         float lastInteriorCutoffFreq;
 
+        HashSet<AudioSource> unManagedSources = new HashSet<AudioSource>();
         HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
         Dictionary<int, float> managedMinDistance = new Dictionary<int, float>();
-
-        List<AudioSource> preservedSources = new List<AudioSource>();
-        List<AudioSource> chattererSources = new List<AudioSource>();
-        List<AudioSource> stockSources = new List<AudioSource>();
 
         string[] aae_chatterer_clipNames = {
             "breathing",
@@ -69,22 +66,6 @@ namespace RocketSoundEnhancement
 
             AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
 
-            HashSet<AudioSource> audioSources = GameObject.FindObjectsOfType<AudioSource>().ToHashSet();
-            foreach (var source in audioSources)
-            {
-                if (source == null) continue;
-                if (source.name.Contains(AudioUtility.RSETag)) continue;
-
-                if (source.clip != null && aae_chatterer_clipNames.Any(source.clip.name.Contains))
-                {
-                    chattererSources.Add(source);
-                    continue;
-                }
-
-                if (source.name == "FX Sound" || source.name == "airspeedNoise" || source.clip != null && source.clip.name.ToLower().Contains("wind"))
-                    stockSources.Add(source);
-            }
-
             ApplySettings();
 
             GameEvents.onGamePause.Add(() => gamePaused = true);
@@ -98,33 +79,48 @@ namespace RocketSoundEnhancement
             {
                 stageSource.enabled = !Settings.DisableStagingSound;
             }
-            foreach (var chattererSource in chattererSources)
-            {
-                if (chattererSource.clip != null && aae_chatterer_clipNames.Any(chattererSource.clip.name.Contains))
-                {
-                    bool isBreathSounds = chattererSource.clip.name.ToLower().Contains("breathing");
-                    chattererSource.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? (isBreathSounds ? InteriorMixer : FocusMixer) : null;
-                    continue;
-                }
-            }
-            foreach (var source in stockSources)
+
+            unManagedSources.Clear();
+            HashSet<AudioSource> audioSources = GameObject.FindObjectsOfType<AudioSource>().ToHashSet();
+            foreach (var source in audioSources)
             {
                 if (source == null) continue;
+                if (source.name.Contains(AudioUtility.RSETag)) continue;
 
-                if (source.clip != null && source.clip.name != "sound_wind_constant")
+                if (Settings.CustomAudioSources.Count > 0 && Settings.CustomAudioSources.ContainsKey(source.gameObject.name))
                 {
-                    source.mute = Settings.MuteStockAeroSounds;
+                    if (!unManagedSources.Contains(source)) unManagedSources.Add(source);
+
+                    var mixerChannel = Settings.CustomAudioSources[source.gameObject.name];
+                    source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
+                    continue;
                 }
 
-                source.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? ExteriorMixer : null;
+                if (Settings.CustomAudioClips.Count > 0 && source.clip != null && Settings.CustomAudioClips.ContainsKey(source.clip.name))
+                {
+                    if (!unManagedSources.Contains(source)) unManagedSources.Add(source);
+
+                    var mixerChannel = Settings.CustomAudioClips[source.clip.name];
+                    source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
+                    continue;
+                }
+
+                if (source.name == "FX Sound" || source.name == "airspeedNoise")
+                {
+                    if (source.clip != null && source.clip.name != "sound_wind_constant")
+                        source.mute = Settings.MuteStockAeroSounds;
+
+                    source.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? ExteriorMixer : null;
+                }
             }
+
             UpdateNormalizer();
         }
 
         public void UpdateNormalizer()
         {
             if (Mixer == null) return;
-            
+
             Mixer.SetFloat("NormalizerFadeInTime", Settings.NormalizerPreset.FadeInTime);
             Mixer.SetFloat("NormalizerLowestVolume", Settings.NormalizerPreset.LowestVolume);
             Mixer.SetFloat("NormalizerMaximumAmp", Settings.NormalizerPreset.MaximumAmp);
@@ -172,7 +168,7 @@ namespace RocketSoundEnhancement
                     continue;
                 }
 
-                if (preservedSourceNames.Any(source.gameObject.name.Contains) || chattererSources.Contains(source))
+                if (unManagedSources.Contains(source))
                     continue;
 
                 int managedSourceID = source.GetInstanceID();
@@ -209,23 +205,6 @@ namespace RocketSoundEnhancement
                             source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
                             continue;
                         }
-
-                        if (managedMinDistance.ContainsKey(managedSourceID) && source.minDistance != managedMinDistance[managedSourceID])
-                            source.minDistance = managedMinDistance[managedSourceID];
-
-                        var shipEffects = sourcePart.vessel.GetComponent<ShipEffects>();
-                        var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
-                        airSimFilter.enabled = source.isPlaying;
-                        airSimFilter.EnableLowpassFilter = true;
-                        airSimFilter.SimulationUpdate = AirSimulationUpdate.Full;
-
-                        airSimFilter.Distance = shipEffects.Distance;
-                        airSimFilter.Mach = shipEffects.Mach;
-                        airSimFilter.Angle = shipEffects.Angle;
-                        airSimFilter.MachAngle = shipEffects.MachAngle;
-                        airSimFilter.MachPass = shipEffects.MachPass;
-
-                        continue;
                     }
 
                     if (managedMinDistance.Count > 0 && managedMinDistance.ContainsKey(managedSourceID))
