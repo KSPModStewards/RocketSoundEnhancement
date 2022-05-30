@@ -109,6 +109,7 @@
     <Compile Include="PartModules\RSE_RCS.cs"/>
     <Compile Include="PartModules\ShipEffectsCollisions.cs"/>
     <Compile Include="AudioUtility.cs"/>
+    <Compile Include="AudioLimiterSettings.cs"/>
     <Compile Include="RocketSoundEnhancement.cs"/>
     <Compile Include="GUI.cs"/>
     <Compile Include="Settings.cs"/>

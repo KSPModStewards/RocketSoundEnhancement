@@ -114,16 +114,25 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            UpdateNormalizer();
+            UpdateLimiter();
         }
 
-        public void UpdateNormalizer()
+        public void UpdateLimiter()
         {
             if (Mixer == null) return;
 
-            Mixer.SetFloat("NormalizerFadeInTime", Settings.NormalizerPreset.FadeInTime);
-            Mixer.SetFloat("NormalizerLowestVolume", Settings.NormalizerPreset.LowestVolume);
-            Mixer.SetFloat("NormalizerMaximumAmp", Settings.NormalizerPreset.MaximumAmp);
+            float thrs, gain, atk, rls;
+            float amount = Settings.Limiter.AutoLimiter;
+            bool isCustom = Settings.Limiter.Custom;
+            thrs = isCustom ? Settings.Limiter.Threshold : Mathf.Lerp(0, -16, amount);
+            gain = isCustom ? Settings.Limiter.Gain : Mathf.Lerp(0, 16, amount);
+            atk = isCustom ? Settings.Limiter.Attack : Mathf.Lerp(10, 200, amount);
+            rls = isCustom ? Settings.Limiter.Release : Mathf.Lerp(20, 1000, amount);
+
+            mixer.SetFloat("LimiterThreshold",thrs);
+            mixer.SetFloat("LimiterGain", gain);
+            mixer.SetFloat("LimiterAttack", atk);
+            mixer.SetFloat("LimiterRelease", rls);
         }
 
         public float WindModulation()
@@ -171,7 +180,6 @@ namespace RocketSoundEnhancement
                 if (unManagedSources.Contains(source))
                     continue;
 
-                int managedSourceID = source.GetInstanceID();
                 // assume this source is a GUI source and ignore
                 if (source.transform.position == Vector3.zero || source.spatialBlend == 0) continue;
 
@@ -187,6 +195,7 @@ namespace RocketSoundEnhancement
 
                 if (!managedSources.Contains(source)) { managedSources.Add(source); }
 
+                int managedSourceID = source.GetInstanceID();
                 Part sourcePart;
                 if ((sourcePart = source.GetComponent<Part>()) || (sourcePart = source.GetComponentInParent<Part>()))
                 {

@@ -11,13 +11,6 @@ namespace RocketSoundEnhancement
         public float ExteriorMuffling;
     }
 
-    public struct AudioNormalizerPreset
-    {
-        public float FadeInTime;
-        public float LowestVolume;
-        public float MaximumAmp;
-    }
-
     public enum AudioMufflerQuality
     {
         Normal = 0,
@@ -28,6 +21,7 @@ namespace RocketSoundEnhancement
     {
         public static string ModPath = "GameData/RocketSoundEnhancement/";
         public static string SettingsName = "RSE_SETTINGS";
+        public static int VoiceCount = 32;
 
         public static Dictionary<string, CollidingObject> CollisionData = new Dictionary<string, CollidingObject>();
         public static Dictionary<string, MixerGroup> CustomAudioSources = new Dictionary<string, MixerGroup>();
@@ -40,12 +34,11 @@ namespace RocketSoundEnhancement
         public static float InteriorVolume = 1;
 
         public static Dictionary<string, AudioMufflerPreset> MufflerPresets = new Dictionary<string, AudioMufflerPreset>();
-        public static Dictionary<string, AudioNormalizerPreset> NormalizerPresets = new Dictionary<string, AudioNormalizerPreset>();
+        public static AudioLimiterSettings Limiter = new AudioLimiterSettings();
 
         public static bool AudioEffectsEnabled = true;
         public static AudioMufflerQuality MufflerQuality = AudioMufflerQuality.Normal;
         public static AudioMufflerPreset MufflerPreset;
-        public static AudioNormalizerPreset NormalizerPreset;
         public static string MufflerPresetName;
         public static string NormalizerPresetName;
         public static float AirSimMaxDistance = 5000;
@@ -58,20 +51,6 @@ namespace RocketSoundEnhancement
                 {
                     InteriorMuffling = 1500,
                     ExteriorMuffling = 22200,
-                };
-                return defaultPreset;
-            }
-        }
-
-        public static AudioNormalizerPreset DefaultAudioNormalizerPreset
-        {
-            get
-            {
-                var defaultPreset = new AudioNormalizerPreset
-                {
-                    FadeInTime = 2500,
-                    LowestVolume = 0.5f,
-                    MaximumAmp = 4
                 };
                 return defaultPreset;
             }
@@ -93,20 +72,6 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public static void ApplyNormalizerPreset()
-        {
-            if (NormalizerPresetName != string.Empty && NormalizerPresets.ContainsKey(NormalizerPresetName))
-            {
-                NormalizerPreset = NormalizerPresets[NormalizerPresetName];
-                Debug.Log("[RSE]: Audio Normalizer: " + NormalizerPresetName + " Preset Applied");
-            }
-            else
-            {
-                DefaultNormalizer();
-                Debug.Log("[RSE]: Audio Normalizer: Preset Not Found = " + NormalizerPresetName + ". Using Default Settings");
-            }
-        }
-
         public static void DefaultMuffler()
         {
             MufflerPreset = DefaultAudioMufflerPreset;
@@ -116,61 +81,38 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public static void DefaultNormalizer()
+        #region  LIMITER SETTINGS
+        private static void loadLimiterSettings(ConfigNode settingsNode)
         {
-            NormalizerPreset = DefaultAudioNormalizerPreset;
-            if (!NormalizerPresets.ContainsKey("Custom"))
+            if (!settingsNode.HasNode("LIMITER"))
             {
-                NormalizerPresets.Add("Custom", DefaultAudioNormalizerPreset);
-            }
-        }
-        #region  NORMALIZER SETTINGS
-        private static void loadNormalizerSettings(ConfigNode settingsNode)
-        {
-            if (!settingsNode.HasNode("NORMALIZER"))
-            {
-                NormalizerPresetName = "Custom";
-                DefaultNormalizer();
-
-                var defaultNormalizerNode = settingsNode.AddNode("NORMALIZER");
-                defaultNormalizerNode.AddValue("Preset", "Custom");
-
-                var defaultPresetNode = defaultNormalizerNode.AddNode("Custom");
-                defaultPresetNode.AddValue("FadeInTime", DefaultAudioNormalizerPreset.FadeInTime);
-                defaultPresetNode.AddValue("LowestVolume", DefaultAudioNormalizerPreset.LowestVolume);
-                defaultPresetNode.AddValue("MaximumAmp", DefaultAudioNormalizerPreset.MaximumAmp);
+                Limiter.Default();
+                var defaultLimiterNode = settingsNode.AddNode("LIMITER");
+                defaultLimiterNode.AddValue("Custom", Limiter.Custom);
+                defaultLimiterNode.AddValue("AutoLimiter", Limiter.AutoLimiter);
+                defaultLimiterNode.AddValue("Threshold", Limiter.Threshold);
+                defaultLimiterNode.AddValue("Gain", Limiter.Gain);
+                defaultLimiterNode.AddValue("Attack", Limiter.Attack);
+                defaultLimiterNode.AddValue("Attack", Limiter.Release);
                 return;
             }
 
-            var normalizerNode = settingsNode.GetNode("NORMALIZER");
-            if (normalizerNode.HasValue("Preset")) { NormalizerPresetName = normalizerNode.GetValue("Preset"); }
-
-            foreach (var presetNode in normalizerNode.GetNodes())
-            {
-                string presetName = presetNode.name;
-                AudioNormalizerPreset normalizerPreset = new AudioNormalizerPreset();
-
-                if (NormalizerPresetName == string.Empty) { NormalizerPresetName = presetName; }
-
-                if (!float.TryParse(presetNode.GetValue("FadeInTime"), out normalizerPreset.FadeInTime))
-                    normalizerPreset.FadeInTime = NormalizerPreset.FadeInTime;
-
-                if (!float.TryParse(presetNode.GetValue("LowestVolume"), out normalizerPreset.LowestVolume))
-                    normalizerPreset.LowestVolume = NormalizerPreset.LowestVolume;
-
-                if (!float.TryParse(presetNode.GetValue("MaximumAmp"), out normalizerPreset.MaximumAmp))
-                    normalizerPreset.MaximumAmp = NormalizerPreset.MaximumAmp;
-
-                if (NormalizerPresets.ContainsKey(presetName))
-                {
-                    NormalizerPresets[presetName] = normalizerPreset;
-                    continue;
-                }
-
-                NormalizerPresets.Add(presetName, normalizerPreset);
-            }
+            var limiterNode = settingsNode.GetNode("LIMITER");
+            if (!limiterNode.HasValue("Custom") || !bool.TryParse(limiterNode.GetValue("Custom"), out Limiter.Custom))
+                limiterNode.AddValue("Custom", Limiter.Custom);
+            if (!limiterNode.HasValue("AutoLimiter") || !float.TryParse(limiterNode.GetValue("AutoLimiter"), out Limiter.AutoLimiter))
+                limiterNode.AddValue("AutoLimiter", Limiter.AutoLimiter);
+            if (!limiterNode.HasValue("Threshold") || !float.TryParse(limiterNode.GetValue("Threshold"), out Limiter.Threshold))
+                limiterNode.AddValue("Threshold", Limiter.Threshold);
+            if (!limiterNode.HasValue("Gain") || !float.TryParse(limiterNode.GetValue("Gain"), out Limiter.Gain))
+                limiterNode.AddValue("Gain", Limiter.Gain);
+            if (!limiterNode.HasValue("Attack") || !float.TryParse(limiterNode.GetValue("Attack"), out Limiter.Attack))
+                limiterNode.AddValue("Attack", Limiter.Attack);
+            if (!limiterNode.HasValue("Release") || !float.TryParse(limiterNode.GetValue("Release"), out Limiter.Release))
+                limiterNode.AddValue("Attack", Limiter.Release);
         }
         #endregion
+        
         #region MUFFLER SETTINGS
         private static void loadMufflerSettings(ConfigNode settingsNode)
         {
@@ -256,7 +198,6 @@ namespace RocketSoundEnhancement
             CustomAudioSources.Clear();
             CustomAudioClips.Clear();
             CollisionData.Clear();
-            NormalizerPresets.Clear();
             MufflerPresets.Clear();
 
             foreach (var configNode in GameDatabase.Instance.GetConfigNodes("SHIPEFFECTS_SOUNDLAYERS"))
@@ -344,10 +285,8 @@ namespace RocketSoundEnhancement
                 mixerRoutingNode.AddNode("AudioClips");
             }
 
-            loadNormalizerSettings(settingsNode);
+            loadLimiterSettings(settingsNode);
             loadMufflerSettings(settingsNode);
-
-            ApplyNormalizerPreset();
             ApplyMufflerPreset();
 
             _settings.Save(ModPath + "Settings.cfg");
@@ -362,15 +301,13 @@ namespace RocketSoundEnhancement
             settingsNode.SetValue("InteriorVolume", InteriorVolume, true);
             settingsNode.SetValue("DisableStagingSound", DisableStagingSound, true);
 
-            var normalizerNode = settingsNode.GetNode("NORMALIZER");
-            normalizerNode.SetValue("Preset", NormalizerPresetName, true);
-            if (NormalizerPresetName == "Custom")
-            {
-                var customPreset = normalizerNode.GetNode("Custom");
-                customPreset.SetValue("FadeInTime", NormalizerPreset.FadeInTime, true);
-                customPreset.SetValue("LowestVolume", NormalizerPreset.LowestVolume, true);
-                customPreset.SetValue("MaximumAmp", NormalizerPreset.MaximumAmp, true);
-            }
+            var limiterNode = settingsNode.GetNode("LIMITER");
+            limiterNode.SetValue("Custom", Limiter.Custom);
+            limiterNode.SetValue("AutoLimiter", Limiter.AutoLimiter);
+            limiterNode.SetValue("Threshold", Limiter.Threshold);
+            limiterNode.SetValue("Gain", Limiter.Gain);
+            limiterNode.SetValue("Attack", Limiter.Attack);
+            limiterNode.SetValue("Release", Limiter.Release);
 
             var mufflerNode = settingsNode.GetNode("MUFFLER");
             mufflerNode.SetValue("MufflerQuality", MufflerQuality.ToString(), true);

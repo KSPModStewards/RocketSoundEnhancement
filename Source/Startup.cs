@@ -16,8 +16,8 @@ namespace RocketSoundEnhancement
         {
             get {
                 if(rse_Bundle == null) {
-                    string path = KSPUtil.ApplicationRootPath + "GameData/RocketSoundEnhancement/Plugins";
-                    rse_Bundle = AssetBundle.LoadFromFile(path + "/rse_bundle");
+                    string path = KSPUtil.ApplicationRootPath + Settings.ModPath + "Plugins/";
+                    rse_Bundle = AssetBundle.LoadFromFile(path + "rse_bundle");
                     Debug.Log("[RSE]: AssetBundle loaded");
                 }
                 return rse_Bundle;
@@ -27,7 +27,7 @@ namespace RocketSoundEnhancement
         void Awake()
         {
             AudioConfiguration audioConfig = UnityEngine.AudioSettings.GetConfiguration();
-            audioConfig.numRealVoices = 64;
+            audioConfig.numRealVoices = Settings.VoiceCount;
 
             if(UnityEngine.AudioSettings.Reset(audioConfig)) {
                 Debug.Log("[RSE]: Audio Settings Applied");
