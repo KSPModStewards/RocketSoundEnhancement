@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace RocketSoundEnhancement.Unity
 {
@@ -13,6 +14,7 @@ namespace RocketSoundEnhancement.Unity
     }
     public interface ISettingsPanel
     {
+        float CanvasScale { get; }
         string Version { get; }
 
         bool EnableAudioEffects { get; set; }
@@ -33,5 +35,6 @@ namespace RocketSoundEnhancement.Unity
 
         void LoadSettings();
         void SaveSettings();
+        void ClampToScreen(RectTransform rect);
     }
 }

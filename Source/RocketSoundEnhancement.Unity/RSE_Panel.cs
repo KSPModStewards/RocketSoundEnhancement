@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace RocketSoundEnhancement.Unity
 {
     [RequireComponent(typeof(RectTransform))]
-    public class RSE_Panel : MonoBehaviour, IDragHandler
+    public class RSE_Panel : MonoBehaviour, IDragHandler, IEndDragHandler, IPointerDownHandler
     {
         [SerializeField] private GameObject _basicPanel;
         [SerializeField] private GameObject _advancePanel;
@@ -29,11 +29,28 @@ namespace RocketSoundEnhancement.Unity
         private RectTransform rectTransform;
         private ISettingsPanel settingsPanel;
         private bool _initialized = false;
-
-        void Awake()
+        private void Awake()
         {
             rectTransform = GetComponent<RectTransform>();
         }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            rectTransform.anchoredPosition += eventData.delta / settingsPanel.CanvasScale;
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            if (settingsPanel == null) return;
+
+            settingsPanel.ClampToScreen(rectTransform);
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            transform.SetAsLastSibling();
+        }
+
         public void Initialize(ISettingsPanel _settingsPanel)
         {
             settingsPanel = _settingsPanel;
@@ -183,18 +200,6 @@ namespace RocketSoundEnhancement.Unity
         {
             if (!_initialized) return;
             settingsPanel.SaveSettings();
-        }
-
-        public void OnDrag(PointerEventData eventData)
-        {
-            if (rectTransform == null) return;
-            rectTransform.anchoredPosition += eventData.delta;
-        }
-
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            if (rectTransform == null) return;
-            rectTransform.SetAsLastSibling();
         }
     }
 }

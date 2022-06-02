@@ -3,17 +3,23 @@ using UnityEngine;
 using RocketSoundEnhancement.Unity;
 using System.Reflection;
 using System;
+using KSP.UI;
 
 namespace RocketSoundEnhancement
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class SettingsPanel : MonoBehaviour, ISettingsPanel
     {
+        private SettingsPanel instance;
+        public SettingsPanel Instance { get { return instance; } }
+        public float CanvasScale => GameSettings.UI_SCALE;
+
         public ApplicationLauncherButton AppButton;
         public Texture AppIcon = GameDatabase.Instance.GetTexture("RocketSoundEnhancement/Textures/RSE_Icon", false);
 
         private RSE_Panel panelController;
         private GameObject rse_PanelPrefab;
+        private Vector2 panelPosition = Vector2.zero;
         public GameObject RSE_PanelPrefab
         {
             get
@@ -26,8 +32,6 @@ namespace RocketSoundEnhancement
             }
         }
 
-        private SettingsPanel instance;
-        public SettingsPanel Instance { get { return instance; } }
         public string Version => version;
         public string version;
         public bool EnableAudioEffects { get => Settings.EnableAudioEffects; set => Settings.EnableAudioEffects = value; }
@@ -119,12 +123,13 @@ namespace RocketSoundEnhancement
         {
             if (RSE_PanelPrefab == null) return;
 
-            GameObject obj = Instantiate(RSE_PanelPrefab, Vector3.zero, Quaternion.identity) as GameObject;
-            obj.transform.SetParent(MainCanvasUtil.MainCanvas.transform);
-            panelController = obj.GetComponent<RSE_Panel>();
+            GameObject panelPrefab = Instantiate(RSE_PanelPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+            panelPrefab.transform.SetParent(UIMasterController.Instance.dialogCanvas.transform, false);
+            panelPrefab.transform.SetAsFirstSibling();
+            panelController = panelPrefab.GetComponent<RSE_Panel>();
 
             if (panelController == null) return;
-
+            panelController.transform.position = panelPosition;
             panelController.Initialize(Instance);
         }
 
@@ -132,6 +137,7 @@ namespace RocketSoundEnhancement
         {
             if (panelController != null)
             {
+                panelPosition = panelController.transform.position;
                 GameObject.Destroy(panelController.gameObject);
             }
         }
@@ -146,6 +152,10 @@ namespace RocketSoundEnhancement
         {
             Settings.Save();
             RocketSoundEnhancement.Instance.ApplySettings();
+        }
+        public void ClampToScreen(RectTransform rect)
+        {
+           UIMasterController.ClampToScreen(rect, Vector2.zero);
         }
 
         void OnDestroy()
