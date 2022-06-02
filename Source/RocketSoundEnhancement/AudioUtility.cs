@@ -225,7 +225,7 @@ namespace RocketSoundEnhancement
 
         public static AudioMixerGroup GetMixerGroup(MixerGroup group)
         {
-            if (Settings.AudioEffectsEnabled)
+            if (Settings.EnableAudioEffects)
             {
                 switch (group)
                 {
@@ -240,7 +240,7 @@ namespace RocketSoundEnhancement
 
         public static AudioMixerGroup GetMixerGroup(FXChannel channel, bool isActiveVessel)
         {
-            if (Settings.AudioEffectsEnabled)
+            if (Settings.EnableAudioEffects)
             {
                 switch (channel)
                 {

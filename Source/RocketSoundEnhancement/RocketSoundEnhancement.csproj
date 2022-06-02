@@ -51,6 +51,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>..\..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <OutputPath>..\..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
@@ -96,6 +99,14 @@
       <HintPath>..\..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.VehiclesModule">
       <HintPath>..\..\..\..\Kerbal Space Program\KSP 1.12.3\KSP_x64_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
       <Private>False</Private>
@@ -115,6 +126,8 @@
     <Compile Include="RocketSoundEnhancement.cs" />
     <Compile Include="GUI.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SettingsPanel.cs" />
+    <Compile Include="ShipEffectsConfig.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="ShipEffects.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -124,6 +137,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Krafs.Publicizer" Version="1.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj">
+      <Project>{5dff0176-7ba8-49f4-8155-f5d9b37d7d3d}</Project>
+      <Name>RocketSoundEnhancement.Unity</Name>
+      <Private>False</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

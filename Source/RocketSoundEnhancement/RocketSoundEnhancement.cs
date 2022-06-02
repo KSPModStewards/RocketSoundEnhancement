@@ -1,5 +1,6 @@
 ﻿using KSP.UI.Screens;
 using RocketSoundEnhancement.AudioFilters;
+using RocketSoundEnhancement.Unity;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,8 +11,8 @@ namespace RocketSoundEnhancement
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class RocketSoundEnhancement : MonoBehaviour
     {
-        public static RocketSoundEnhancement _instance = null;
-        public static RocketSoundEnhancement Instance { get { return _instance; } }
+        public static RocketSoundEnhancement instance = null;
+        public static RocketSoundEnhancement Instance { get { return instance; } }
 
         public AerodynamicsFX AeroFX;
         private AudioMixer mixer;
@@ -38,31 +39,21 @@ namespace RocketSoundEnhancement
         float lastCutoffFreq;
         float lastInteriorCutoffFreq;
 
-        HashSet<AudioSource> unManagedSources = new HashSet<AudioSource>();
+        HashSet<AudioSource> unmanagedSources = new HashSet<AudioSource>();
         HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
         Dictionary<int, float> managedMinDistance = new Dictionary<int, float>();
-
-        string[] aae_chatterer_clipNames = {
-            "breathing",
-            "airlock"
-        };
-
-        string[] preservedSourceNames = {
-            "MusicLogic",
-            "SoundtrackEditor",
-            "PartActionController(Clone)"
-        };
 
         private bool gamePaused;
 
         void Awake()
         {
-            _instance = this;
+            instance = this;
         }
 
         void Start()
         {
             Settings.Load();
+            ShipEffectsConfig.Load();
 
             AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
 
@@ -80,7 +71,7 @@ namespace RocketSoundEnhancement
                 stageSource.enabled = !Settings.DisableStagingSound;
             }
 
-            unManagedSources.Clear();
+            unmanagedSources.Clear();
             HashSet<AudioSource> audioSources = GameObject.FindObjectsOfType<AudioSource>().ToHashSet();
             foreach (var source in audioSources)
             {
@@ -89,7 +80,7 @@ namespace RocketSoundEnhancement
 
                 if (Settings.CustomAudioSources.Count > 0 && Settings.CustomAudioSources.ContainsKey(source.gameObject.name))
                 {
-                    if (!unManagedSources.Contains(source)) unManagedSources.Add(source);
+                    if (!unmanagedSources.Contains(source)) unmanagedSources.Add(source);
 
                     var mixerChannel = Settings.CustomAudioSources[source.gameObject.name];
                     source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
@@ -98,7 +89,7 @@ namespace RocketSoundEnhancement
 
                 if (Settings.CustomAudioClips.Count > 0 && source.clip != null && Settings.CustomAudioClips.ContainsKey(source.clip.name))
                 {
-                    if (!unManagedSources.Contains(source)) unManagedSources.Add(source);
+                    if (!unmanagedSources.Contains(source)) unmanagedSources.Add(source);
 
                     var mixerChannel = Settings.CustomAudioClips[source.clip.name];
                     source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
@@ -108,9 +99,9 @@ namespace RocketSoundEnhancement
                 if (source.name == "FX Sound" || source.name == "airspeedNoise")
                 {
                     if (source.clip != null && source.clip.name != "sound_wind_constant")
-                        source.mute = Settings.MuteStockAeroSounds;
+                        source.mute = ShipEffectsConfig.MuteStockAeroSounds;
 
-                    source.outputAudioMixerGroup = Settings.AudioEffectsEnabled ? ExteriorMixer : null;
+                    source.outputAudioMixerGroup = Settings.EnableAudioEffects ? ExteriorMixer : null;
                 }
             }
 
@@ -122,12 +113,12 @@ namespace RocketSoundEnhancement
             if (Mixer == null) return;
 
             float thrs, gain, atk, rls;
-            float amount = Settings.Limiter.AutoLimiter;
-            bool isCustom = Settings.Limiter.Custom;
-            thrs = isCustom ? Settings.Limiter.Threshold : Mathf.Lerp(0, -16, amount);
-            gain = isCustom ? Settings.Limiter.Gain : Mathf.Lerp(0, 16, amount);
-            atk = isCustom ? Settings.Limiter.Attack : Mathf.Lerp(10, 200, amount);
-            rls = isCustom ? Settings.Limiter.Release : Mathf.Lerp(20, 1000, amount);
+            float amount = Settings.AutoLimiter;
+            bool isCustom = Settings.EnableCustomLimiter;
+            thrs = isCustom ? Settings.LimiterThreshold : Mathf.Lerp(0, -16, amount);
+            gain = isCustom ? Settings.LimiterGain : Mathf.Lerp(0, 16, amount);
+            atk = isCustom ? Settings.LimiterAttack : Mathf.Lerp(10, 200, amount);
+            rls = isCustom ? Settings.LimiterRelease : Mathf.Lerp(20, 1000, amount);
 
             mixer.SetFloat("LimiterThreshold",thrs);
             mixer.SetFloat("LimiterGain", gain);
@@ -147,7 +138,7 @@ namespace RocketSoundEnhancement
         {
             if (gamePaused) return;
 
-            if (!Settings.AudioEffectsEnabled || Mixer == null)
+            if (!Settings.EnableAudioEffects || Mixer == null)
             {
                 if (managedSources.Count > 0)
                 {
@@ -177,7 +168,7 @@ namespace RocketSoundEnhancement
                     continue;
                 }
 
-                if (unManagedSources.Contains(source))
+                if (unmanagedSources.Contains(source))
                     continue;
 
                 // assume this source is a GUI source and ignore
@@ -247,10 +238,10 @@ namespace RocketSoundEnhancement
 
             if (overrideFiltering) { FocusMufflingFrequency = MufflingFrequency; return; }
 
-            float atmCutOff = Mathf.Lerp(Settings.MufflerPreset.ExteriorMuffling, 22200, atmDensityClamped) * WindModulation();
-            float focusMuffling = InternalCamera.Instance.isActive ? Settings.MufflerPreset.InteriorMuffling : atmCutOff;
+            float atmCutOff = Mathf.Lerp(Settings.MufflerExternalMode, 22200, atmDensityClamped) * WindModulation();
+            float focusMuffling = InternalCamera.Instance.isActive ? Settings.MufflerInternalMode : atmCutOff;
 
-            if (MapView.MapCamera.isActiveAndEnabled) focusMuffling = Mathf.Min(Settings.MufflerPreset.InteriorMuffling, atmCutOff);
+            if (MapView.MapCamera.isActiveAndEnabled) focusMuffling = Mathf.Min(Settings.MufflerInternalMode, atmCutOff);
 
             MufflingFrequency = Mathf.MoveTowards(lastCutoffFreq, Mathf.Min(atmCutOff, focusMuffling), 5000);
             FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);

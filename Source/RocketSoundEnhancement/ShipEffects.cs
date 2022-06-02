@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
+using RocketSoundEnhancement.Unity;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -59,7 +60,7 @@ namespace RocketSoundEnhancement
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
-            if (Settings.AudioEffectsEnabled && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
+            if (Settings.EnableAudioEffects && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
             {
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
@@ -117,7 +118,7 @@ namespace RocketSoundEnhancement
 
                     if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
                     {
-                        if (!Settings.AudioEffectsEnabled || Settings.MufflerQuality != AudioMufflerQuality.AirSim)
+                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality != AudioMufflerQuality.AirSim)
                             continue;
 
                         if (MachPass > 0.0 && !SonicBoomedTip)
@@ -298,9 +299,9 @@ namespace RocketSoundEnhancement
                 return true;
             }
 
-            if (Settings.ShipEffectsNodes().Count > 0)
+            if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
             {
-                foreach (var node in Settings.ShipEffectsNodes())
+                foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
                 {
                     if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
                     if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;

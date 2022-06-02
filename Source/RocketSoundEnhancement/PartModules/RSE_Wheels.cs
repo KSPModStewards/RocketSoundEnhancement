@@ -184,7 +184,7 @@ namespace RocketSoundEnhancement.PartModules
             wheelSpeed = Mathf.Abs(moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity);
 
             float x = moduleWheel.Wheel.currentState.localWheelVelocity.x;
-            float y = wheelSpeed - moduleWheel.Wheel.currentState.localWheelVelocity.y;
+            float y = (moduleWheel.Wheel.WheelRadius * moduleWheel.Wheel.wheelCollider.angularVelocity) - moduleWheel.Wheel.currentState.localWheelVelocity.y;
 
             slipDisplacement = Mathf.Sqrt(x * x + y * y);
         }

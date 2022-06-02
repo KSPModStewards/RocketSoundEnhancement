@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
+using RocketSoundEnhancement.Unity;
 using UnityEngine;
 
 namespace RocketSoundEnhancement.PartModules
@@ -196,7 +197,7 @@ namespace RocketSoundEnhancement.PartModules
             if (!initialized || !vessel.loaded)
                 return;
             
-            if (Settings.AudioEffectsEnabled)
+            if (Settings.EnableAudioEffects)
             {
                 //  Calculate Doppler
                 var speedOfSound = vessel.speedOfSound > 0 ? (float)vessel.speedOfSound : 340.29f;
@@ -233,7 +234,7 @@ namespace RocketSoundEnhancement.PartModules
 
             finalPitch = soundLayer.pitchFC?.Evaluate(control) ?? soundLayer.pitch.Value(control);
             finalPitch *= soundLayer.massToPitch?.Value((float)part.physicsMass) ?? 1;
-            finalPitch *= Settings.AudioEffectsEnabled ? doppler : 1;
+            finalPitch *= Settings.EnableAudioEffects ? doppler : 1;
 
             if (finalVolume < float.Epsilon)
             {
@@ -249,7 +250,7 @@ namespace RocketSoundEnhancement.PartModules
             AudioSource source = Sources[soundLayerName];
             source.enabled = true;
 
-            if (Settings.AudioEffectsEnabled && Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
+            if (Settings.EnableAudioEffects && Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
             {
                 if (UseAirSimulation && AirSimFilters.ContainsKey(soundLayerName))
                 {
