@@ -1,4 +1,4 @@
-# v0.9.2
+# [0.9.2] - 06-04-22
 **Changes**
 - New Settings Panel
 - Replaced Audio Limiter with Unity's Audio Compressor/Limiter
@@ -20,11 +20,11 @@
 
 **Full Changelog**: https://github.com/ensou04/RocketSoundEnhancement/compare/0.9.1...0.9.2
 
-# v0.9.1
+# [0.9.1] - 05-23-22
 - Added Support for Internal Space Mods ([RPM](https://github.com/JonnyOThan/RasterPropMonitor/releases), [MAS](https://github.com/MOARdV/AvionicsSystems/releases))
 - Fixed Music Getting Muffled at higher Muffler Settings
 
-# v0.9.0
+# [0.9.0] - 05-23-22
 ### New Audio Muffler Quality Settings
 - **Lite:** The Old Basic Muffler
 - **Full:** Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect
