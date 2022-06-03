@@ -1,4 +1,4 @@
-## [0.9.2] - 06-04-22
+## [0.9.2] - 06-03-22
 ### Changes
 - New Settings Panel
 - Replaced Audio Limiter with Unity's Audio Compressor/Limiter
