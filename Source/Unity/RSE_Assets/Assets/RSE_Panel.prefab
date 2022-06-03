@@ -9891,7 +9891,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Minimal Muffling
+  m_Text: No Muffling
 --- !u!114 &624002619070436749
 MonoBehaviour:
   m_ObjectHideFlags: 0
