@@ -21,6 +21,7 @@ namespace RocketSoundEnhancement
         public static bool EnableAudioEffects = true;
         public static bool EnableCustomLimiter = false;
         public static bool DisableStagingSound = false;
+        public static bool ClampActiveVesselMuffling = false;
 
         public static float AirSimMaxDistance = 5000;
         public static float InteriorVolume = 1;
@@ -50,7 +51,7 @@ namespace RocketSoundEnhancement
         public static void SetMufflerDefaults()
         {
             MufflerInternalMode = 1500;
-            MufflerExternalMode = 2220;
+            MufflerExternalMode = 1000;
         }
 
         private static void loadLimiterSettings(ConfigNode settingsNode)
@@ -95,6 +96,7 @@ namespace RocketSoundEnhancement
                 SetMufflerDefaults();
 
                 var defaultMufflerNode = settingsNode.AddNode("MUFFLER");
+                defaultMufflerNode.AddValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling);
                 defaultMufflerNode.AddValue("MufflerQuality", MufflerQuality);
                 defaultMufflerNode.AddValue("InternalMode", MufflerInternalMode);
                 defaultMufflerNode.AddValue("ExternalMode", MufflerExternalMode);
@@ -102,6 +104,9 @@ namespace RocketSoundEnhancement
             }
 
             var mufflerNode = settingsNode.GetNode("MUFFLER");
+            if (!mufflerNode.HasValue("ClampActiveVesselMuffling") || !bool.TryParse(mufflerNode.GetValue("ClampActiveVesselMuffling"), out ClampActiveVesselMuffling))
+                mufflerNode.AddValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling);
+
             if (mufflerNode.HasValue("MufflerQuality"))
             {
                 if (!Enum.TryParse(mufflerNode.GetValue("MufflerQuality"), true, out MufflerQuality))
@@ -143,11 +148,12 @@ namespace RocketSoundEnhancement
             if (!settingsNode.HasValue("EnableAudioEffects")) settingsNode.AddValue("EnableAudioEffects", true);
             bool.TryParse(settingsNode.GetValue("EnableAudioEffects"), out EnableAudioEffects);
 
+            if (!settingsNode.HasValue("DisableStagingSound") || !bool.TryParse(settingsNode.GetValue("DisableStagingSound"), out DisableStagingSound))
+                settingsNode.AddValue("DisableStagingSound", DisableStagingSound);
+
             if (settingsNode.HasValue("ExteriorVolume") && !float.TryParse(settingsNode.GetValue("ExteriorVolume"), out ExteriorVolume)) ExteriorVolume = 1;
             if (settingsNode.HasValue("InteriorVolume") && !float.TryParse(settingsNode.GetValue("InteriorVolume"), out InteriorVolume)) InteriorVolume = 1;
 
-            if (!settingsNode.HasValue("DisableStagingSound") || !bool.TryParse(settingsNode.GetValue("DisableStagingSound"), out DisableStagingSound))
-                settingsNode.AddValue("DisableStagingSound", DisableStagingSound);
 
             if (settingsNode.HasNode("Colliders"))
             {
@@ -232,10 +238,11 @@ namespace RocketSoundEnhancement
             limiterNode.SetValue("Release", LimiterRelease);
 
             var mufflerNode = settingsNode.GetNode("MUFFLER");
+            mufflerNode.SetValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling, true);
             mufflerNode.SetValue("MufflerQuality", MufflerQuality.ToString(), true);
-            mufflerNode.SetValue("AirSimMaxDistance", AirSimMaxDistance, true);
             mufflerNode.SetValue("InternalMode", MufflerInternalMode, true);
             mufflerNode.SetValue("ExternalMode", MufflerExternalMode, true);
+            mufflerNode.SetValue("AirSimMaxDistance", AirSimMaxDistance, false);
 
             settingsConfigNode.Save(ModPath + "Settings.cfg");
         }

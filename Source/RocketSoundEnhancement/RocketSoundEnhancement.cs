@@ -230,16 +230,9 @@ namespace RocketSoundEnhancement
             }
 
             float atmDensityClamped = Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity);
-            Mixer.SetFloat("ExteriorCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
-            Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 10, 22000));
-
-            Mixer.SetFloat("ExteriorVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(MufflingFrequency / 50)));
-            Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
-
-            if (overrideFiltering) { FocusMufflingFrequency = MufflingFrequency; return; }
-
-            float atmCutOff = Mathf.Lerp(Settings.MufflerExternalMode, 22200, atmDensityClamped) * WindModulation();
-            float focusMuffling = InternalCamera.Instance.isActive ? Settings.MufflerInternalMode : atmCutOff;
+            float atmCutOff = Mathf.Lerp(Settings.MufflerExternalMode, 30000, atmDensityClamped) * WindModulation();
+            float focusOutsideMuffling = Settings.ClampActiveVesselMuffling ? Mathf.Clamp(atmCutOff, Settings.MufflerInternalMode, 30000) : atmCutOff;
+            float focusMuffling = InternalCamera.Instance.isActive ? Settings.MufflerInternalMode : focusOutsideMuffling;
 
             if (MapView.MapCamera.isActiveAndEnabled) focusMuffling = Mathf.Min(Settings.MufflerInternalMode, atmCutOff);
 
@@ -247,6 +240,12 @@ namespace RocketSoundEnhancement
             FocusMufflingFrequency = Mathf.MoveTowards(lastInteriorCutoffFreq, focusMuffling, 5000);
             lastCutoffFreq = MufflingFrequency;
             lastInteriorCutoffFreq = FocusMufflingFrequency;
+
+            Mixer.SetFloat("ExteriorCutoff", Mathf.Clamp(MufflingFrequency, 10, 22000));
+            Mixer.SetFloat("FocusCutoff", Mathf.Clamp(FocusMufflingFrequency, 10, 22000));
+
+            Mixer.SetFloat("ExteriorVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(MufflingFrequency / 50)));
+            Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
         }
 
         void OnDestroy()

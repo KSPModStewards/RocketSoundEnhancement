@@ -160,6 +160,9 @@ namespace RocketSoundEnhancement
 
         void OnDestroy()
         {
+            if (panelController != null)
+                UnityEngine.Object.Destroy(panelController.gameObject);
+
             if (AppButton != null)
             {
                 ApplicationLauncher.Instance.RemoveModApplication(AppButton);
