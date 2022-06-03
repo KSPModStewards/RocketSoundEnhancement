@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 2731915267
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: rse_bundle
+      Dependencies: {}
