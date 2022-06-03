@@ -1,5 +1,4 @@
 # Rocket Sound Enhancement
-
 Rocket Sound Enhancement (RSE) is an Audio Plugin Framework Mod for [Kerbal Space Program](https://www.kerbalspaceprogram.com/) that offers modders advance sound effects features not available in the base game. 
 It features a robust Layering System for use of multiple sounds just like in other games (eg: FMod). 
 
@@ -11,31 +10,12 @@ Get the Default Config here:
 
 
 ## Features
-
 ### Audio Muffler
-
-- Lite: The Old Basic Muffler
-- Full: Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect.
-- AirSim: Works on top of Full Quality, Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, mach effects, sonic booms and distortion. Stock sound sources has basic mach and distance attenuation (volume or filter based) support.
-
-**Presets:**
-
-    - Interior-Only (Only Muffle sounds when the Camera is in IVA view)
-    - Muffled-Vacuum
-    - Silent-Vacuum
-    - Custom (User Customizable Preset)
-    - Add more Presets in Settings.cfg
+- Normal: Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect.
+- AirSim: Works on top of Full Quality, Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, mach effects, sonic booms (via ShipEffects) and distortion. Stock sound sources has basic mach and distance attenuation (volume or filter based) support.
 
 ### Master Audio Limiter/Compressor
-Control the Loudness of the overall game dynamically.
-
-**Presets:**
-
-    - Balanced (The Default Preset, Sounds are balanced with Reasonable Dynamic Range)
-    - Cinematic (Wide Dynamic Range, Loud Sounds are Louder and Quiet Sound Are Quieter than Balanced)
-    - NASA-Reels (Inspired by Real Rocket Launch Footage, This is the Loudest Preset with minimal Dynamic Range)
-    - Custom (User Customizable Preset)
-    - Add more Presets in Settings.cfg
+Sound Mastering that controls the overall loudness of the game with Adjustable Settings for different dynamic ranges.
 
 ### Part Modules
 Apply sounds with Layering Capabilities with these part modules. 
@@ -53,6 +33,3 @@ Replace and/or Add Sounds to Decouplers, Launch Clamps and Docking Ports.
 - Add sounds and assign it's Pitch or Volume to any physics variable available for each Vessel
 - Add Collision Sound Effects for different surfaces to any Part
 - Replace or Disable Staging Sound Effects
-
-## Dependencies
-- [Module Manager](https://github.com/sarbian/ModuleManager)
