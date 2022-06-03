@@ -1,3 +1,47 @@
+# v0.9.2
+**Changes**
+- New Settings Panel
+- Replaced Audio Limiter with Unity's Audio Compressor/Limiter
+- Audio Limiter Presets has been replaced with "Limiter Amount" slider in the Settings Panel. 
+- Muffling Presets has been replaced with simpler "Muffling Amount" slider in the Settings Panel. (Still saved as a frequency value in the Settings.cfg)
+- "ClampActiveVesselMuffling" option for Audio Muffler. Allows the currently active vessel to have separate muffling from regular muffling by clamping the muffling amount to the InternalMode muffling frequency.
+- ["CustomMixerRouting" config allows custom routing of existing static sound sources (modded, stock) to the mixer.](https://forum.kerbalspaceprogram.com/index.php?/topic/179579-110x-112x-rocket-sound-enhancement-audio-framework-for-complex-sound-effects-v091-052322-config-pack-v120-052322/&do=findComment&comment=4139319)
+- Audio Muffler now considers any sound source that has spatialBlend = 0 or position = 0 as a GUI Source and is ignored from the muffling. Can still be routed back for muffling (for example: wind sounds) via CustomMixerRouting config in Settings.cfg
+
+**Performance Improvements/Fixes**
+- Fixed denormal numbers from AirSimulationFilter causing high CPU usage
+- AudioClips, AudioSources and AirSimulationFilters are prepared ahead of time instead of being created dynamically during update.
+- SoundLayers can now share AudioSources with each other if the layer has the same name
+- One Shot (eg: Engage, Disengage, Flame-out and Bursts) SoundLayers now share one AudioSource with each other. _Issue: sometimes pitch is incorrectly applied._
+- Fixed audio clicking when the sound source is stopped
+- Fixed Null Exceptions from ShipEffectsCollisions
+- Fixed Loop Randomizer not properlly randomizing causing unwanted Comb-Filtering/Phasing
+- Various Refactoring and Optimizations
+
+**Full Changelog**: https://github.com/ensou04/RocketSoundEnhancement/compare/0.9.1...0.9.2
+
+# v0.9.1
+- Added Support for Internal Space Mods ([RPM](https://github.com/JonnyOThan/RasterPropMonitor/releases), [MAS](https://github.com/MOARdV/AvionicsSystems/releases))
+- Fixed Music Getting Muffled at higher Muffler Settings
+
+# v0.9.0
+### New Audio Muffler Quality Settings
+- **Lite:** The Old Basic Muffler
+- **Full:** Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect
+- **AirSim:** Works on top of Full Quality, Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, mach effects, sonic booms and distortion. Stock sound sources has basic mach and distance attenuation (volume or filter based) support.
+### Changes
+- **RSE_RotorEngines** Part Module
+- **RSE_Propellers**{} Config Node for propeller blades. Works when attached to Rotors with an **RSE_RotorEngines** Part Module
+- **Motor{}** Sound Group for **RSE_Wheels**. **Torque** Sound Group has been removed.
+- **ShipEffects** now uses Sound Groups for **Physics Controllers** instead of using soundlayer.data
+- **DYNAMICPRESSURE{}**, **SONICBOOM{}** and **REENTRYHEAT{}** Sound Group for **ShipEffects**
+- Simplified Audio Muffler Settings
+- Interior and Exterior Volume Settings
+- Support for SoundtrackEditor music sources by @KvaNTy in https://github.com/ensou04/RocketSoundEnhancement/pull/11
+- Support for misc Chatterer sound sources by @KvaNTy in https://github.com/ensou04/RocketSoundEnhancement/pull/12
+
+**Full Changelog**: https://github.com/ensou04/RocketSoundEnhancement/compare/0.7.2...0.9.0
+
 0.7.2:
 - Potential Fix for Collision Loop Sound Effects Persisting after Impact
 - Custom Audio Muffler Settings now react instantly to new settings
