@@ -1,5 +1,5 @@
-# [0.9.2] - 06-04-22
-**Changes**
+## [0.9.2] - 06-04-22
+### Changes
 - New Settings Panel
 - Replaced Audio Limiter with Unity's Audio Compressor/Limiter
 - Audio Limiter Presets has been replaced with "Limiter Amount" slider in the Settings Panel. 
@@ -8,7 +8,7 @@
 - ["CustomMixerRouting" config allows custom routing of existing static sound sources (modded, stock) to the mixer.](https://forum.kerbalspaceprogram.com/index.php?/topic/179579-110x-112x-rocket-sound-enhancement-audio-framework-for-complex-sound-effects-v091-052322-config-pack-v120-052322/&do=findComment&comment=4139319)
 - Audio Muffler now considers any sound source that has spatialBlend = 0 or position = 0 as a GUI Source and is ignored from the muffling. Can still be routed back for muffling (for example: wind sounds) via CustomMixerRouting config in Settings.cfg
 
-**Performance Improvements/Fixes**
+### Performance Improvements/Fixes
 - Fixed denormal numbers from AirSimulationFilter causing high CPU usage
 - AudioClips, AudioSources and AirSimulationFilters are prepared ahead of time instead of being created dynamically during update.
 - SoundLayers can now share AudioSources with each other if the layer has the same name
@@ -20,11 +20,11 @@
 
 **Full Changelog**: https://github.com/ensou04/RocketSoundEnhancement/compare/0.9.1...0.9.2
 
-# [0.9.1] - 05-23-22
+## [0.9.1] - 05-23-22
 - Added Support for Internal Space Mods ([RPM](https://github.com/JonnyOThan/RasterPropMonitor/releases), [MAS](https://github.com/MOARdV/AvionicsSystems/releases))
 - Fixed Music Getting Muffled at higher Muffler Settings
 
-# [0.9.0] - 05-23-22
+## [0.9.0] - 05-23-22
 ### New Audio Muffler Quality Settings
 - **Lite:** The Old Basic Muffler
 - **Full:** Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior. With Doppler Effect
