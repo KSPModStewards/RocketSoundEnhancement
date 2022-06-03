@@ -15,7 +15,7 @@ Get the Default Config here:
 - AirSim: Works on top of Full Quality, Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, mach effects, sonic booms (via ShipEffects) and distortion. Stock sound sources has basic mach and distance attenuation (volume or filter based) support.
 
 ### Master Audio Limiter/Compressor
-Sound Mastering that controls the overall loudness of the game with Adjustable Settings for different dynamic ranges.
+Sound Mastering that controls the overall loudness of the game with Adjustable Amount for different dynamics.
 
 ### Part Modules
 Apply sounds with Layering Capabilities with these part modules. 
