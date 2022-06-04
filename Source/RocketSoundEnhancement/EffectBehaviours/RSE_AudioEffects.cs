@@ -146,6 +146,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     goto end;
                 }
 
+                audioSource.enabled = true;
                 if (Settings.MufflerQuality > AudioMufflerQuality.Normal)
                 {
                     if (airSimFilter != null && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
@@ -167,7 +168,6 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 audioSource.pitch = pitch.Value(control) * (loop ? doppler : 1);
                 audioSource.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, isActiveVessel);
 
-                audioSource.enabled = true;
                 if (!audioSource.isPlaying && loop)
                 {
                     if (audioSource.clip == null) audioSource.clip = audioClip;
@@ -192,6 +192,12 @@ namespace RocketSoundEnhancement.EffectBehaviours
             if (slowUpdate >= 60)
             {
                 slowUpdate = 0;
+
+                if (audioSource.isPlaying || !audioSource.enabled) return;
+
+                audioSource.enabled = false;
+                markForPlay = false;
+
                 if (!audioSource.enabled && airSimFilter != null)
                 {
                     airSimFilter.enabled = false;
@@ -201,11 +207,6 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     airSimFilter.MachAngle = machAngle;
                     airSimFilter.MachPass = machPass;
                 }
-
-                if (audioSource.isPlaying || !audioSource.enabled) return;
-
-                audioSource.enabled = false;
-                markForPlay = false;
             }
         }
 
