@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Changes
 - AirSim Lite muffler quality. mach effects and sonic booms without the airsim filters
+- RSE_AUDIO, RSE_AUDIOLOOP, simpler non-SoundLayer version of RSE_Modules for EFFECTS{} nodes.
 
 ## [0.9.2] - 06-03-22
 ### Changes
