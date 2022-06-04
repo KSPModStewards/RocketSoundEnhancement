@@ -192,19 +192,16 @@ namespace RocketSoundEnhancement
                 {
                     source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExteriorMixer;
 
-                    if (Settings.MufflerQuality == AudioMufflerQuality.AirSim)
+                    if (Settings.MufflerQuality > AudioMufflerQuality.Normal && source.gameObject.GetComponents<AudioSource>().Length > 1)
                     {
-                        if (source.gameObject.GetComponents<AudioSource>().Length > 1)
-                        {
-                            if (!managedMinDistance.ContainsKey(managedSourceID))
-                                managedMinDistance.Add(managedSourceID, source.minDistance);
+                        if (!managedMinDistance.ContainsKey(managedSourceID))
+                            managedMinDistance.Add(managedSourceID, source.minDistance);
 
-                            float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
-                            float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
-                            float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
-                            source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
-                            continue;
-                        }
+                        float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
+                        float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                        float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
+                        source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
+                        continue;
                     }
 
                     if (managedMinDistance.Count > 0 && managedMinDistance.ContainsKey(managedSourceID))

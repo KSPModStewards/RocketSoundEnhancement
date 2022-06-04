@@ -28,7 +28,6 @@ namespace RocketSoundEnhancement.PartModules
         public bool EnableLowpassFilter = false;
         public bool EnableWaveShaperFilter = false;
         public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
-        public float MaxDistance = 2500;
         public float FarLowpass = 2500;
         public float AngleHighpass = 0;
         public float MaxCombDelay = 20;
@@ -70,7 +69,6 @@ namespace RocketSoundEnhancement.PartModules
 
                 if(node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
-                if (node.HasValue("MaxDistance")) MaxDistance = float.Parse(node.GetValue("MaxDistance"));
                 if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
                 if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
                 if (node.HasValue("MaxCombDelay")) MaxCombDelay = float.Parse(node.GetValue("MaxCombDelay"));
@@ -112,8 +110,8 @@ namespace RocketSoundEnhancement.PartModules
             random = new System.Random(GetInstanceID());
             loopRandomStart = (float)random.NextDouble();
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            GameEvents.onGamePause.Add(OnGamePause);
+            GameEvents.onGameUnpause.Add(OnGameUnpause);
         }
 
         public IEnumerator SetupAudioSources(List<SoundLayer> soundLayers)
@@ -132,8 +130,7 @@ namespace RocketSoundEnhancement.PartModules
                     source.enabled = false;
                     Sources.Add(soundLayerName, source);
 
-                    var airSimFilter = new AirSimulationFilter();
-                    airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
+                    var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
                     airSimFilter.enabled = false;
 
                     airSimFilter.EnableCombFilter = EnableCombFilter;
@@ -141,7 +138,6 @@ namespace RocketSoundEnhancement.PartModules
                     airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
                     airSimFilter.SimulationUpdate = AirSimUpdateMode;
 
-                    airSimFilter.MaxDistance = MaxDistance;
                     airSimFilter.FarLowpass = FarLowpass;
                     airSimFilter.AngleHighPass = AngleHighpass;
                     airSimFilter.MaxCombDelay = MaxCombDelay;
@@ -208,7 +204,7 @@ namespace RocketSoundEnhancement.PartModules
                 var dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 1 - (DopplerFactor * 0.5f), 1 + DopplerFactor);
                 doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
 
-                if (Settings.MufflerQuality != AudioMufflerQuality.AirSim) return;
+                if (Settings.MufflerQuality == AudioMufflerQuality.Normal) return;
 
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
                 machPass = 1f - Mathf.Clamp01(angle / vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
@@ -250,9 +246,9 @@ namespace RocketSoundEnhancement.PartModules
             AudioSource source = Sources[soundLayerName];
             source.enabled = true;
 
-            if (Settings.EnableAudioEffects && Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior)
+            if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
             {
-                if (UseAirSimulation && AirSimFilters.ContainsKey(soundLayerName))
+                if (UseAirSimulation && Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName))
                 {
                     AirSimFilters[soundLayerName].enabled = source.isPlaying;
                     AirSimFilters[soundLayerName].Distance = distance;
@@ -264,8 +260,7 @@ namespace RocketSoundEnhancement.PartModules
                 }
                 else
                 {
-                    float machPassLog = Mathf.Log(Mathf.Lerp(1, 10, machPass), 10);
-                    finalVolume *= Mathf.Min(machPassLog, Mathf.Pow(1 - Mathf.Clamp01(distance / MaxDistance), 2) * 0.5f);
+                    finalVolume *= Mathf.Log(Mathf.Lerp(1, 10, machPass), 10);
                 }
             }
 
@@ -286,13 +281,13 @@ namespace RocketSoundEnhancement.PartModules
             AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, volumeScale, !soundLayer.loop ? soundLayer.audioClips[index] : null);
         }
 
-        public void onGamePause()
+        public void OnGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
             gamePaused = true;
         }
 
-        public void onGameUnpause()
+        public void OnGameUnpause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
 
@@ -304,8 +299,8 @@ namespace RocketSoundEnhancement.PartModules
             if (!initialized) return;
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
             UnityEngine.Object.Destroy(audioParent);
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
         }
     }
 }

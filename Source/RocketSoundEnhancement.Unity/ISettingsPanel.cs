@@ -10,7 +10,8 @@ namespace RocketSoundEnhancement.Unity
     public enum AudioMufflerQuality
     {
         Normal = 0,
-        AirSim = 1
+        AirSimLite = 1,
+        AirSim = 2
     }
     public interface ISettingsPanel
     {

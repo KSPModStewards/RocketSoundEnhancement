@@ -70,8 +70,7 @@ namespace RocketSoundEnhancement.Unity
             _limiterRelease.value = settingsPanel.LimiterRelease;
 
             _mufflerNormalQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.Normal;
-            _mufflerAirSimLiteQuality.isOn = false;
-            _mufflerAirSimLiteQuality.interactable = false;
+            _mufflerAirSimLiteQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.AirSimLite;
             _mufflerAirSimFullQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.AirSim;
 
             _mufflerExternalMode.value = MathHelper.FrequencyToAmount(settingsPanel.MufflerExternalMode);
@@ -165,6 +164,9 @@ namespace RocketSoundEnhancement.Unity
                     settingsPanel.MufflerQuality = AudioMufflerQuality.Normal;
                     break;
                 case 1:
+                    settingsPanel.MufflerQuality = AudioMufflerQuality.AirSimLite;
+                    break;
+                case 2:
                     settingsPanel.MufflerQuality = AudioMufflerQuality.AirSim;
                     break;
                 default:

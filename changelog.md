@@ -1,4 +1,10 @@
-## [0.9.2] - 06-04-22
+# Changelog
+
+## [Unreleased]
+### Changes
+- AirSim Lite muffler quality. mach effects and sonic booms without the airsim filters
+
+## [0.9.2] - 06-03-22
 ### Changes
 - New Settings Panel
 - Replaced Audio Limiter with Unity's Audio Compressor/Limiter

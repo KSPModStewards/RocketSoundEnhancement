@@ -1667,10 +1667,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.11764707, g: 0.26666668, b: 0.37647063, a: 1}
+    m_NormalColor: {r: 0.16078432, g: 0.16078432, b: 0.18039216, a: 1}
     m_HighlightedColor: {r: 0, g: 0.5372549, b: 0.9607844, a: 1}
     m_PressedColor: {r: 0.40784317, g: 0.7254902, b: 0.9686275, a: 1}
-    m_SelectedColor: {r: 0.11764707, g: 0.26666668, b: 0.37647063, a: 1}
+    m_SelectedColor: {r: 0.18039216, g: 0.2, b: 0.23529412, a: 1}
     m_DisabledColor: {r: 0.16078432, g: 0.16078432, b: 0.18039216, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -1685,14 +1685,25 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 0
+  m_Interactable: 1
   m_TargetGraphic: {fileID: 624002619003814959}
   toggleTransition: 1
   graphic: {fileID: 624002618204160749}
   m_Group: {fileID: 624002618454865367}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 624002617916166690}
+        m_MethodName: OnMufflerQuality
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_IsOn: 0
 --- !u!222 &624002617430252155
 CanvasRenderer:
@@ -2405,7 +2416,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0, g: 0.5372549, b: 0.9607844, a: 1}
     m_PressedColor: {r: 0.40784317, g: 0.7254902, b: 0.9686275, a: 1}
     m_SelectedColor: {r: 0.18039216, g: 0.20000002, b: 0.23529413, a: 1}
-    m_DisabledColor: {r: 0.18039216, g: 0.20000002, b: 0.23529413, a: 1}
+    m_DisabledColor: {r: 0.16078432, g: 0.16078432, b: 0.18039216, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -2433,7 +2444,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 1
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -7570,7 +7581,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0, g: 0.5372549, b: 0.9607844, a: 1}
     m_PressedColor: {r: 0.40784317, g: 0.7254902, b: 0.9686275, a: 1}
     m_SelectedColor: {r: 0.18039216, g: 0.20000002, b: 0.23529413, a: 1}
-    m_DisabledColor: {r: 0.18039216, g: 0.20000002, b: 0.23529413, a: 1}
+    m_DisabledColor: {r: 0.16078432, g: 0.16078432, b: 0.18039216, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -9683,7 +9694,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.23529412}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
