@@ -60,7 +60,7 @@ namespace RocketSoundEnhancement
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
-            if (Settings.EnableAudioEffects && Settings.MufflerQuality == AudioMufflerQuality.AirSim)
+            if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
             {
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
                 Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
@@ -118,7 +118,7 @@ namespace RocketSoundEnhancement
 
                     if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
                     {
-                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality != AudioMufflerQuality.AirSim)
+                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality == AudioMufflerQuality.Normal)
                             continue;
 
                         if (MachPass > 0.0 && !SonicBoomedTip)
@@ -222,16 +222,23 @@ namespace RocketSoundEnhancement
 
             if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
 
-            if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && soundLayer.channel == FXChannel.Exterior && AirSimFilters.ContainsKey(soundLayerName))
+            if (Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
             {
-                AirSimFilters[soundLayerName].enabled = true;
-                AirSimFilters[soundLayerName].SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
-                AirSimFilters[soundLayerName].Distance = Distance;
-                AirSimFilters[soundLayerName].Mach = Mach;
-                AirSimFilters[soundLayerName].Angle = Angle;
-                AirSimFilters[soundLayerName].MachPass = MachPass;
-                AirSimFilters[soundLayerName].MachAngle = Angle;
-                airSimFiltersEnabled = true;
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName))
+                {
+                    AirSimFilters[soundLayerName].enabled = true;
+                    AirSimFilters[soundLayerName].SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
+                    AirSimFilters[soundLayerName].Distance = Distance;
+                    AirSimFilters[soundLayerName].Mach = Mach;
+                    AirSimFilters[soundLayerName].Angle = Angle;
+                    AirSimFilters[soundLayerName].MachPass = MachPass;
+                    AirSimFilters[soundLayerName].MachAngle = MachAngle;
+                    airSimFiltersEnabled = true;
+                }
+                else
+                {
+                    finalVolume *= Mathf.Log(Mathf.Lerp(1, 10, MachPass), 10);
+                }
             }
 
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
@@ -331,8 +338,8 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            GameEvents.onGamePause.Add(onGamePause);
-            GameEvents.onGameUnpause.Add(onGameUnpause);
+            GameEvents.onGamePause.Add(OnGamePause);
+            GameEvents.onGameUnpause.Add(OnGameUnpause);
             return true;
         }
 
@@ -371,8 +378,8 @@ namespace RocketSoundEnhancement
             VolumeControls.Clear();
             PitchControls.Clear();
 
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
             initialized = false;
         }
 
@@ -388,13 +395,13 @@ namespace RocketSoundEnhancement
             Unload();
         }
 
-        public void onGamePause()
+        public void OnGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
             gamePaused = true;
         }
 
-        public void onGameUnpause()
+        public void OnGameUnpause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
             gamePaused = false;
@@ -405,8 +412,8 @@ namespace RocketSoundEnhancement
             if (!initialized) return;
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
             UnityEngine.Object.Destroy(audioParent);
-            GameEvents.onGamePause.Remove(onGamePause);
-            GameEvents.onGameUnpause.Remove(onGameUnpause);
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
         }
     }
 }

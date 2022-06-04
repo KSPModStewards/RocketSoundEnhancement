@@ -170,6 +170,20 @@ namespace RocketSoundEnhancement
 
             return soundLayer;
         }
+        public static AudioSource CreateSource(GameObject sourceGameObject, FXCurve volume, FXCurve pitch, bool loop = false, float spread = 0.5f)
+        {
+            var source = sourceGameObject.AddComponent<AudioSource>();
+            source.name = RSETag + "_" + sourceGameObject.name;
+            source.playOnAwake = false;
+            source.volume = volume;
+            source.pitch = pitch;
+            source.loop = loop;
+            source.spatialBlend = 1;
+            source.rolloffMode = AudioRolloffMode.Logarithmic;
+            if (spread > 0) { source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, spread, 1, 0)); }
+
+            return source;
+        }
 
         public static AudioSource CreateSource(GameObject sourceGameObject, SoundLayer soundLayer)
         {
