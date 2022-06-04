@@ -48,10 +48,11 @@ namespace RocketSoundEnhancement.EffectBehaviours
         public AirSimulationFilter airSimFilter;
         public AudioClip audioClip;
 
-        float control;
-        private bool markForPlay;
         bool isActiveVessel;
+        bool markForPlay;
+        bool playOneShot;
         int slowUpdate;
+        float control;
         float distance;
         float lastDistance;
         float doppler = 1;
@@ -59,7 +60,6 @@ namespace RocketSoundEnhancement.EffectBehaviours
         float machPass = 1;
         float mach = 0;
         float machAngle = 0;
-        private bool playOneShot;
 
         public override void OnInitialize()
         {
