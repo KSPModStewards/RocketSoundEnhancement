@@ -62,20 +62,12 @@ namespace RocketSoundEnhancement
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
             {
-                Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-                Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
-                MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
-
                 Vector3 vesselTip = transform.position;
                 RaycastHit tipHit;
                 if (Physics.BoxCast(transform.position + (vessel.velocityD.normalized * vessel.vesselSize.magnitude), vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
                 {
                     vesselTip = tipHit.point;
                 }
-
-                MachTipCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
-                Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
-                MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach);
 
                 Vector3 vesselRear = transform.position;
                 RaycastHit rearHit;
@@ -84,14 +76,28 @@ namespace RocketSoundEnhancement
                     vesselRear = rearHit.point;
                 }
 
+                MachTipCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
                 MachRearCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselRear).normalized;
+                Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);  
+                Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
                 AngleRear = (1 + Vector3.Dot(MachRearCameraNormal, vessel.velocityD.normalized)) * 90;
-                MachPassRear = 1f - Mathf.Clamp01(AngleRear / MachAngle) * Mathf.Clamp01(Mach);
 
-                if (vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled))
+                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
+                if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
                 {
+                    Angle = 0;
+                    AngleRear = 0;
                     MachPass = 1;
                     MachPassRear = 1;
+                    return;
+                }
+
+                if (Settings.MachEffectsAmount > 0)
+                {
+                    Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
+                    MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
+                    MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach);
+                    MachPassRear = 1f - Mathf.Clamp01(AngleRear / MachAngle) * Mathf.Clamp01(Mach);
                 }
             }
         }
@@ -118,7 +124,7 @@ namespace RocketSoundEnhancement
 
                     if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
                     {
-                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality == AudioMufflerQuality.Normal)
+                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality == AudioMufflerQuality.Normal || Settings.MachEffectsAmount == 0)
                             continue;
 
                         if (MachPass > 0.0 && !SonicBoomedTip)
@@ -170,8 +176,7 @@ namespace RocketSoundEnhancement
         {
             if (!(InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel))
             {
-                float vesselSize = vessel.vesselSize.sqrMagnitude;
-                PlaySoundLayer(soundLayer, 1, Mathf.Clamp01(Distance / vesselSize) * Mathf.Min(Mach, 4), false, true);
+                PlaySoundLayer(soundLayer, 1, Mathf.Min(Mach, 4), false, true);
             }
         }
 
@@ -237,7 +242,11 @@ namespace RocketSoundEnhancement
                 }
                 else
                 {
-                    finalVolume *= Mathf.Log(Mathf.Lerp(1, 10, MachPass), 10);
+                    if (Settings.MachEffectsAmount > 0)
+                    {
+                        float machLog = Mathf.Log10(Mathf.Lerp(1, 10, MachPass));
+                        finalVolume *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machLog);
+                    }
                 }
             }
 
@@ -359,8 +368,7 @@ namespace RocketSoundEnhancement
                     source.enabled = false;
                     Sources.Add(soundLayerName, source);
 
-                    var airSimFilter = new AirSimulationFilter();
-                    airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
+                    var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
                     airSimFilter.EnableLowpassFilter = true;
                     airSimFilter.EnableWaveShaperFilter = true;
 

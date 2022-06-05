@@ -111,7 +111,6 @@ namespace RocketSoundEnhancement.EffectBehaviours
         public override void OnEvent()
         {
             Play(1);
-            playOneShot = true;
         }
 
         public override void OnEvent(float power)
@@ -123,6 +122,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
         {
             markForPlay = true;
             control = power;
+            playOneShot = !loop;
         }
 
         public virtual void LateUpdate()
@@ -160,7 +160,11 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     }
                     else
                     {
-                        finalVolume *= Mathf.Log(Mathf.Lerp(1, 10, machPass), 10);
+                        if (Settings.MachEffectsAmount > 0)
+                        {
+                            float machLog = Mathf.Log10(Mathf.Lerp(1, 10, machPass));
+                            finalVolume *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machLog);
+                        }
                     }
                 }
 
@@ -183,7 +187,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 }
             }
 
-            end:
+end:
 
             if (airSimFilter != null && airSimFilter.enabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
                 airSimFilter.enabled = false;
@@ -212,29 +216,38 @@ namespace RocketSoundEnhancement.EffectBehaviours
 
         public void FixedUpdate()
         {
-            if (Settings.EnableAudioEffects && HighLogic.LoadedSceneIsFlight)
+            if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal && HighLogic.LoadedSceneIsFlight)
             {
                 distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-                var relativeSpeed = (lastDistance - distance) / TimeWarp.fixedDeltaTime;
-                lastDistance = distance;
 
                 if (hostPart == null) return;
 
-                float speedOfSound = hostPart.vessel.speedOfSound > 0 ? (float)hostPart.vessel.speedOfSound : 340.29f;
-                float dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * DopplerFactor)) / speedOfSound, 1 - (DopplerFactor * 0.5f), 1 + DopplerFactor);
-                doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
+                if (DopplerFactor > 0)
+                {
+                    var relativeSpeed = (lastDistance - distance) / TimeWarp.fixedDeltaTime;
+                    lastDistance = distance;
+                    float dopplerScale = DopplerFactor * Settings.DopplerFactor;
+                    float speedOfSound = hostPart.vessel.speedOfSound > 0 ? (float)hostPart.vessel.speedOfSound : 340.29f;
+                    float dopplerRaw = Mathf.Clamp((speedOfSound + ((relativeSpeed) * dopplerScale)) / speedOfSound, 1 - (dopplerScale * 0.5f), 1 + dopplerScale);
+                    doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
+                }
 
                 angle = (1 + Vector3.Dot(hostPart.vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + hostPart.vessel.velocityD).normalized)) * 90;
-                machPass = 1f - Mathf.Clamp01(angle / hostPart.vessel.GetComponent<ShipEffects>().MachAngle) * Mathf.Clamp01(hostPart.vessel.GetComponent<ShipEffects>().Mach);
 
-                if (hostPart.vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled))
+                bool isActiveAndInternal = hostPart.vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
+                if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
                 {
                     angle = 0;
                     machPass = 1;
+                    return;
                 }
 
-                mach = hostPart.vessel.GetComponent<ShipEffects>().Mach;
-                machAngle = hostPart.vessel.GetComponent<ShipEffects>().MachAngle;
+                if (Settings.MachEffectsAmount > 0)
+                {
+                    mach = Mathf.Clamp01(hostPart.vessel.GetComponent<ShipEffects>().Mach);
+                    machAngle = hostPart.vessel.GetComponent<ShipEffects>().MachAngle;
+                    machPass = 1f - Mathf.Clamp01(angle / machAngle) * mach;
+                }
             }
         }
 

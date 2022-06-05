@@ -24,8 +24,12 @@ namespace RocketSoundEnhancement.Unity
         float ExteriorVolume { get; set; }
 
         AudioMufflerQuality MufflerQuality { get; set; }
+        bool ClampActiveVesselMuffling { get; set; }
         float MufflerInternalMode { get; set; }
         float MufflerExternalMode { get; set; }
+        float MachEffectsAmount { get; set; }
+        float DopplerFactor { get; set; }
+
 
         bool EnableCustomLimiter { get; set; }
         float AutoLimiter { get; set; }

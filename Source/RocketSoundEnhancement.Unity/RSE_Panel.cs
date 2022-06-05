@@ -10,21 +10,28 @@ namespace RocketSoundEnhancement.Unity
         [SerializeField] private GameObject _basicPanel;
         [SerializeField] private GameObject _advancePanel;
         [SerializeField] private Text _versionLabel;
+
         [SerializeField] private Toggle _enableAudioEffects;
         [SerializeField] private Toggle _disableStagingSound;
-        [SerializeField] private Toggle _enableCustomLimiter;
-        [SerializeField] private Toggle _mufflerNormalQuality;
-        [SerializeField] private Toggle _mufflerAirSimLiteQuality;
-        [SerializeField] private Toggle _mufflerAirSimFullQuality;
-        [SerializeField] private Slider _mufflerInternalMode;
-        [SerializeField] private Slider _mufflerExternalMode;
+
         [SerializeField] private Slider _interiorVolume;
         [SerializeField] private Slider _exteriorVolume;
+
+        [SerializeField] private Toggle _enableCustomLimiter;
         [SerializeField] private Slider _autoLimiter;
         [SerializeField] private Slider _limiterThreshold;
         [SerializeField] private Slider _limiterGain;
         [SerializeField] private Slider _limiterAttack;
         [SerializeField] private Slider _limiterRelease;
+
+        [SerializeField] private Toggle _mufflerNormalQuality;
+        [SerializeField] private Toggle _mufflerAirSimLiteQuality;
+        [SerializeField] private Toggle _mufflerAirSimFullQuality;
+        [SerializeField] private Toggle _clampActiveVesselMuffling;
+        [SerializeField] private Slider _mufflerInternalMode;
+        [SerializeField] private Slider _mufflerExternalMode;
+        [SerializeField] private Slider _machEffectsAmount;
+        [SerializeField] private Slider _dopplerFactor;
 
         private RectTransform rectTransform;
         private ISettingsPanel settingsPanel;
@@ -72,9 +79,12 @@ namespace RocketSoundEnhancement.Unity
             _mufflerNormalQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.Normal;
             _mufflerAirSimLiteQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.AirSimLite;
             _mufflerAirSimFullQuality.isOn = settingsPanel.MufflerQuality == AudioMufflerQuality.AirSim;
+            _clampActiveVesselMuffling.isOn = settingsPanel.ClampActiveVesselMuffling;
 
             _mufflerExternalMode.value = MathHelper.FrequencyToAmount(settingsPanel.MufflerExternalMode);
             _mufflerInternalMode.value = MathHelper.FrequencyToAmount(settingsPanel.MufflerInternalMode);
+            _machEffectsAmount.value = settingsPanel.MachEffectsAmount;
+            _dopplerFactor.value = settingsPanel.DopplerFactor;
 
             _initialized = true;
         }
@@ -85,79 +95,60 @@ namespace RocketSoundEnhancement.Unity
             _basicPanel.SetActive(!toggle);
             _advancePanel.SetActive(toggle);
         }
-
         public void OnAudioEffecstEnabled(bool isOn)
         {
             if (!_initialized) return;
 
             settingsPanel.EnableAudioEffects = isOn;
         }
-
         public void OnDisableStagingSound(bool isOn)
         {
             if (!_initialized) return;
-
             settingsPanel.DisableStagingSound = isOn;
         }
-
         public void OnInteriorVolume(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.InteriorVolume = MathHelper.Round(value, 2);
         }
-
         public void OnExteriorVolume(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.ExteriorVolume = MathHelper.Round(value, 2);
         }
-
         public void OnEnableCustomLimiter(bool isOn)
         {
             if (!_initialized) return;
-
             settingsPanel.EnableCustomLimiter = isOn;
         }
-
         public void OnAutoLimiter(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.AutoLimiter = MathHelper.Round(value, 2);
         }
-
         public void OnLimiterThreshold(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.LimiterThreshold = MathHelper.Round(value, 2);
         }
-
         public void OnLimiterGain(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.LimiterGain = MathHelper.Round(value, 2);
         }
         public void OnLimiterAttack(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.LimiterAttack = MathHelper.Round(value, 2);
         }
         public void OnLimiterRelease(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.LimiterRelease = MathHelper.Round(value, 2);
         }
-
         public void OnMufflerQuality(int qualityIndex)
         {
             if(!_initialized) return;
-
             switch (qualityIndex)
             {
                 case 0:
@@ -174,21 +165,31 @@ namespace RocketSoundEnhancement.Unity
                     break;
             }
         }
-
+        public void OnClampActiveVesselMuffling(bool isOn)
+        {
+            if (!_initialized) return;
+            settingsPanel.ClampActiveVesselMuffling = isOn;
+        }
         public void OnMufflerInternalMode(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.MufflerInternalMode = MathHelper.AmountToFrequency(value);
         }
-
         public void OnMufflerExternalMode(float value)
         {
             if (!_initialized) return;
-
             settingsPanel.MufflerExternalMode = MathHelper.AmountToFrequency(value);
         }
-
+        public void OnMachEffectsAmount(float value)
+        {
+            if (!_initialized) return;
+            settingsPanel.MachEffectsAmount = MathHelper.Round(value, 2);
+        }
+        public void OnDopplerFactor(float value)
+        {
+            if (!_initialized) return;
+            settingsPanel.DopplerFactor = MathHelper.Round(value, 2);
+        }
         public void OnReload()
         {
             if (!_initialized) return;
@@ -197,7 +198,6 @@ namespace RocketSoundEnhancement.Unity
             settingsPanel.LoadSettings();
             Initialize(settingsPanel);
         }
-
         public void OnSave()
         {
             if (!_initialized) return;

@@ -23,7 +23,8 @@ namespace RocketSoundEnhancement
         public static bool DisableStagingSound = false;
         public static bool ClampActiveVesselMuffling = false;
 
-        public static float AirSimMaxDistance = 5000;
+        public static float DopplerFactor = 1f;
+
         public static float InteriorVolume = 1;
         public static float ExteriorVolume = 1;
 
@@ -33,8 +34,16 @@ namespace RocketSoundEnhancement
         public static float LimiterAttack = 10;
         public static float LimiterRelease = 20;
 
+        public static float AirSimMaxDistance = 5000;
         public static float MufflerInternalMode = 1500;
         public static float MufflerExternalMode = 22000;
+        public static float MachEffectsAmount = 0.8f;
+        public static float MachEffectLowerLimit
+        {
+            get {
+                return (1 - Mathf.Log10(Mathf.Lerp(0.1f, 10, MachEffectsAmount))) * 0.5f;
+            }
+        }
 
         private static bool initialized;
         private static ConfigNode settingsConfigNode;
@@ -97,6 +106,7 @@ namespace RocketSoundEnhancement
 
                 var defaultMufflerNode = settingsNode.AddNode("MUFFLER");
                 defaultMufflerNode.AddValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling);
+                defaultMufflerNode.AddValue("MachEffectsAmount", MachEffectsAmount);
                 defaultMufflerNode.AddValue("MufflerQuality", MufflerQuality);
                 defaultMufflerNode.AddValue("InternalMode", MufflerInternalMode);
                 defaultMufflerNode.AddValue("ExternalMode", MufflerExternalMode);
@@ -118,15 +128,21 @@ namespace RocketSoundEnhancement
             {
                 mufflerNode.AddValue("MufflerQuality", MufflerQuality);
             }
-
-            if (!mufflerNode.HasValue("AirSimMaxDistance") || !float.TryParse(mufflerNode.GetValue("AirSimMaxDistance"), out AirSimMaxDistance))
-                mufflerNode.AddValue("AirSimMaxDistance", AirSimMaxDistance);
-
             if (!mufflerNode.HasValue("InternalMode") || !float.TryParse(mufflerNode.GetValue("InternalMode"), out MufflerInternalMode))
                 mufflerNode.AddValue("InternalMode", MufflerInternalMode);
 
             if (!mufflerNode.HasValue("ExternalMode") || !float.TryParse(mufflerNode.GetValue("ExternalMode"), out MufflerExternalMode))
                 mufflerNode.AddValue("ExternalMode", MufflerExternalMode);
+
+            if (!mufflerNode.HasValue("MachEffectsAmount") || !float.TryParse(mufflerNode.GetValue("MachEffectsAmount"), out MachEffectsAmount))
+                mufflerNode.AddValue("MachEffectsAmount", MachEffectsAmount);
+
+            if (!mufflerNode.HasValue("DopplerFactor") || !float.TryParse(mufflerNode.GetValue("DopplerFactor"), out DopplerFactor))
+                mufflerNode.AddValue("DopplerFactor", DopplerFactor);
+
+            if (mufflerNode.HasValue("AirSimMaxDistance"))
+                float.TryParse(mufflerNode.GetValue("AirSimMaxDistance"), out AirSimMaxDistance);
+
         }
 
         public static void Load()
@@ -180,7 +196,7 @@ namespace RocketSoundEnhancement
                 var sourcesNode = mixerRoutingNode.GetNode("AudioSources");
                 foreach (ConfigNode.Value node in sourcesNode.values)
                 {
-                    MixerGroup channel = MixerGroup.Ignore;
+                    MixerGroup channel;
                     if (!CustomAudioSources.ContainsKey(node.name) && Enum.TryParse<MixerGroup>(node.value, true, out channel))
                         CustomAudioSources.Add(node.name, channel);
                 }
@@ -238,10 +254,12 @@ namespace RocketSoundEnhancement
             limiterNode.SetValue("Release", LimiterRelease);
 
             var mufflerNode = settingsNode.GetNode("MUFFLER");
-            mufflerNode.SetValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling, true);
             mufflerNode.SetValue("MufflerQuality", MufflerQuality.ToString(), true);
+            mufflerNode.SetValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling, true);
             mufflerNode.SetValue("InternalMode", MufflerInternalMode, true);
             mufflerNode.SetValue("ExternalMode", MufflerExternalMode, true);
+            mufflerNode.SetValue("MachEffectsAmount", MachEffectsAmount, true);
+            mufflerNode.SetValue("DopplerFactor", DopplerFactor, true);
             mufflerNode.SetValue("AirSimMaxDistance", AirSimMaxDistance, false);
 
             settingsConfigNode.Save(ModPath + "Settings.cfg");

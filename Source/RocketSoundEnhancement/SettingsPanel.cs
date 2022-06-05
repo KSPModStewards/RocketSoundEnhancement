@@ -41,6 +41,9 @@ namespace RocketSoundEnhancement
         public AudioMufflerQuality MufflerQuality { get => Settings.MufflerQuality; set => Settings.MufflerQuality = value; }
         public float MufflerExternalMode { get => Settings.MufflerExternalMode; set => Settings.MufflerExternalMode = value; }
         public float MufflerInternalMode { get => Settings.MufflerInternalMode; set => Settings.MufflerInternalMode = value; }
+        public float MachEffectsAmount { get => Settings.MachEffectsAmount; set => Settings.MachEffectsAmount = value; }
+        public float DopplerFactor { get => Settings.DopplerFactor; set => Settings.DopplerFactor = value; }
+        public bool ClampActiveVesselMuffling { get => Settings.ClampActiveVesselMuffling; set => Settings.ClampActiveVesselMuffling = value; }
         public bool EnableCustomLimiter
         {
             get => Settings.EnableCustomLimiter;

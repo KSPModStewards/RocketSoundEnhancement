@@ -75,12 +75,15 @@ namespace RocketSoundEnhancement.AudioFilters
                     LowpassFrequency = Mathf.Lerp(FarLowpass, 22500, distanceLog);
                     if (SimulationUpdate == AirSimulationUpdate.Full)
                     {
-                        LowpassFrequency *= Mathf.Max(machPass, 0.05f);
+                        if(Settings.MachEffectsAmount > 0)
+                        {
+                            LowpassFrequency *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machPass);
+                        }
+
                         HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePositive);
                     }
                     else
                     {
-
                         HighPassFrequency = AngleHighPass * anglePositive;
                     }
                 }

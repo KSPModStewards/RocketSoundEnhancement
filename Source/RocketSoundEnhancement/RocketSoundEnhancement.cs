@@ -192,12 +192,12 @@ namespace RocketSoundEnhancement
                 {
                     source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExteriorMixer;
 
-                    if (Settings.MufflerQuality > AudioMufflerQuality.Normal && source.gameObject.GetComponents<AudioSource>().Length > 1)
+                    if (Settings.MufflerQuality > AudioMufflerQuality.Normal)
                     {
                         if (!managedMinDistance.ContainsKey(managedSourceID))
                             managedMinDistance.Add(managedSourceID, source.minDistance);
 
-                        float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
+                        float machPass = Mathf.Lerp(Settings.MachEffectLowerLimit, 1, sourcePart.vessel.GetComponent<ShipEffects>().MachPass);
                         float sourceDistance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
                         float distanceAttenuation = Mathf.Max(Mathf.Pow(1 - Mathf.Clamp01(sourceDistance / Settings.AirSimMaxDistance), 10), 0.1f) * machPass;
                         source.minDistance = managedMinDistance[managedSourceID] * distanceAttenuation;
