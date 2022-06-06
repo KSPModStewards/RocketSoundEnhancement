@@ -74,11 +74,16 @@ namespace RocketSoundEnhancement
         {
             var configs = GameDatabase.Instance.GetConfigs("PART");
 
-            foreach(var configNode in configs) {
-                if(configNode.name.Replace("_", ".") == partInfoName) {
-                    if(moduleID == "") {
+            foreach (var configNode in configs)
+            {
+                if (configNode.name.Replace("_", ".") == partInfoName)
+                {
+                    if (moduleID == "")
+                    {
                         return Array.FindAll(configNode.config.GetNodes("MODULE"), x => x.GetValue("name") == moduleName).FirstOrDefault();
-                    } else {
+                    }
+                    else
+                    {
                         return Array.FindAll(configNode.config.GetNodes("MODULE"), x => x.GetValue("name") == moduleName && x.GetValue("moduleID") == moduleID).FirstOrDefault();
                     }
                 }
@@ -89,7 +94,8 @@ namespace RocketSoundEnhancement
         public static List<SoundLayer> CreateSoundLayerGroup(ConfigNode[] groupNodes)
         {
             var group = new List<SoundLayer>();
-            foreach(var node in groupNodes) {
+            foreach (var node in groupNodes)
+            {
                 group.Add(CreateSoundLayer(node));
             }
             return group;
@@ -97,9 +103,7 @@ namespace RocketSoundEnhancement
 
         public static SoundLayer CreateSoundLayer(ConfigNode node)
         {
-            var soundLayer = new SoundLayer();
-
-            soundLayer.name = node.GetValue("name");
+            var soundLayer = new SoundLayer { name = node.GetValue("name") };
 
             if (node.HasValue("audioClip"))
             {
@@ -173,7 +177,6 @@ namespace RocketSoundEnhancement
         public static AudioSource CreateSource(GameObject sourceGameObject, FXCurve volume, FXCurve pitch, bool loop = false, float spread = 0.5f)
         {
             var source = sourceGameObject.AddComponent<AudioSource>();
-            source.name = RSETag + "_" + sourceGameObject.name;
             source.playOnAwake = false;
             source.volume = volume;
             source.pitch = pitch;
@@ -188,7 +191,6 @@ namespace RocketSoundEnhancement
         public static AudioSource CreateSource(GameObject sourceGameObject, SoundLayer soundLayer)
         {
             var source = sourceGameObject.AddComponent<AudioSource>();
-            source.name = RSETag + "_" + sourceGameObject.name;
             source.playOnAwake = false;
             source.volume = soundLayer.volume;
             source.pitch = soundLayer.pitch;
@@ -226,7 +228,7 @@ namespace RocketSoundEnhancement
 
         public static GameObject CreateAudioParent(Part part, string partName)
         {
-            var audioParent = part.gameObject.GetChild(partName);
+            var audioParent = part.gameObject.GetChild($"{RSETag}_partName");
             if (!audioParent)
             {
                 audioParent = new GameObject(partName);

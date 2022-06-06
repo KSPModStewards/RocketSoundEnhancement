@@ -4,7 +4,7 @@ namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_RCS : RSE_Module
     {
-        ModuleRCSFX moduleRCSFX;
+        private ModuleRCSFX moduleRCSFX;
 
         public override void OnStart(StartState state)
         {
@@ -15,12 +15,12 @@ namespace RocketSoundEnhancement.PartModules
             base.OnStart(state);
 
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();
-            initialized = true;
+            Initialized = true;
         }
 
         public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
+            if(!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused)
                 return;
 
             var thrustTransforms = moduleRCSFX.thrusterTransforms;

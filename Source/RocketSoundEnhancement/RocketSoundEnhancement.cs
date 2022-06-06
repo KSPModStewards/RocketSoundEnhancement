@@ -47,26 +47,25 @@ namespace RocketSoundEnhancement
         public static AudioMixerGroup InteriorMixer { get { return Mixer.FindMatchingGroups("INTERIOR")[0]; } }
         public static AudioMixerGroup ExteriorMixer { get { return Mixer.FindMatchingGroups("EXTERIOR")[0]; } }
 
-        public float MufflingFrequency { get; set; } = 22200;
-        public float FocusMufflingFrequency { get; set; } = 22200;
-        public bool overrideFiltering;
-        float lastCutoffFreq;
-        float lastInteriorCutoffFreq;
+        public float MufflingFrequency { get; set; } = 30000;
+        public float FocusMufflingFrequency { get; set; } = 30000;
+        private float lastCutoffFreq;
+        private float lastInteriorCutoffFreq;
 
-        HashSet<AudioSource> unmanagedSources = new HashSet<AudioSource>();
-        HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
-        Dictionary<int, float> managedMinDistance = new Dictionary<int, float>();
+        private HashSet<AudioSource> unmanagedSources = new HashSet<AudioSource>();
+        private HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
+        private Dictionary<int, float> managedMinDistance = new Dictionary<int, float>();
 
         private bool gamePaused;
 
-        void Awake()
+        private void Awake()
         {
             if (instance != null) { Destroy(instance); }
 
             instance = this;
         }
 
-        void Start()
+        private void Start()
         {
             Settings.Load();
             ShipEffectsConfig.Load();
@@ -154,7 +153,7 @@ namespace RocketSoundEnhancement
             return Mathf.Lerp(1, windModulation, Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity));
         }
 
-        void LateUpdate()
+        public void LateUpdate()
         {
             if (gamePaused || !HighLogic.LoadedSceneIsFlight) return;
 
@@ -176,7 +175,7 @@ namespace RocketSoundEnhancement
             }
 
             HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToHashSet();
-            foreach (AudioSource source in audioSources)
+            foreach (var source in audioSources)
             {
                 if (source == null)
                 {
@@ -265,10 +264,10 @@ namespace RocketSoundEnhancement
             Mixer.SetFloat("FocusVolume", Mathf.Lerp(-80, 0, Mathf.Clamp01(FocusMufflingFrequency / 50)));
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
-            // Temp fix for sound stuttering between scene changes
-            AudioListener.volume = 0;
+            AudioListener.volume = 0;   // Temp fix for sound stuttering between scene changes
+
             GameEvents.onGamePause.Remove(() => gamePaused = true);
             GameEvents.onGameUnpause.Remove(() => gamePaused = false);
         }

@@ -25,16 +25,18 @@ namespace RocketSoundEnhancement
         public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
-        Dictionary<string, float> VolumeControls = new Dictionary<string, float>();
-        Dictionary<string, float> PitchControls = new Dictionary<string, float>();
+
+        private Dictionary<string, float> volumeControls = new Dictionary<string, float>();
+        private Dictionary<string, float> pitchControls = new Dictionary<string, float>();
 
         private GameObject audioParent;
+
         //  Physics Sound Effects Controls
-        public float VesselMass;
         public float Acceleration;
         public float Jerk;
         public float ThrustToWeight;
         public float DynamicPressure;
+        public float VesselMass;
 
         //  Air Simulation Values
         public float Distance;
@@ -50,21 +52,120 @@ namespace RocketSoundEnhancement
         public bool SonicBoomedTip = true;
         public bool SonicBoomedRear = true;
 
-        public bool initialized;
-        bool gamePaused;
-        bool ignoreVessel;
-        bool noPhysics;
-        bool airSimFiltersEnabled;
-        float pastAngularVelocity;
-        float pastAcceleration;
+        private bool initialized;
+        private bool gamePaused;
+        private bool ignoreVessel;
+        private bool noPhysics;
+        private bool airSimFiltersEnabled;
+        private float pastAngularVelocity;
+        private float pastAcceleration;
 
-        public void FixedUpdate()
+        public bool Initialize()
+        {
+            if (vessel == null) return false;
+
+            if (vessel.Parts.Count <= 1)
+            {
+                ignoreVessel = vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA");
+                noPhysics = vessel.Parts[0].PhysicsSignificance == 1;
+                return true;
+            }
+
+            if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
+            {
+                foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
+                {
+                    if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
+                    if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;
+
+                    if (node.HasNode("SOUNDLAYER"))
+                    {
+                        var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
+                        if (soundLayers.Count == 0) continue;
+
+                        if (SoundLayerGroups.ContainsKey(controlGroup)) { SoundLayerGroups[controlGroup].AddRange(soundLayers); continue; }
+
+                        SoundLayerGroups.Add(controlGroup, soundLayers);
+                    }
+                }
+            }
+
+            audioParent = new GameObject($"ShipEffects_{vessel.vesselName}");
+            audioParent.transform.rotation = vessel.transform.rotation;
+            audioParent.transform.position = vessel.transform.position;
+            audioParent.transform.parent = vessel.transform;
+
+            if (SoundLayerGroups.Count > 0)
+            {
+                foreach (var soundLayerGroup in SoundLayerGroups)
+                {
+                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value));
+                }
+            }
+
+            GameEvents.onGamePause.Add(OnGamePause);
+            GameEvents.onGameUnpause.Add(OnGameUnpause);
+            return true;
+        }
+
+        IEnumerator SetupAudioSources(List<SoundLayer> soundLayers)
+        {
+            foreach (var soundLayer in soundLayers.ToList())
+            {
+                string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
+                if (!Sources.ContainsKey(soundLayerName))
+                {
+                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
+                    sourceGameObject.transform.parent = audioParent.transform;
+                    sourceGameObject.transform.position = audioParent.transform.position;
+                    sourceGameObject.transform.rotation = audioParent.transform.rotation;
+
+                    var source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
+                    source.enabled = false;
+                    Sources.Add(soundLayerName, source);
+
+                    var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
+                    airSimFilter.EnableLowpassFilter = true;
+                    airSimFilter.EnableWaveShaperFilter = true;
+
+                    AirSimFilters.Add(soundLayerName, airSimFilter);
+                }
+                yield return null;
+            }
+        }
+
+        public void Unload()
+        {
+            Destroy(audioParent);
+            Sources.Clear();
+            AirSimFilters.Clear();
+            volumeControls.Clear();
+            pitchControls.Clear();
+
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
+            initialized = false;
+        }
+
+        public override void OnLoadVessel()
+        {
+            if (initialized) return;
+            initialized = Initialize();
+        }
+
+        public override void OnUnloadVessel()
+        {
+            if (!initialized) return;
+            Unload();
+        }
+
+        private void FixedUpdate()
         {
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
-            float accel = vessel.LandedOrSplashed ? (float)vessel.acceleration.magnitude : (float)(vessel.geeForce * PhysicsGlobals.GravitationalAcceleration);
-            Acceleration = accel + (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
+            float acceleration = vessel.LandedOrSplashed ? (float)vessel.acceleration.magnitude : (float)(vessel.geeForce * PhysicsGlobals.GravitationalAcceleration);
+            Acceleration = acceleration + (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
             Acceleration = Mathf.Round(Acceleration * 100) * 0.01f;
             Jerk = Mathf.Abs(pastAcceleration - Acceleration) / Time.fixedDeltaTime;
             DynamicPressure = (float)vessel.dynamicPressurekPa;
@@ -72,18 +173,30 @@ namespace RocketSoundEnhancement
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
+            VesselMass = vessel.GetTotalMass();
+            var excludedPart = vessel.Parts.Find(x => x.Modules.Contains("ModuleAsteroid"));
+            if (excludedPart != null)
+            {
+                VesselMass -= excludedPart.mass;
+            }
+
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
             {
-                Vector3 vesselTip = transform.position;
+                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
+                var velocityDirection = vessel.velocityD.normalized * vessel.vesselSize.magnitude;
+                var positionTip = transform.position + velocityDirection;
+                var positionRear = transform.position - velocityDirection;
+                var vesselTip = transform.position;
+                var vesselRear = transform.position;
                 RaycastHit tipHit;
-                if (Physics.BoxCast(transform.position + (vessel.velocityD.normalized * vessel.vesselSize.magnitude), vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
+                RaycastHit rearHit;
+
+                if (Physics.BoxCast(positionTip, vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
                 {
                     vesselTip = tipHit.point;
                 }
 
-                Vector3 vesselRear = transform.position;
-                RaycastHit rearHit;
-                if (Physics.BoxCast(transform.position - (vessel.velocityD.normalized * vessel.vesselSize.magnitude), vessel.vesselSize, vessel.velocityD.normalized, out rearHit))
+                if (Physics.BoxCast(positionRear, vessel.vesselSize, vessel.velocityD.normalized, out rearHit))
                 {
                     vesselRear = rearHit.point;
                 }
@@ -94,7 +207,6 @@ namespace RocketSoundEnhancement
                 Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
                 AngleRear = (1 + Vector3.Dot(MachRearCameraNormal, vessel.velocityD.normalized)) * 90;
 
-                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
                 if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
                 {
                     Angle = 0;
@@ -114,17 +226,10 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public void LateUpdate()
+        private void LateUpdate()
         {
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
-
-            VesselMass = vessel.GetTotalMass();
-            var excludedPart = vessel.Parts.Find(x => x.Modules.Contains("ModuleAsteroid"));
-            if (excludedPart != null)
-            {
-                VesselMass -= excludedPart.mass;
-            }
 
             foreach (var soundLayerGroup in SoundLayerGroups)
             {
@@ -186,10 +291,10 @@ namespace RocketSoundEnhancement
 
         public void PlaySonicBoom(SoundLayer soundLayer)
         {
-            if (!(InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel))
-            {
-                PlaySoundLayer(soundLayer, 1, Mathf.Min(Mach, 4), false, true);
-            }
+            if (InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)
+                return;
+
+            PlaySoundLayer(soundLayer, 1, Mathf.Min(Mach, 4), false, true);
         }
 
         public void PlaySoundLayer(SoundLayer soundLayer, float control, float volumeScale = 1, bool smoothControl = true, bool AirSimBasic = false)
@@ -206,13 +311,13 @@ namespace RocketSoundEnhancement
 
             if (smoothControl)
             {
-                if (!VolumeControls.ContainsKey(soundLayerName)) { VolumeControls.Add(soundLayerName, 0); }
-                if (!PitchControls.ContainsKey(soundLayerName)) { PitchControls.Add(soundLayerName, 1); }
+                if (!volumeControls.ContainsKey(soundLayerName)) { volumeControls.Add(soundLayerName, 0); }
+                if (!pitchControls.ContainsKey(soundLayerName)) { pitchControls.Add(soundLayerName, 1); }
 
-                VolumeControls[soundLayerName] = Mathf.MoveTowards(VolumeControls[soundLayerName], finalVolume, AudioUtility.SmoothControl.Evaluate(finalVolume) * (10 * Time.deltaTime));
-                PitchControls[soundLayerName] = Mathf.MoveTowards(PitchControls[soundLayerName], finalPitch, AudioUtility.SmoothControl.Evaluate(finalPitch) * (10 * Time.deltaTime));
-                finalVolume = VolumeControls[soundLayerName];
-                finalPitch = PitchControls[soundLayerName];
+                volumeControls[soundLayerName] = Mathf.MoveTowards(volumeControls[soundLayerName], finalVolume, AudioUtility.SmoothControl.Evaluate(finalVolume) * (10 * Time.deltaTime));
+                pitchControls[soundLayerName] = Mathf.MoveTowards(pitchControls[soundLayerName], finalPitch, AudioUtility.SmoothControl.Evaluate(finalPitch) * (10 * Time.deltaTime));
+                finalVolume = volumeControls[soundLayerName];
+                finalPitch = pitchControls[soundLayerName];
             }
 
             finalVolume = Mathf.Round(finalVolume * 1000) * 0.001f;
@@ -265,14 +370,14 @@ namespace RocketSoundEnhancement
             source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
-            int index = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
-            if (soundLayer.loop && soundLayer.audioClips != null && (source.clip == null || source.clip != soundLayer.audioClips[index]))
+            int clipIndex = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
+            if (soundLayer.loop && soundLayer.audioClips != null && (source.clip == null || source.clip != soundLayer.audioClips[clipIndex]))
             {
-                source.clip = soundLayer.audioClips[index];
-                source.time = soundLayer.loopAtRandom ? UnityEngine.Random.Range(0, soundLayer.audioClips[index].length) : 0;
+                source.clip = soundLayer.audioClips[clipIndex];
+                source.time = soundLayer.loopAtRandom ? UnityEngine.Random.Range(0, soundLayer.audioClips[clipIndex].length) : 0;
             }
 
-            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, 1, soundLayer.audioClips[index]);
+            AudioUtility.PlayAtChannel(source, soundLayer.channel, vessel == FlightGlobals.ActiveVessel, soundLayer.loop, 1, soundLayer.audioClips[clipIndex]);
         }
 
         public float GetPhysicsController(PhysicsControl physControl)
@@ -316,118 +421,19 @@ namespace RocketSoundEnhancement
             return controller;
         }
 
-        public bool Initialize()
-        {
-            if (vessel == null) return false;
-
-            if (vessel.Parts.Count <= 1)
-            {
-                ignoreVessel = vessel.Parts[0].Modules.Contains("ModuleAsteroid") || vessel.Parts[0].Modules.Contains("KerbalEVA");
-                noPhysics = vessel.Parts[0].PhysicsSignificance == 1;
-                return true;
-            }
-
-            if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
-            {
-                foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
-                {
-                    if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
-                    if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;
-
-                    if (node.HasNode("SOUNDLAYER"))
-                    {
-                        var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                        if (soundLayers.Count == 0) continue;
-
-                        if (SoundLayerGroups.ContainsKey(controlGroup)) { SoundLayerGroups[controlGroup].AddRange(soundLayers); continue; }
-
-                        SoundLayerGroups.Add(controlGroup, soundLayers);
-                    }
-                }
-            }
-
-            audioParent = new GameObject($"ShipEffects_{vessel.vesselName}");
-            audioParent.transform.rotation = vessel.transform.rotation;
-            audioParent.transform.position = vessel.transform.position;
-            audioParent.transform.parent = vessel.transform;
-
-            if (SoundLayerGroups.Count > 0)
-            {
-                foreach (var soundLayerGroup in SoundLayerGroups)
-                {
-                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value));
-                }
-            }
-
-            GameEvents.onGamePause.Add(OnGamePause);
-            GameEvents.onGameUnpause.Add(OnGameUnpause);
-            return true;
-        }
-
-        IEnumerator SetupAudioSources(List<SoundLayer> soundLayers)
-        {
-            foreach (var soundLayer in soundLayers.ToList())
-            {
-                string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
-                if (!Sources.ContainsKey(soundLayerName))
-                {
-                    var sourceGameObject = new GameObject(soundLayerName);
-                    sourceGameObject.transform.parent = audioParent.transform;
-                    sourceGameObject.transform.position = audioParent.transform.position;
-                    sourceGameObject.transform.rotation = audioParent.transform.rotation;
-
-                    var source = AudioUtility.CreateSource(sourceGameObject, soundLayer);
-                    source.enabled = false;
-                    Sources.Add(soundLayerName, source);
-
-                    var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
-                    airSimFilter.EnableLowpassFilter = true;
-                    airSimFilter.EnableWaveShaperFilter = true;
-
-                    AirSimFilters.Add(soundLayerName, airSimFilter);
-                }
-                yield return null;
-            }
-        }
-
-        public void Unload()
-        {
-            UnityEngine.Object.Destroy(audioParent);
-            Sources.Clear();
-            AirSimFilters.Clear();
-            VolumeControls.Clear();
-            PitchControls.Clear();
-
-            GameEvents.onGamePause.Remove(OnGamePause);
-            GameEvents.onGameUnpause.Remove(OnGameUnpause);
-            initialized = false;
-        }
-
-        public override void OnLoadVessel()
-        {
-            if (initialized) return;
-            initialized = Initialize();
-        }
-
-        public override void OnUnloadVessel()
-        {
-            if (!initialized) return;
-            Unload();
-        }
-
-        public void OnGamePause()
+        private void OnGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
             gamePaused = true;
         }
 
-        public void OnGameUnpause()
+        private void OnGameUnpause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
             gamePaused = false;
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             if (!initialized) return;
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }

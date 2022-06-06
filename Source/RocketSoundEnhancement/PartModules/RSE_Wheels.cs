@@ -6,22 +6,22 @@ using UnityEngine.Profiling;
 
 namespace RocketSoundEnhancement.PartModules
 {
-    class RSE_Wheels : RSE_Module
+    public class RSE_Wheels : RSE_Module
     {
-        ModuleWheelBase moduleWheel;
-        ModuleWheelMotor moduleMotor;
-        ModuleWheelDamage moduleWheelDamage;
-        ModuleWheelDeployment moduleDeploy;
+        private Dictionary<string, float> offLoadVolumeScale = new Dictionary<string, float>();
+        private Dictionary<string, float> volumeScaleSpools = new Dictionary<string, float>();
 
-        float motorOutput = 0;
-        float wheelSpeed = 0;
-        float slipDisplacement = 0;
-        bool retracted = false;
-        bool motorRunning = false;
-        CollidingObject collidingObject;
+        private ModuleWheelBase moduleWheel;
+        private ModuleWheelMotor moduleMotor;
+        private ModuleWheelDamage moduleWheelDamage;
+        private ModuleWheelDeployment moduleDeploy;
+        private CollidingObject collidingObject;
 
-        Dictionary<string, float> offLoadVolumeScale = new Dictionary<string, float>();
-        Dictionary<string, float> volumeScaleSpools = new Dictionary<string, float>();
+        private bool retracted = false;
+        private bool motorRunning = false;
+        private float motorOutput = 0;
+        private float wheelSpeed = 0;
+        private float slipDisplacement = 0;
 
         public override void OnStart(StartState state)
         {
@@ -31,10 +31,10 @@ namespace RocketSoundEnhancement.PartModules
             EnableLowpassFilter = true;
             base.OnStart(state);
 
-            if (configNode.HasNode("Motor"))
+            if (PartConfigNode.HasNode("Motor"))
             {
                 ConfigNode offLoadVolumeScaleNode;
-                if ((offLoadVolumeScaleNode = configNode.GetNode("Motor").GetNode("offLoadVolumeScale")) != null && offLoadVolumeScaleNode.HasValues())
+                if ((offLoadVolumeScaleNode = PartConfigNode.GetNode("Motor").GetNode("offLoadVolumeScale")) != null && offLoadVolumeScaleNode.HasValues())
                 {
                     foreach (ConfigNode.Value node in offLoadVolumeScaleNode.values)
                     {
@@ -57,12 +57,12 @@ namespace RocketSoundEnhancement.PartModules
             moduleDeploy = part.GetComponent<ModuleWheelDeployment>();
             moduleWheelDamage = part.GetComponent<ModuleWheelDamage>();
 
-            initialized = true;
+            Initialized = true;
         }
 
         public override void LateUpdate()
         {
-            if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused || !moduleWheel || !moduleWheel.Wheel)
+            if (!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused || !moduleWheel || !moduleWheel.Wheel)
                 return;
 
             if (moduleMotor)
@@ -160,7 +160,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void FixedUpdate()
         {
-            if (!initialized || !moduleWheel || !moduleWheel.Wheel || gamePaused || !vessel.loaded)
+            if (!Initialized || !moduleWheel || !moduleWheel.Wheel || GamePaused || !vessel.loaded)
                 return;
 
             base.FixedUpdate();

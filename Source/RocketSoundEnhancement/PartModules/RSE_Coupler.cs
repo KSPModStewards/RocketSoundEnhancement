@@ -7,13 +7,13 @@ namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_Coupler : RSE_Module
     {
-        ModuleDecouplerBase moduleDecoupler;
-        bool isDecoupler;
-        bool hasDecoupled;
+        private ModuleDecouplerBase moduleDecoupler;
+        private bool isDecoupler;
+        private bool hasDecoupled;
 
         public override void OnStart(StartState state)
         {
-            if(state == StartState.Editor || state == StartState.None)
+            if (state == StartState.Editor || state == StartState.None)
                 return;
 
             EnableLowpassFilter = true;
@@ -34,7 +34,7 @@ namespace RocketSoundEnhancement.PartModules
                     var fxGroup = part.GetComponent<LaunchClamp>().releaseFx;
                     int index = clampSoundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, clampSoundLayer.audioClips.Length) : 0;
                     fxGroup.sfx = clampSoundLayer.audioClips[index];
-                    fxGroup.audio = AudioUtility.CreateSource(audioParent, clampSoundLayer);
+                    fxGroup.audio = AudioUtility.CreateSource(AudioParent, clampSoundLayer);
                     Sources.Add("launchClamp", fxGroup.audio);
                 }
             }
@@ -42,7 +42,7 @@ namespace RocketSoundEnhancement.PartModules
             GameEvents.onDockingComplete.Add(onDock);
             GameEvents.onPartUndockComplete.Add(onUnDock);
 
-            initialized = true;
+            Initialized = true;
         }
 
         private void onUnDock(Part data)
@@ -61,7 +61,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
+            if(!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused)
                 return;
 
             if(moduleDecoupler != null && SoundLayerGroups.ContainsKey("Decouple")) {

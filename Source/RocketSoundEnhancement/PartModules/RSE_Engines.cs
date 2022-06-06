@@ -5,12 +5,12 @@ namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_Engines : RSE_Module
     {
-        Dictionary<string, bool> ignites = new Dictionary<string, bool>();
-        Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
-        Dictionary<string, bool> bursts = new Dictionary<string, bool>();
+        public Dictionary<string, bool> ignites = new Dictionary<string, bool>();
+        public Dictionary<string, bool> flameouts = new Dictionary<string, bool>();
+        public Dictionary<string, bool> bursts = new Dictionary<string, bool>();
 
-        Dictionary<string, int> sharedSoundLayers = new Dictionary<string, int>();
-        List<ModuleEngines> engineModules = new List<ModuleEngines>();
+        public Dictionary<string, int> sharedSoundLayers = new Dictionary<string, int>();
+        private List<ModuleEngines> engineModules = new List<ModuleEngines>();
 
         public override void OnStart(StartState state)
         {
@@ -50,20 +50,20 @@ namespace RocketSoundEnhancement.PartModules
                 bursts.Add(engineModule.engineID, false);
             }
 
-            initialized = true;
+            Initialized = true;
         }
         
         public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused)
+            if(!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused)
                 return;
 
             foreach (var engineModule in engineModules)
             {
-                string engineID = engineModule.engineID;
-                bool engineIgnited = engineModule.EngineIgnited;
-                bool engineFlameout = engineModule.flameout;
-                float currentThrust = engineModule.GetCurrentThrust() / engineModule.maxThrust;
+                var engineID = engineModule.engineID;
+                var engineIgnited = engineModule.EngineIgnited;
+                var engineFlameout = engineModule.flameout;
+                var currentThrust = engineModule.GetCurrentThrust() / engineModule.maxThrust;
 
                 if (SoundLayerGroups.ContainsKey(engineID))
                 {
@@ -71,7 +71,7 @@ namespace RocketSoundEnhancement.PartModules
                     {
                         if (sharedSoundLayers.ContainsKey(soundLayer.name) && !engineModule.isEnabled)
                             continue;
-                            
+
                         float control = currentThrust;
 
                         if (!Controls.ContainsKey(soundLayer.name))
@@ -102,7 +102,7 @@ namespace RocketSoundEnhancement.PartModules
                     }
                 }
 
-                foreach(var soundLayerGroup in SoundLayerGroups) {
+                foreach (var soundLayerGroup in SoundLayerGroups) {
                     float control = currentThrust;
                     switch(soundLayerGroup.Key) {
                         case "Engage":

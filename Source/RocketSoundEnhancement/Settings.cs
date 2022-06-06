@@ -63,7 +63,7 @@ namespace RocketSoundEnhancement
             MufflerExternalMode = 1000;
         }
 
-        private static void loadLimiterSettings(ConfigNode settingsNode)
+        private static void LoadLimiter(ConfigNode settingsNode)
         {
             if (!settingsNode.HasNode("LIMITER"))
             {
@@ -98,12 +98,11 @@ namespace RocketSoundEnhancement
                 limiterNode.AddValue("Attack", LimiterRelease);
         }
 
-        private static void loadMufflerSettings(ConfigNode settingsNode)
+        private static void LoadMuffler(ConfigNode settingsNode)
         {
             if (!settingsNode.HasNode("MUFFLER"))
             {
                 SetMufflerDefaults();
-
                 var defaultMufflerNode = settingsNode.AddNode("MUFFLER");
                 defaultMufflerNode.AddValue("ClampActiveVesselMuffling", ClampActiveVesselMuffling);
                 defaultMufflerNode.AddValue("MachEffectsAmount", MachEffectsAmount);
@@ -128,6 +127,7 @@ namespace RocketSoundEnhancement
             {
                 mufflerNode.AddValue("MufflerQuality", MufflerQuality);
             }
+
             if (!mufflerNode.HasValue("InternalMode") || !float.TryParse(mufflerNode.GetValue("InternalMode"), out MufflerInternalMode))
                 mufflerNode.AddValue("InternalMode", MufflerInternalMode);
 
@@ -159,7 +159,7 @@ namespace RocketSoundEnhancement
                 settingsConfigNode.AddNode(SettingsNodeName);
             }
 
-            ConfigNode settingsNode = settingsConfigNode.GetNode(SettingsNodeName);
+            var settingsNode = settingsConfigNode.GetNode(SettingsNodeName);
 
             if (!settingsNode.HasValue("EnableAudioEffects")) settingsNode.AddValue("EnableAudioEffects", true);
             bool.TryParse(settingsNode.GetValue("EnableAudioEffects"), out EnableAudioEffects);
@@ -176,7 +176,7 @@ namespace RocketSoundEnhancement
                 var colNode = settingsNode.GetNode("Colliders");
                 foreach (ConfigNode.Value node in colNode.values)
                 {
-                    CollidingObject colDataType = CollidingObject.Dirt;
+                    CollidingObject colDataType;
                     if (!CollisionData.ContainsKey(node.name) && Enum.TryParse<CollidingObject>(node.value, true, out colDataType))
                         CollisionData.Add(node.name, colDataType);
                 }
@@ -217,7 +217,7 @@ namespace RocketSoundEnhancement
                 var clipsNode = mixerRoutingNode.GetNode("AudioClips");
                 foreach (ConfigNode.Value node in clipsNode.values)
                 {
-                    MixerGroup channel = MixerGroup.Ignore;
+                    MixerGroup channel;
                     if (!CustomAudioClips.ContainsKey(node.name) && Enum.TryParse<MixerGroup>(node.value, true, out channel))
                         CustomAudioClips.Add(node.name, channel);
                 }
@@ -227,8 +227,8 @@ namespace RocketSoundEnhancement
                 mixerRoutingNode.AddNode("AudioClips");
             }
 
-            loadLimiterSettings(settingsNode);
-            loadMufflerSettings(settingsNode);
+            LoadLimiter(settingsNode);
+            LoadMuffler(settingsNode);
 
             settingsConfigNode.Save(ModPath + "Settings.cfg");
             initialized = true;
@@ -238,7 +238,7 @@ namespace RocketSoundEnhancement
         {
             if (!initialized) Load();
 
-            ConfigNode settingsNode = settingsConfigNode.GetNode(SettingsNodeName);
+            var settingsNode = settingsConfigNode.GetNode(SettingsNodeName);
 
             settingsNode.SetValue("EnableAudioEffects", EnableAudioEffects, true);
             settingsNode.SetValue("ExteriorVolume", ExteriorVolume, true);

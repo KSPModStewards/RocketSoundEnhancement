@@ -16,9 +16,13 @@ namespace RocketSoundEnhancement.PartModules
         public Dictionary<string, List<SoundLayer>> SoundLayerGroups = new Dictionary<string, List<SoundLayer>>();
         public List<SoundLayer> SoundLayers = new List<SoundLayer>();
 
-        public GameObject audioParent { get; protected set; }
-        public bool initialized;
-        public bool gamePaused;
+        public GameObject AudioParent { get; protected set; }
+
+        public ConfigNode PartConfigNode;
+        public bool PrepareSoundLayers = true;
+        public bool Initialized;
+        public bool GamePaused;
+        public bool AirSimFiltersEnabled;
 
         public float Volume = 1;
         public float DopplerFactor = 0.5f;
@@ -34,40 +38,36 @@ namespace RocketSoundEnhancement.PartModules
         public float MaxCombMix = 0.25f;
         public float MaxDistortion = 0.5f;
 
-        float doppler = 1;
-        float distance;
-        float angle;
-        float mach;
-        float machAngle;
-        float machPass;
-        float lastDistance;
-        float loopRandomStart;
+        private float doppler = 1;
+        private float distance;
+        private float angle;
+        private float mach;
+        private float machAngle;
+        private float machPass;
+        private float lastDistance;
+        private float loopRandomStart;
 
-        public ConfigNode configNode;
-        public bool prepareSoundLayers = true;
-        bool airSimFiltersEnabled;
-        int slowUpdate;
-
-        System.Random random;
+        private int slowUpdate;
+        private System.Random random;
 
         public override void OnStart(StartState state)
         {
             string partParentName = part.name + "_" + this.moduleName;
-            audioParent = AudioUtility.CreateAudioParent(part, partParentName);
-            configNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
+            AudioParent = AudioUtility.CreateAudioParent(part, partParentName);
+            PartConfigNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
-            if (!float.TryParse(configNode.GetValue("volume"), out Volume)) Volume = 1;
-            if (!float.TryParse(configNode.GetValue("DopplerFactor"), out DopplerFactor)) DopplerFactor = 0.5f;
+            if (!float.TryParse(PartConfigNode.GetValue("volume"), out Volume)) Volume = 1;
+            if (!float.TryParse(PartConfigNode.GetValue("DopplerFactor"), out DopplerFactor)) DopplerFactor = 0.5f;
 
-            if (configNode.HasNode("AIRSIMULATION"))
+            if (PartConfigNode.HasNode("AIRSIMULATION"))
             {
-                var node = configNode.GetNode("AIRSIMULATION");
+                var node = PartConfigNode.GetNode("AIRSIMULATION");
 
-                if(node.HasValue("EnableCombFilter")) bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
-                if(node.HasValue("EnableLowpassFilter")) bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
-                if(node.HasValue("EnableWaveShaperFilter")) bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
+                if (node.HasValue("EnableCombFilter")) bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
+                if (node.HasValue("EnableLowpassFilter")) bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
+                if (node.HasValue("EnableWaveShaperFilter")) bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
 
-                if(node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
+                if (node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
                 if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
                 if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
@@ -78,9 +78,9 @@ namespace RocketSoundEnhancement.PartModules
 
             UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableWaveShaperFilter);
 
-            if (prepareSoundLayers)
+            if (PrepareSoundLayers)
             {
-                foreach (var node in configNode.GetNodes())
+                foreach (var node in PartConfigNode.GetNodes())
                 {
                     var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
                     if (soundLayers.Count == 0) continue;
@@ -91,7 +91,7 @@ namespace RocketSoundEnhancement.PartModules
                     SoundLayerGroups.Add(groupName, soundLayers);
                 }
 
-                SoundLayers = AudioUtility.CreateSoundLayerGroup(configNode.GetNodes("SOUNDLAYER"));
+                SoundLayers = AudioUtility.CreateSoundLayerGroup(PartConfigNode.GetNodes("SOUNDLAYER"));
 
                 if (SoundLayerGroups.Count > 0)
                 {
@@ -121,8 +121,8 @@ namespace RocketSoundEnhancement.PartModules
                 string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
                 if (!Sources.ContainsKey(soundLayerName))
                 {
-                    var sourceGameObject = new GameObject(soundLayerName);
-                    sourceGameObject.transform.SetParent(audioParent.transform, false);
+                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
+                    sourceGameObject.transform.SetParent(AudioParent.transform, false);
                     sourceGameObject.transform.localPosition = Vector3.zero;
                     sourceGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
 
@@ -181,16 +181,16 @@ namespace RocketSoundEnhancement.PartModules
                 slowUpdate = 0;
             }
 
-            if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
+            if (AirSimFilters.Count > 0 && AirSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
                 AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
-                airSimFiltersEnabled = false;
+                AirSimFiltersEnabled = false;
             }
         }
 
         public virtual void FixedUpdate()
         {
-            if (!initialized || !vessel.loaded)
+            if (!Initialized || !vessel.loaded)
                 return;
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
@@ -263,7 +263,7 @@ namespace RocketSoundEnhancement.PartModules
                     AirSimFilters[soundLayerName].Angle = angle;
                     AirSimFilters[soundLayerName].MachAngle = machAngle;
                     AirSimFilters[soundLayerName].MachPass = machPass;
-                    airSimFiltersEnabled = true;
+                    AirSimFiltersEnabled = true;
                 }
                 else
                 {
@@ -295,21 +295,22 @@ namespace RocketSoundEnhancement.PartModules
         public void OnGamePause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
-            gamePaused = true;
+            GamePaused = true;
         }
 
         public void OnGameUnpause()
         {
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
 
-            gamePaused = false;
+            GamePaused = false;
         }
 
         public virtual void OnDestroy()
         {
-            if (!initialized) return;
+            if (!Initialized) return;
             if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
-            UnityEngine.Object.Destroy(audioParent);
+            Destroy(AudioParent);
+
             GameEvents.onGamePause.Remove(OnGamePause);
             GameEvents.onGameUnpause.Remove(OnGameUnpause);
         }

@@ -48,22 +48,22 @@ namespace RocketSoundEnhancement.EffectBehaviours
         public AirSimulationFilter airSimFilter;
         public AudioClip audioClip;
 
-        bool isActiveVessel;
-        bool markForPlay;
-        bool playOneShot;
-        int slowUpdate;
-        float control;
-        float distance;
-        float lastDistance;
-        float doppler = 1;
-        float angle = 0;
-        float machPass = 1;
-        float mach = 0;
-        float machAngle = 0;
+        private bool isActiveVessel;
+        private bool markForPlay;
+        private bool playOneShot;
+        private int slowUpdate;
+        private float control;
+        private float distance;
+        private float lastDistance;
+        private float doppler = 1;
+        private float angle = 0;
+        private float machPass = 1;
+        private float mach = 0;
+        private float machAngle = 0;
 
         public override void OnInitialize()
         {
-            audioParent = new GameObject($"RSE_{this.effectName}");
+            audioParent = new GameObject($"{AudioUtility.RSETag}_{this.effectName}");
             audioParent.transform.SetParent(transform, false);
             audioParent.transform.localRotation = Quaternion.Euler(0, 0, 0);
             audioParent.transform.localPosition = Vector3.zero;
@@ -171,7 +171,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     }
                 }
 
-                AudioFX.SetSourceVolume(audioSource, finalVolume, channel);
+                audioSource.volume = finalVolume * GetVolumeChannel(channel);
                 audioSource.pitch = pitch.Value(control) * (loop ? doppler : 1);
                 audioSource.outputAudioMixerGroup = AudioUtility.GetMixerGroup(FXChannel.Exterior, isActiveVessel);
 
@@ -190,8 +190,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 }
             }
 
-end:
-
+            end:
             if (airSimFilter != null && airSimFilter.enabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
                 airSimFilter.enabled = false;
 
@@ -251,6 +250,24 @@ end:
                     machAngle = hostPart.vessel.GetComponent<ShipEffects>().MachAngle;
                     machPass = 1f - Mathf.Clamp01(angle / machAngle) * mach;
                 }
+            }
+        }
+
+        public float GetVolumeChannel(AudioFX.AudioChannel channel)
+        {
+            switch (channel)
+            {
+                case AudioFX.AudioChannel.Ship:
+                    return GameSettings.SHIP_VOLUME;
+                case AudioFX.AudioChannel.Voice:
+                    return GameSettings.VOICE_VOLUME;
+                case AudioFX.AudioChannel.Ambient:
+                    return GameSettings.AMBIENCE_VOLUME;
+                case AudioFX.AudioChannel.Music:
+                    return GameSettings.MUSIC_VOLUME;
+                case AudioFX.AudioChannel.UI:
+                    return GameSettings.UI_VOLUME;
+                default: return 1;
             }
         }
 

@@ -14,23 +14,23 @@ namespace RocketSoundEnhancement.PartModules
 
     public class ShipEffectsCollisions : RSE_Module
     {
-        Dictionary<CollisionType, List<SoundLayer>> SoundLayerCollisionGroups = new Dictionary<CollisionType, List<SoundLayer>>();
+        private Dictionary<CollisionType, List<SoundLayer>> SoundLayerCollisionGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
-        bool collided;
-        Collision collision;
-        CollidingObject collidingObject;
-        CollisionType collisionType;
+        private bool collided;
+        private Collision collision;
+        private CollidingObject collidingObject;
+        private CollisionType collisionType;
 
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            prepareSoundLayers = false;
+            PrepareSoundLayers = false;
             EnableLowpassFilter = true;
             base.OnStart(state);
 
-            foreach (var node in configNode.GetNodes())
+            foreach (var node in PartConfigNode.GetNodes())
             {
                 var soundLayerNodes = node.GetNodes("SOUNDLAYER");
                 CollisionType collisionType;
@@ -49,12 +49,12 @@ namespace RocketSoundEnhancement.PartModules
                 }
             }
 
-            initialized = true;
+            Initialized = true;
         }
 
         public override void LateUpdate()
         {
-            if (!HighLogic.LoadedSceneIsFlight || !initialized || !vessel.loaded || gamePaused) return;
+            if (!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused) return;
 
             base.LateUpdate();
 
@@ -86,7 +86,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void FixedUpdate()
         {
-            if (!initialized || gamePaused || !vessel.loaded)
+            if (!Initialized || GamePaused || !vessel.loaded)
                 return;
 
             collided = false;
@@ -94,7 +94,7 @@ namespace RocketSoundEnhancement.PartModules
             base.FixedUpdate();
         }
 
-        void OnCollisionEnter(Collision col)
+        public void OnCollisionEnter(Collision col)
         {
             collided = true;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
@@ -102,7 +102,7 @@ namespace RocketSoundEnhancement.PartModules
             collision = col;
         }
 
-        void OnCollisionStay(Collision col)
+        public void OnCollisionStay(Collision col)
         {
             collided = true;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
@@ -110,7 +110,7 @@ namespace RocketSoundEnhancement.PartModules
             collision = col;
         }
 
-        void OnCollisionExit(Collision col)
+        public void OnCollisionExit(Collision col)
         {
             collided = false;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);

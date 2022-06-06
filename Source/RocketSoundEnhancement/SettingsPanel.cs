@@ -101,6 +101,8 @@ namespace RocketSoundEnhancement
 
         private void Awake()
         {
+            if (instance != null) Destroy(instance);
+
             instance = this;
 
             Assembly assembly = AssemblyLoader.loadedAssemblies.GetByAssembly(Assembly.GetExecutingAssembly()).assembly;
@@ -122,7 +124,7 @@ namespace RocketSoundEnhancement
             }
         }
 
-        void OpenSettingsPanel()
+        public void OpenSettingsPanel()
         {
             if (RSE_PanelPrefab == null) return;
 
@@ -136,7 +138,7 @@ namespace RocketSoundEnhancement
             panelController.Initialize(Instance);
         }
 
-        void CloseSettingsPanel()
+        public void CloseSettingsPanel()
         {
             if (panelController != null)
             {
@@ -161,7 +163,7 @@ namespace RocketSoundEnhancement
            UIMasterController.ClampToScreen(rect, Vector2.zero);
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             if (panelController != null)
                 UnityEngine.Object.Destroy(panelController.gameObject);

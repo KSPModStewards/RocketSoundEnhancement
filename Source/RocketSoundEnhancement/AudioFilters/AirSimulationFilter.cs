@@ -40,17 +40,17 @@ namespace RocketSoundEnhancement.AudioFilters
         public float HighPassFrequency = 0;
         public float Distortion = 0;
 
-        int SampleRate;
-        double combDelaySamples;
+        private int sampleRate;
+        private double combDelaySamples;
 
-        float distanceLog, machVelocityClamped, angleAbsolute, anglePositive, machPass;
+        private float distanceLog, machVelocityClamped, angleAbsolute, anglePositive, machPass;
 
-        void Awake()
+        private void Awake()
         {
-            SampleRate = AudioSettings.outputSampleRate;
+            sampleRate = AudioSettings.outputSampleRate;
         }
 
-        void LateUpdate()
+        private void LateUpdate()
         {
             if (SimulationUpdate != AirSimulationUpdate.None)
             {
@@ -102,14 +102,14 @@ namespace RocketSoundEnhancement.AudioFilters
             }
 
             #region Combfilter Update
-            if (EnableCombFilter) { combDelaySamples = CombDelay * SampleRate / 1000; }
+            if (EnableCombFilter) { combDelaySamples = CombDelay * sampleRate / 1000; }
             #endregion
 
             #region LowpassHighpassFilter Update
             if (EnableLowpassFilter)
             {
-                freqLP = Mathf.Clamp(LowpassFrequency, 20, 22000) * 2 / SampleRate;
-                freqHP = Mathf.Clamp(HighPassFrequency, 20, 22000) * 2 / SampleRate;
+                freqLP = Mathf.Clamp(LowpassFrequency, 20, 22000) * 2 / sampleRate;
+                freqHP = Mathf.Clamp(HighPassFrequency, 20, 22000) * 2 / sampleRate;
                 fbLP = 0; // q + q / (1 - freqLP);
                 fbHP = 0; // q + q / (1 - freqHP);
             }
@@ -124,7 +124,7 @@ namespace RocketSoundEnhancement.AudioFilters
             #endregion
         }
 
-        void OnAudioFilterRead(float[] data, int channels)
+        private void OnAudioFilterRead(float[] data, int channels)
         {
             for (int i = 0; i < data.Length; i++)
             {
@@ -144,8 +144,8 @@ namespace RocketSoundEnhancement.AudioFilters
         }
 
         //removes denormal numbers that causes very high cpu
-        float dn = 1e-18f;
-        float quantize(float input)
+        private float dn = 1e-18f;
+        private float Quantize(float input)
         {
             dn = -dn;
             return (+input) + dn;
@@ -154,8 +154,8 @@ namespace RocketSoundEnhancement.AudioFilters
         #region Time Variable Delay / Comb Filter
         //Flexible-time, non-sample quantized delay , can be used for stuff like waveguide synthesis or time-based(chorus/flanger) fx.
         //Source = https://www.musicdsp.org/en/latest/Effects/98-class-for-waveguide-delay-effects.html
-        float[] buffer = new float[4096];
-        int counter = 0;
+        private float[] buffer = new float[4096];
+        private int counter = 0;
         float CombFilter(float input)
         {
             float output = input;
@@ -217,7 +217,7 @@ namespace RocketSoundEnhancement.AudioFilters
             return output;
         }
 
-        void ClearCombFilter()
+        private void ClearCombFilter()
         {
             Array.Clear(buffer, 0, buffer.Length);
             counter = 0;
@@ -226,12 +226,12 @@ namespace RocketSoundEnhancement.AudioFilters
 
         #region LowpassHighpass Filter
         // source: https://www.musicdsp.org/en/latest/Filters/29-resonant-filter.html
-        float buf0L, buf1L, buf0R, buf1R;
-        float buf2L, buf3L, buf2R, buf3R, hpL, hpR;
-        float freqLP, freqHP, fbLP, fbHP;
-        float LowpassHighpassFilter(float input, int index)
+        private float buf0L, buf1L, buf0R, buf1R;
+        private float buf2L, buf3L, buf2R, buf3R, hpL, hpR;
+        private float freqLP, freqHP, fbLP, fbHP;
+        private float LowpassHighpassFilter(float input, int index)
         {
-            float newOutput = input = quantize(input);
+            float newOutput = input = Quantize(input);
 
             if (index % 2 == 0)
             {
@@ -267,9 +267,9 @@ namespace RocketSoundEnhancement.AudioFilters
 
         #region Waveshaper
         // Source: https://www.musicdsp.org/en/latest/Effects/46-waveshaper.html
-        float wsK;
+        private float wsK;
 
-        float Waveshaper(float input)
+        private float Waveshaper(float input)
         {
             float output = Mathf.Min(Mathf.Max(input, -1), 1);
             output = (1 + wsK) * output / (1 + wsK * Mathf.Abs(output));
@@ -278,7 +278,7 @@ namespace RocketSoundEnhancement.AudioFilters
         }
         #endregion
 
-        void OnDisable()
+        private void OnDisable()
         {
             buffer = new float[4096];
             counter = 0;

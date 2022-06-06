@@ -4259,27 +4259,27 @@ MonoBehaviour:
   m_Script: {fileID: 1096701715, guid: 0e52c662bd1351044ae9c9fb5c8ddffb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _basicPanel: {fileID: 624002619279262896}
-  _advancePanel: {fileID: 624002618753899085}
-  _versionLabel: {fileID: 624002617675269383}
-  _enableAudioEffects: {fileID: 4121204886597762271}
-  _disableStagingSound: {fileID: 624002617384921995}
-  _interiorVolume: {fileID: 624002617687527905}
-  _exteriorVolume: {fileID: 624002618933409920}
-  _enableCustomLimiter: {fileID: 624002618722204266}
-  _autoLimiter: {fileID: 624002618376120386}
-  _limiterThreshold: {fileID: 624002618686713665}
-  _limiterGain: {fileID: 624002618376552999}
-  _limiterAttack: {fileID: 624002618718625837}
-  _limiterRelease: {fileID: 624002618712064378}
-  _mufflerNormalQuality: {fileID: 624002618536429215}
-  _mufflerAirSimLiteQuality: {fileID: 624002617430252156}
-  _mufflerAirSimFullQuality: {fileID: 624002617576820055}
-  _clampActiveVesselMuffling: {fileID: 2877824910572881614}
-  _mufflerInternalMode: {fileID: 624002618285046138}
-  _mufflerExternalMode: {fileID: 624002619216535102}
-  _machEffectsAmount: {fileID: 3201638918188027517}
-  _dopplerFactor: {fileID: 3422041773733005368}
+  basicPanel: {fileID: 624002619279262896}
+  advancePanel: {fileID: 624002618753899085}
+  versionLabel: {fileID: 624002617675269383}
+  enableAudioEffects: {fileID: 4121204886597762271}
+  disableStagingSound: {fileID: 624002617384921995}
+  interiorVolume: {fileID: 624002617687527905}
+  exteriorVolume: {fileID: 624002618933409920}
+  enableCustomLimiter: {fileID: 624002618722204266}
+  autoLimiter: {fileID: 624002618376120386}
+  limiterThreshold: {fileID: 624002618686713665}
+  limiterGain: {fileID: 624002618376552999}
+  limiterAttack: {fileID: 624002618718625837}
+  limiterRelease: {fileID: 624002618712064378}
+  mufflerNormalQuality: {fileID: 624002618536429215}
+  mufflerAirSimLiteQuality: {fileID: 624002617430252156}
+  mufflerAirSimFullQuality: {fileID: 624002617576820055}
+  clampActiveVesselMuffling: {fileID: 2877824910572881614}
+  mufflerInternalMode: {fileID: 624002618285046138}
+  mufflerExternalMode: {fileID: 624002619216535102}
+  machEffectsAmount: {fileID: 3201638918188027517}
+  dopplerFactor: {fileID: 3422041773733005368}
 --- !u!114 &6103024342092573967
 MonoBehaviour:
   m_ObjectHideFlags: 0
