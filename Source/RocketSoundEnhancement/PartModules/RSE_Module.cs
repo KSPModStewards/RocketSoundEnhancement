@@ -122,7 +122,7 @@ namespace RocketSoundEnhancement.PartModules
                 if (!Sources.ContainsKey(soundLayerName))
                 {
                     var sourceGameObject = new GameObject(soundLayerName);
-                    sourceGameObject.transform.parent = audioParent.transform;
+                    sourceGameObject.transform.SetParent(audioParent.transform, false);
                     sourceGameObject.transform.localPosition = Vector3.zero;
                     sourceGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
 

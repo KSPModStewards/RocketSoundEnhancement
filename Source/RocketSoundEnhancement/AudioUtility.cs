@@ -243,9 +243,9 @@ namespace RocketSoundEnhancement
             {
                 switch (group)
                 {
-                    case MixerGroup.Exterior: return RocketSoundEnhancement.Instance.ExteriorMixer;
-                    case MixerGroup.Interior: return RocketSoundEnhancement.Instance.InteriorMixer;
-                    case MixerGroup.Focus: return RocketSoundEnhancement.Instance.FocusMixer;
+                    case MixerGroup.Exterior: return RocketSoundEnhancement.ExteriorMixer;
+                    case MixerGroup.Interior: return RocketSoundEnhancement.InteriorMixer;
+                    case MixerGroup.Focus: return RocketSoundEnhancement.FocusMixer;
                     default: return null;
                 }
             }
@@ -258,8 +258,8 @@ namespace RocketSoundEnhancement
             {
                 switch (channel)
                 {
-                    case FXChannel.Interior: return RocketSoundEnhancement.Instance.InteriorMixer;
-                    case FXChannel.Exterior: return isActiveVessel ? RocketSoundEnhancement.Instance.FocusMixer : RocketSoundEnhancement.Instance.ExteriorMixer;
+                    case FXChannel.Interior: return RocketSoundEnhancement.InteriorMixer;
+                    case FXChannel.Exterior: return isActiveVessel ? RocketSoundEnhancement.FocusMixer : RocketSoundEnhancement.ExteriorMixer;
                 }
             }
             return null;

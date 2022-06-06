@@ -63,7 +63,10 @@ namespace RocketSoundEnhancement.EffectBehaviours
 
         public override void OnInitialize()
         {
-            audioParent = hostPart != null ? AudioUtility.CreateAudioParent(hostPart, hostPart.name) : this.gameObject;
+            audioParent = new GameObject($"RSE_{this.effectName}");
+            audioParent.transform.SetParent(transform, false);
+            audioParent.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            audioParent.transform.localPosition = Vector3.zero;
 
             audioClip = GameDatabase.Instance.GetAudioClip(clip);
             while (audioClip == null)

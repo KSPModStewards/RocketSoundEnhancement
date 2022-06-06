@@ -14,24 +14,38 @@ namespace RocketSoundEnhancement
         public static RocketSoundEnhancement instance = null;
         public static RocketSoundEnhancement Instance { get { return instance; } }
 
-        public AerodynamicsFX AeroFX;
-        private AudioMixer mixer;
-        public AudioMixer Mixer
+        private static AssetBundle rse_Bundle;
+        public static AssetBundle RSE_Bundle
+        {
+            get
+            {
+                if (rse_Bundle == null)
+                {
+                    string path = KSPUtil.ApplicationRootPath + Settings.ModPath + "Plugins/";
+                    rse_Bundle = AssetBundle.LoadFromFile(path + "rse_bundle");
+                    Debug.Log("[RSE]: AssetBundle loaded");
+                }
+                return rse_Bundle;
+            }
+        }
+
+        private static AudioMixer mixer;
+        public static AudioMixer Mixer
         {
             get
             {
                 if (mixer == null)
                 {
-                    mixer = Startup.RSE_Bundle.LoadAsset("RSE_Mixer") as AudioMixer;
+                    mixer = RSE_Bundle.LoadAsset("RSE_Mixer") as AudioMixer;
                 }
                 return mixer;
             }
         }
 
-        public AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
-        public AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
-        public AudioMixerGroup InteriorMixer { get { return Mixer.FindMatchingGroups("INTERIOR")[0]; } }
-        public AudioMixerGroup ExteriorMixer { get { return Mixer.FindMatchingGroups("EXTERIOR")[0]; } }
+        public static AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
+        public static AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
+        public static AudioMixerGroup InteriorMixer { get { return Mixer.FindMatchingGroups("INTERIOR")[0]; } }
+        public static AudioMixerGroup ExteriorMixer { get { return Mixer.FindMatchingGroups("EXTERIOR")[0]; } }
 
         public float MufflingFrequency { get; set; } = 22200;
         public float FocusMufflingFrequency { get; set; } = 22200;
@@ -47,6 +61,8 @@ namespace RocketSoundEnhancement
 
         void Awake()
         {
+            if (instance != null) { Destroy(instance); }
+
             instance = this;
         }
 
@@ -55,9 +71,13 @@ namespace RocketSoundEnhancement
             Settings.Load();
             ShipEffectsConfig.Load();
 
-            AeroFX = GameObject.FindObjectOfType<AerodynamicsFX>();
-
             ApplySettings();
+
+            // AudioListener Fix
+            Debug.Log($"[RSE]: Listener Local Position: {FlightCamera.fetch.AudioListenerGameObject.transform.localPosition} Rotation: {FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles}");
+            FlightCamera.fetch.AudioListenerGameObject.transform.localPosition = Vector3.zero;
+            FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles = Vector3.zero;
+            Debug.Log($"[RSE]: Listener Fixed: Local Position:  {FlightCamera.fetch.AudioListenerGameObject.transform.localPosition} Rotation: {FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles}");
 
             GameEvents.onGamePause.Add(() => gamePaused = true);
             GameEvents.onGameUnpause.Add(() => gamePaused = false);
@@ -72,7 +92,7 @@ namespace RocketSoundEnhancement
             }
 
             unmanagedSources.Clear();
-            HashSet<AudioSource> audioSources = GameObject.FindObjectsOfType<AudioSource>().ToHashSet();
+            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().ToHashSet();
             foreach (var source in audioSources)
             {
                 if (source == null) continue;
@@ -120,10 +140,10 @@ namespace RocketSoundEnhancement
             atk = isCustom ? Settings.LimiterAttack : Mathf.Lerp(10, 200, amount);
             rls = isCustom ? Settings.LimiterRelease : Mathf.Lerp(20, 1000, amount);
 
-            mixer.SetFloat("LimiterThreshold",thrs);
-            mixer.SetFloat("LimiterGain", gain);
-            mixer.SetFloat("LimiterAttack", atk);
-            mixer.SetFloat("LimiterRelease", rls);
+            Mixer.SetFloat("LimiterThreshold",thrs);
+            Mixer.SetFloat("LimiterGain", gain);
+            Mixer.SetFloat("LimiterAttack", atk);
+            Mixer.SetFloat("LimiterRelease", rls);
         }
 
         public float WindModulation()
@@ -136,7 +156,7 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
-            if (gamePaused) return;
+            if (gamePaused || !HighLogic.LoadedSceneIsFlight) return;
 
             if (!Settings.EnableAudioEffects || Mixer == null)
             {
@@ -155,7 +175,7 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            HashSet<AudioSource> audioSources = GameObject.FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToHashSet();
+            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToHashSet();
             foreach (AudioSource source in audioSources)
             {
                 if (source == null)
@@ -247,6 +267,8 @@ namespace RocketSoundEnhancement
 
         void OnDestroy()
         {
+            // Temp fix for sound stuttering between scene changes
+            AudioListener.volume = 0;
             GameEvents.onGamePause.Remove(() => gamePaused = true);
             GameEvents.onGameUnpause.Remove(() => gamePaused = false);
         }

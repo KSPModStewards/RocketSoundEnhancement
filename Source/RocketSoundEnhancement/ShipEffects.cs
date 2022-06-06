@@ -10,6 +10,18 @@ namespace RocketSoundEnhancement
 {
     public class ShipEffects : VesselModule
     {
+        public static AerodynamicsFX aeroFx;
+        public static AerodynamicsFX AeroFX
+        {
+            get
+            {
+                if (aeroFx == null)
+                    aeroFx = FindObjectOfType<AerodynamicsFX>();
+
+                return aeroFx;
+            }
+        }
+
         public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
@@ -295,7 +307,7 @@ namespace RocketSoundEnhancement
                     ThrustToWeight = controller;
                     break;
                 case PhysicsControl.REENTRYHEAT:
-                    if (RocketSoundEnhancement.Instance.AeroFX != null) { controller = RocketSoundEnhancement.Instance.AeroFX.FxScalar * RocketSoundEnhancement.Instance.AeroFX.state; }
+                    if (AeroFX != null) { controller = AeroFX.FxScalar * AeroFX.state; }
                     break;
                 case PhysicsControl.None:
                     controller = 1;

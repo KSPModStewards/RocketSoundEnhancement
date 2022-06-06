@@ -26,7 +26,7 @@ namespace RocketSoundEnhancement
             {
                 if (rse_PanelPrefab == null)
                 {
-                    rse_PanelPrefab = Startup.RSE_Bundle.LoadAsset("RSE_Panel") as GameObject;
+                    rse_PanelPrefab = RocketSoundEnhancement.RSE_Bundle.LoadAsset("RSE_Panel") as GameObject;
                 }
                 return rse_PanelPrefab;
             }
