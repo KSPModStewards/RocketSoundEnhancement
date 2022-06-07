@@ -157,6 +157,7 @@ namespace RocketSoundEnhancement
         {
             Settings.Save();
             RocketSoundEnhancement.Instance.ApplySettings();
+            CloseSettingsPanel();
         }
         public void ClampToScreen(RectTransform rect)
         {

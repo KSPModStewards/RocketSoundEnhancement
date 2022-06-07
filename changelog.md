@@ -4,6 +4,8 @@
 ### Changes
 - Added MachEffectsAmount config
 - Fixed RSE_AUDIO AirSim Filter being disabled first before the audiosource causing unwanted behaviour
+- Settings Panel now closes when Save button is pressed
+- Temporary Fix for Sound Stutters when changing scenes
 
 ## [0.9.3] - 06-05-22
 ### Changes
