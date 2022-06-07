@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 ### Changes
+
+## [0.9.4] - 06-08-22
+### Changes
 - Added MachEffectsAmount config
 - Fixed RSE_AUDIO AirSim Filter being disabled first before the audiosource causing unwanted behaviour
 - Settings Panel now closes when Save button is pressed
