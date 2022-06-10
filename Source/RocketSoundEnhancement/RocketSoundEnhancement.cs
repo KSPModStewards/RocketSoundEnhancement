@@ -37,6 +37,7 @@ namespace RocketSoundEnhancement
                 if (mixer == null)
                 {
                     mixer = RSE_Bundle.LoadAsset("RSE_Mixer") as AudioMixer;
+                    Debug.Log("[RSE]: AudioMixer loaded");
                 }
                 return mixer;
             }
@@ -72,11 +73,8 @@ namespace RocketSoundEnhancement
 
             ApplySettings();
 
-            // AudioListener Fix
-            Debug.Log($"[RSE]: Listener Local Position: {FlightCamera.fetch.AudioListenerGameObject.transform.localPosition} Rotation: {FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles}");
             FlightCamera.fetch.AudioListenerGameObject.transform.localPosition = Vector3.zero;
             FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles = Vector3.zero;
-            Debug.Log($"[RSE]: Listener Fixed: Local Position:  {FlightCamera.fetch.AudioListenerGameObject.transform.localPosition} Rotation: {FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles}");
 
             GameEvents.onGamePause.Add(() => gamePaused = true);
             GameEvents.onGameUnpause.Add(() => gamePaused = false);

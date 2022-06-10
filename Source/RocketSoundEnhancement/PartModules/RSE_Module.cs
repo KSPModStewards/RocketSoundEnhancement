@@ -118,7 +118,7 @@ namespace RocketSoundEnhancement.PartModules
         {
             foreach (var soundLayer in soundLayers.ToList())
             {
-                string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
+                string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
                 {
                     var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
@@ -228,7 +228,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public void PlaySoundLayer(SoundLayer soundLayer, float control, float volume, bool rndOneShotVol = false)
         {
-            string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
+            string soundLayerName = soundLayer.name;
             if (!Sources.ContainsKey(soundLayerName)) return;
 
             float finalVolume, finalPitch;
