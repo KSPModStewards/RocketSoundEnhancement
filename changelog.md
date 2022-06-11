@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Changes
 - Fixed OneShot Samples playing with wrong pitch value
+- Fixed AirSim Filter not taking effect sometimes.
 - Removed AudioListener Fix. Install [KSP Community Fixes](https://github.com/KSPModdingLibs/KSPCommunityFixes/releases) instead for the Sound Bug Fix.
 
 ## [0.9.4] - 06-08-22

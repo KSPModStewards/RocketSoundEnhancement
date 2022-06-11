@@ -160,7 +160,7 @@ namespace RocketSoundEnhancement.PartModules
                     foreach (var source in Sources.Keys)
                     {
                         //disable the filter but keep the fields updated
-                        if (!Sources[source].enabled && AirSimFilters.ContainsKey(source))
+                        if (!Sources[source].isPlaying && AirSimFilters.ContainsKey(source))
                         {
                             AirSimFilters[source].enabled = false;
                             AirSimFilters[source].Distance = distance;
