@@ -56,8 +56,6 @@ namespace RocketSoundEnhancement.PartModules
         {
             if (!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused) return;
 
-            base.LateUpdate();
-
             if (!collided)
             {
                 foreach (var source in Sources.Values)
@@ -67,7 +65,7 @@ namespace RocketSoundEnhancement.PartModules
                     if (source.isPlaying && source.loop)
                         source.volume = 0;
                 }
-                return;
+                goto baseLateUpdate;
             }
 
             if (!SoundLayerCollisionGroups.ContainsKey(collisionType)) return;
@@ -82,6 +80,9 @@ namespace RocketSoundEnhancement.PartModules
 
                 PlaySoundLayer(soundLayer, finalControl, Volume, true);
             }
+
+            baseLateUpdate:
+            base.LateUpdate();
         }
 
         public override void FixedUpdate()
