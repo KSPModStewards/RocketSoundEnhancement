@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 namespace RocketSoundEnhancement.PartModules
 {
@@ -8,7 +9,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void OnStart(StartState state)
         {
-            if(state == StartState.Editor || state == StartState.None)
+            if (state == StartState.Editor || state == StartState.None)
                 return;
 
             EnableLowpassFilter = true;
@@ -20,30 +21,26 @@ namespace RocketSoundEnhancement.PartModules
 
         public override void LateUpdate()
         {
-            if(!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused)
+            if (!HighLogic.LoadedSceneIsFlight || !Initialized || !vessel.loaded || GamePaused)
                 return;
 
-            var thrustTransforms = moduleRCSFX.thrusterTransforms;
+            var thrustTransformsCount = moduleRCSFX.thrusterTransforms.Count > 0 ? moduleRCSFX.thrusterTransforms.Count : 1;
             var thrustForces = moduleRCSFX.thrustForces;
+            float control = thrustForces.Take(thrustTransformsCount).Average() / moduleRCSFX.thrusterPower;
 
-            float control = 0;
-            for(int i = 0; i < thrustTransforms.Count; i++) {
-                control += thrustForces[i] / moduleRCSFX.thrusterPower;
-            }
-
-            control /= thrustTransforms.Count > 0 ? thrustTransforms.Count : 1;
-
-            foreach(var soundLayer in SoundLayers) {
+            foreach (var soundLayer in SoundLayers)
+            {
                 string sourceLayerName = soundLayer.name;
 
-                if(!Controls.ContainsKey(sourceLayerName)) {
+                if (!Controls.ContainsKey(sourceLayerName))
+                {
                     Controls.Add(sourceLayerName, 0);
                 }
 
                 float smoothControl = AudioUtility.SmoothControl.Evaluate(control) * (30 * Time.deltaTime);
                 Controls[sourceLayerName] = Mathf.MoveTowards(Controls[sourceLayerName], control, smoothControl);
-                
-                PlaySoundLayer(soundLayer, Controls[sourceLayerName], Volume * thrustTransforms.Count);
+
+                PlaySoundLayer(soundLayer, Controls[sourceLayerName], Volume * thrustTransformsCount);
             }
 
             base.LateUpdate();
