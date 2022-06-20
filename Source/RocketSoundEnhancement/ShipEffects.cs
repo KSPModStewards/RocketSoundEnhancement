@@ -41,16 +41,12 @@ namespace RocketSoundEnhancement
         //  Air Simulation Values
         public float Distance;
         public float Angle;
-        public float AngleRear;
         public float MachAngle;
         public float MachPass;
-        public float MachPassRear;
         public float Mach;
         public Vector3 MachTipCameraNormal = new Vector3();
-        public Vector3 MachRearCameraNormal = new Vector3();
 
-        public bool SonicBoomedTip = true;
-        public bool SonicBoomedRear = true;
+        public bool SonicBoomed = true;
 
         private bool initialized;
         private bool gamePaused;
@@ -189,30 +185,20 @@ namespace RocketSoundEnhancement
                 var vesselTip = transform.position;
                 var vesselRear = transform.position;
                 RaycastHit tipHit;
-                RaycastHit rearHit;
 
                 if (Physics.BoxCast(positionTip, vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
                 {
                     vesselTip = tipHit.point;
                 }
 
-                if (Physics.BoxCast(positionRear, vessel.vesselSize, vessel.velocityD.normalized, out rearHit))
-                {
-                    vesselRear = rearHit.point;
-                }
-
                 MachTipCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
-                MachRearCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselRear).normalized;
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);  
                 Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
-                AngleRear = (1 + Vector3.Dot(MachRearCameraNormal, vessel.velocityD.normalized)) * 90;
 
                 if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
                 {
                     Angle = 0;
-                    AngleRear = 0;
                     MachPass = 1;
-                    MachPassRear = 1;
                     return;
                 }
 
@@ -221,7 +207,6 @@ namespace RocketSoundEnhancement
                     Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                     MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
                     MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach);
-                    MachPassRear = 1f - Mathf.Clamp01(AngleRear / MachAngle) * Mathf.Clamp01(Mach);
                 }
             }
         }
@@ -244,22 +229,15 @@ namespace RocketSoundEnhancement
                         if (!Settings.EnableAudioEffects || Settings.MufflerQuality == AudioMufflerQuality.Normal || Settings.MachEffectsAmount == 0)
                             continue;
 
-                        if (MachPass > 0.0 && !SonicBoomedTip)
+                        if (MachPass > 0.0 && !SonicBoomed)
                         {
-                            SonicBoomedTip = true;
-                            if (vessel.mach > 1) PlaySonicBoom(soundLayer);
-                        }
-
-                        if (MachPassRear > 0.0 && !SonicBoomedRear)
-                        {
-                            SonicBoomedRear = true;
+                            SonicBoomed = true;
                             if (vessel.mach > 1) PlaySonicBoom(soundLayer);
                         }
 
                         if (MachPass == 0)
                         {
-                            SonicBoomedTip = false;
-                            SonicBoomedRear = false;
+                            SonicBoomed = false;
                         }
 
                         continue;
