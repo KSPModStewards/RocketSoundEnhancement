@@ -95,7 +95,8 @@ namespace RocketSoundEnhancement
             {
                 foreach (var soundLayerGroup in SoundLayerGroups)
                 {
-                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value));
+                    var hasAirSimFilter = soundLayerGroup.Key != PhysicsControl.SONICBOOM;
+                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value, hasAirSimFilter));
                 }
             }
 
@@ -104,11 +105,11 @@ namespace RocketSoundEnhancement
             return true;
         }
 
-        IEnumerator SetupAudioSources(List<SoundLayer> soundLayers)
+        IEnumerator SetupAudioSources(List<SoundLayer> soundLayers, bool hasAirSimFilter = true)
         {
             foreach (var soundLayer in soundLayers.ToList())
             {
-                string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
+                string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
                 {
                     var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
@@ -120,11 +121,13 @@ namespace RocketSoundEnhancement
                     source.enabled = false;
                     Sources.Add(soundLayerName, source);
 
-                    var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
-                    airSimFilter.EnableLowpassFilter = true;
-                    airSimFilter.EnableWaveShaperFilter = true;
-
-                    AirSimFilters.Add(soundLayerName, airSimFilter);
+                    if (hasAirSimFilter)
+                    {
+                        var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
+                        airSimFilter.EnableLowpassFilter = true;
+                        airSimFilter.EnableWaveShaperFilter = true;
+                        AirSimFilters.Add(soundLayerName, airSimFilter);
+                    }
                 }
                 yield return null;
             }
@@ -216,32 +219,38 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
+            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM))
+            {
+                if (MachPass > 0.0 && !SonicBoomed)
+                {
+                    SonicBoomed = true;
+                    if (vessel.mach > 1)
+                    {
+                        foreach (var soundLayer in SoundLayerGroups[PhysicsControl.SONICBOOM])
+                        {
+                            if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
+                                continue;
+
+                            PlaySonicBoom(soundLayer);
+                        }
+                    }
+                }
+
+                if (MachPass == 0)
+                {
+                    SonicBoomed = false;
+                }
+            }
+
             foreach (var soundLayerGroup in SoundLayerGroups)
             {
+                if (soundLayerGroup.Key == PhysicsControl.SONICBOOM) continue;
+
                 float rawControl = GetPhysicsController(soundLayerGroup.Key);
                 foreach (var soundLayer in soundLayerGroup.Value)
                 {
                     if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
                         continue;
-
-                    if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
-                    {
-                        if (!Settings.EnableAudioEffects || Settings.MufflerQuality == AudioMufflerQuality.Normal || Settings.MachEffectsAmount == 0)
-                            continue;
-
-                        if (MachPass > 0.0 && !SonicBoomed)
-                        {
-                            SonicBoomed = true;
-                            if (vessel.mach > 1) PlaySonicBoom(soundLayer);
-                        }
-
-                        if (MachPass == 0)
-                        {
-                            SonicBoomed = false;
-                        }
-
-                        continue;
-                    }
 
                     PlaySoundLayer(soundLayer, rawControl);
                 }
@@ -272,12 +281,12 @@ namespace RocketSoundEnhancement
             if (InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)
                 return;
 
-            PlaySoundLayer(soundLayer, 1, Mathf.Min(Mach, 4), false, true);
+            PlaySoundLayer(soundLayer, Mathf.Min(Mach, 4) , false, true);
         }
 
-        public void PlaySoundLayer(SoundLayer soundLayer, float control, float volumeScale = 1, bool smoothControl = true, bool AirSimBasic = false)
+        public void PlaySoundLayer(SoundLayer soundLayer, float control, bool smoothControl = true, bool isSonicBoom = false)
         {
-            string soundLayerName = soundLayer.loop ? soundLayer.name : "oneshotSource";
+            string soundLayerName = soundLayer.name;
             if (!Sources.ContainsKey(soundLayerName)) return;
 
             float finalVolume, finalPitch;
@@ -322,12 +331,12 @@ namespace RocketSoundEnhancement
 
             if (soundLayer.channel == FXChannel.Exterior) { source.transform.position = vessel.CurrentCoM; }
 
-            if (Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
+            if (Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior && !isSonicBoom)
             {
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName))
                 {
                     AirSimFilters[soundLayerName].enabled = true;
-                    AirSimFilters[soundLayerName].SimulationUpdate = AirSimBasic ? AirSimulationUpdate.Basic : AirSimulationUpdate.Full;
+                    AirSimFilters[soundLayerName].SimulationUpdate = AirSimulationUpdate.Full;
                     AirSimFilters[soundLayerName].Distance = Distance;
                     AirSimFilters[soundLayerName].Mach = Mach;
                     AirSimFilters[soundLayerName].Angle = Angle;
@@ -345,7 +354,7 @@ namespace RocketSoundEnhancement
                 }
             }
 
-            source.volume = finalVolume * volumeScale * GameSettings.SHIP_VOLUME;
+            source.volume = finalVolume * GameSettings.SHIP_VOLUME;
             source.pitch = finalPitch;
 
             int clipIndex = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;

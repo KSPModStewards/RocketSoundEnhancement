@@ -54,7 +54,7 @@ namespace RocketSoundEnhancement
         public float spoolSpeed;
         public float spoolIdle;
         public float spread;
-        public float MaxDistance;
+        public float maxDistance;
         public AudioRolloffMode rolloffMode;
         public FXCurve volume;
         public FXCurve pitch;
@@ -129,12 +129,14 @@ namespace RocketSoundEnhancement
             node.TryGetValue("spread", ref soundLayer.spread);
             node.TryGetEnum("channel", ref soundLayer.channel, FXChannel.Exterior);
             node.TryGetEnum("rolloffMode", ref soundLayer.rolloffMode, AudioRolloffMode.Logarithmic);
-            if (!node.TryGetValue("MaxDistance", ref soundLayer.MaxDistance)) soundLayer.MaxDistance = 500;
+            if (!node.TryGetValue("maxDistance", ref soundLayer.maxDistance)) soundLayer.maxDistance = 500;
 
             if (node.HasNode("rolloffCurve"))
             {
                 soundLayer.rollOffCurve = new FloatCurve();
                 soundLayer.rollOffCurve.Load(node.GetNode("rolloffCurve"));
+                soundLayer.rollOffCurve.Curve.preWrapMode = WrapMode.ClampForever;
+                soundLayer.rollOffCurve.Curve.postWrapMode = WrapMode.ClampForever;
             }
 
             soundLayer.volume = new FXCurve("volume", 1);
@@ -174,7 +176,7 @@ namespace RocketSoundEnhancement
 
             return soundLayer;
         }
-        public static AudioSource CreateSource(GameObject sourceGameObject, FXCurve volume, FXCurve pitch, bool loop = false, float spread = 0.5f)
+        public static AudioSource CreateSource(GameObject sourceGameObject, FXCurve volume, FXCurve pitch, bool loop = false, float spread = 0.0f)
         {
             var source = sourceGameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
@@ -183,6 +185,7 @@ namespace RocketSoundEnhancement
             source.loop = loop;
             source.spatialBlend = 1;
             source.rolloffMode = AudioRolloffMode.Logarithmic;
+
             if (spread > 0) { source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, spread, 1, 0)); }
 
             return source;
@@ -198,14 +201,14 @@ namespace RocketSoundEnhancement
             source.spatialBlend = 1;
 
             source.rolloffMode = soundLayer.rolloffMode;
-            if (soundLayer.rolloffMode > AudioRolloffMode.Logarithmic) { source.maxDistance = soundLayer.MaxDistance; }
+            if (soundLayer.rolloffMode > AudioRolloffMode.Logarithmic) { source.maxDistance = soundLayer.maxDistance; }
             if (soundLayer.rolloffMode == AudioRolloffMode.Custom && soundLayer.rollOffCurve != null)
             {
                 source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, soundLayer.rollOffCurve.Curve);
             }
 
             if (soundLayer.spread > 0) { source.SetCustomCurve(AudioSourceCurveType.Spread, AnimationCurve.Linear(0, soundLayer.spread, 1, 0)); }
-            
+
             return source;
         }
 
@@ -281,11 +284,22 @@ namespace RocketSoundEnhancement
                     break;
                 case FXChannel.Interior:
                     source.volume *= Settings.InteriorVolume;
-                    source.mute = isActiveVessel ? !InternalCamera.Instance.isActive : true;
+                    source.mute = !isActiveVessel || !InternalCamera.Instance.isActive;
                     break;
             }
 
-            if (!loop) { source.PlayOneShot(audioclip != null ? audioclip : source.clip, volumeScale); return; }
+            if (!loop)
+            {
+                //if (source.rolloffMode == AudioRolloffMode.Custom)
+                //{
+                //    source.clip = audioclip;
+                //    source.volume *= volumeScale;
+                //    source.Play();
+                //    return;
+                //}
+                source.PlayOneShot(audioclip, volumeScale);
+                return;
+            }
 
             if (loop && !source.isPlaying) source.Play();
         }
