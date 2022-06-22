@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 ### Changes
-- Fixed OneShot Samples playing with wrong pitch value
+
+## [0.9.5] - 06-22-22
+### Changes
+- Fixed OneShot Samples playing with the wrong pitch value
 - Fixed AirSim Filter not taking effect sometimes.
 - Fixed SonicBoom SoundLayer Support
 - Removed AirSim Filters from SonicBoom sources
-- Removed AudioListener Fix. Install [KSP Community Fixes](https://github.com/KSPModdingLibs/KSPCommunityFixes/releases) instead for the Sound Bug Fix.
 
 ## [0.9.4] - 06-08-22
 ### Changes
