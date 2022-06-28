@@ -28,6 +28,10 @@ For eg: Using a different Loop sample for low thrust compared to High Thrust on 
 Replace and/or Add Sounds to Decouplers, Launch Clamps and Docking Ports.
 - RSE_Coupler
 
+EFFECTS Nodes - A Simpler non-layer version of RSE Modules for drop-in replacement of Stock AUDIO{} with full AirSim Support and a more direct Muffling Support.
+- RSE_AUDIO
+- RSE_AUDIO_LOOP
+
 ### ShipEffects & ShipEffectsCollisions 
 **Physics based Sound Effects System**
 - Add sounds and assign it's Pitch or Volume to any physics variable available for each Vessel
