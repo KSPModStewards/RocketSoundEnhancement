@@ -115,6 +115,7 @@
   <ItemGroup>
     <Compile Include="AudioFilters\AirSimulationFilter.cs" />
     <Compile Include="EffectBehaviours\RSE_AudioEffects.cs" />
+    <Compile Include="PartModules\RSE_KerbalEVA.cs" />
     <Compile Include="PartModules\RSE_Module.cs" />
     <Compile Include="PartModules\RSE_RotorEngines.cs" />
     <Compile Include="PartModules\RSE_Coupler.cs" />
