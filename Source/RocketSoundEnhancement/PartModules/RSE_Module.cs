@@ -32,11 +32,11 @@ namespace RocketSoundEnhancement.PartModules
         public bool EnableLowpassFilter = false;
         public bool EnableDistortionFilter = false;
         public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
-        public float FarLowpass = 2500;
-        public float AngleHighpass = 0;
-        public float MaxCombDelay = 20;
-        public float MaxCombMix = 0.25f;
-        public float MaxDistortion = 0.5f;
+        public float FarLowpass = Settings.AirSimFarLowpass;
+        public float MaxCombDelay = Settings.AirSimMaxCombDelay;
+        public float MaxCombMix = Settings.AirSimMaxCombMix;
+        public float MaxDistortion = Settings.AirSimMaxDistortion;
+        public float AngleHighpass;
 
         private float doppler = 1;
         private float distance;
@@ -70,10 +70,10 @@ namespace RocketSoundEnhancement.PartModules
                 if (node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
                 if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
-                if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
                 if (node.HasValue("MaxCombDelay")) MaxCombDelay = float.Parse(node.GetValue("MaxCombDelay"));
                 if (node.HasValue("MaxCombMix")) MaxCombMix = float.Parse(node.GetValue("MaxCombMix"));
                 if (node.HasValue("MaxDistortion")) MaxDistortion = float.Parse(node.GetValue("MaxDistortion"));
+                if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
             }
 
             UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableDistortionFilter);
@@ -138,11 +138,12 @@ namespace RocketSoundEnhancement.PartModules
                     airSimFilter.EnableDistortionFilter = EnableDistortionFilter;
                     airSimFilter.SimulationUpdate = AirSimUpdateMode;
 
+                    airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
                     airSimFilter.FarLowpass = FarLowpass;
-                    airSimFilter.AngleHighPass = AngleHighpass;
                     airSimFilter.MaxCombDelay = MaxCombDelay;
                     airSimFilter.MaxCombMix = MaxCombMix;
                     airSimFilter.MaxDistortion = MaxDistortion;
+                    airSimFilter.AngleHighpass = AngleHighpass;
 
                     AirSimFilters.Add(soundLayerName, airSimFilter);
                 }
@@ -221,7 +222,7 @@ namespace RocketSoundEnhancement.PartModules
                 {
                     mach = Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
                     machAngle = vessel.GetComponent<ShipEffects>().MachAngle;
-                    machPass = 1f - Mathf.Clamp01(angle / machAngle) * mach;
+                    machPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(angle / machAngle) * mach);
                 }
             }
         }
@@ -269,8 +270,7 @@ namespace RocketSoundEnhancement.PartModules
                 {
                     if (Settings.MachEffectsAmount > 0)
                     {
-                        float machLog = Mathf.Log10(Mathf.Lerp(1, 10, machPass));
-                        finalVolume *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machLog);
+                        finalVolume *= Mathf.Log10(Mathf.Lerp(0.1f, 10, machPass)) * 0.5f;
                     }
                 }
             }

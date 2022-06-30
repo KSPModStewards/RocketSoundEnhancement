@@ -211,7 +211,7 @@ namespace RocketSoundEnhancement
 
                     if (Settings.MufflerQuality > AudioMufflerQuality.Normal && Settings.MachEffectsAmount > 0)
                     {
-                        float machPass = Mathf.Lerp(Settings.MachEffectLowerLimit, 1, sourcePart.vessel.GetComponent<ShipEffects>().MachPass);
+                        float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
 
                         if (!managedMinDistance.ContainsKey(managedSourceID))
                             managedMinDistance.Add(managedSourceID, source.minDistance);
@@ -235,6 +235,9 @@ namespace RocketSoundEnhancement
                     airSimFilter.enabled = true;
                     airSimFilter.EnableLowpassFilter = true;
                     airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
+                    airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
+                    airSimFilter.FarLowpass = Settings.AirSimFarLowpass;
+
                     airSimFilter.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
                 }
             }

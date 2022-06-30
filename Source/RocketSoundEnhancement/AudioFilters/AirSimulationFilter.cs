@@ -19,12 +19,13 @@ namespace RocketSoundEnhancement.AudioFilters
         public bool EnableLowpassFilter { get; set; }
         public bool EnableDistortionFilter { get; set; }
         public AirSimulationUpdate SimulationUpdate { get; set; }
-        public float MaxDistance { get; set; } = Settings.AirSimMaxDistance;
-        public float FarLowpass { get; set; } = 2500;
-        public float AngleHighPass { get; set; } = 0;
-        public float MaxCombDelay { get; set; } = 20;
-        public float MaxCombMix { get; set; } = 0.25f;
-        public float MaxDistortion { get; set; } = 0.5f;
+        public float MaxDistance { get; set; } = 500;
+        public float FarLowpass { get; set; }
+        public float MaxCombDelay { get; set; }
+        public float MaxCombMix { get; set; }
+        public float MaxDistortion { get; set; }
+        public float AngleHighpass { get; set; }
+
 
         // Simulation Inputs
         public float Distance = 0;
@@ -36,7 +37,7 @@ namespace RocketSoundEnhancement.AudioFilters
         // Filter Controls
         public float CombDelay = 0;
         public float CombMix = 0;
-        public float LowpassFrequency = 22200;
+        public float LowpassFrequency = 22000;
         public float HighPassFrequency = 0;
         public float Distortion = 0;
 
@@ -64,7 +65,7 @@ namespace RocketSoundEnhancement.AudioFilters
         {
             if (SimulationUpdate != AirSimulationUpdate.None)
             {
-                distanceLog = Mathf.Pow(1 - Mathf.Clamp01(Distance / MaxDistance), 10);
+                distanceLog = (1 - Mathf.Log10(Mathf.Lerp(0.1f, 10, Mathf.Clamp01(Distance / MaxDistance)))) * 0.5f;
                 anglePositive = Mathf.Clamp01((Angle - MachAngle) / MachAngle);
 
                 if (SimulationUpdate == AirSimulationUpdate.Full)
@@ -82,18 +83,15 @@ namespace RocketSoundEnhancement.AudioFilters
 
                 if (EnableLowpassFilter)
                 {
-                    LowpassFrequency = Mathf.Lerp(FarLowpass, 22500, distanceLog);
+                    LowpassFrequency = Mathf.Lerp(FarLowpass, 22000, distanceLog);
                     if (SimulationUpdate == AirSimulationUpdate.Full)
                     {
-                        if (Settings.MachEffectsAmount > 0)
-                        {
-                            LowpassFrequency *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machPass);
-                        }
-                        HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePositive);
+                        LowpassFrequency *= machPass;
+                        HighPassFrequency = Mathf.Lerp(0, AngleHighpass * (1 + (machVelocityClamped * 2f)), anglePositive);
                     }
                     else
                     {
-                        HighPassFrequency = AngleHighPass * anglePositive;
+                        HighPassFrequency = AngleHighpass * anglePositive;
                     }
                 }
 
@@ -129,7 +127,7 @@ namespace RocketSoundEnhancement.AudioFilters
                 alp[3] = 2.0f * (1.0f - clp * clp) * alp[0];
                 alp[4] = (1.0f - r * clp + clp * clp) * alp[0];
 
-                if (AngleHighPass > 0)
+                if (AngleHighpass > 0)
                 {
                     float chp = Mathf.Tan(Mathf.PI * Mathf.Clamp(HighPassFrequency, 0, 22000) / sampleRate);
                     chp = (chp + r) * chp;
@@ -214,7 +212,7 @@ namespace RocketSoundEnhancement.AudioFilters
                 outlpl[1] = outlpl[0];
                 outlpl[0] = outputlp;
 
-                if (AngleHighPass > 0)
+                if (AngleHighpass > 0)
                 {
                     outputhp = (ahp[0] * outhpl[1] + outputlp - inhpl[1]) * ahp[1];
 
@@ -238,7 +236,7 @@ namespace RocketSoundEnhancement.AudioFilters
             outlpr[1] = outlpr[0];
             outlpr[0] = outputlp;
 
-            if (AngleHighPass > 0)
+            if (AngleHighpass > 0)
             {
                 outputhp = (ahp[0] * outhpr[1] + outputlp - inhpr[1]) * ahp[1];
 

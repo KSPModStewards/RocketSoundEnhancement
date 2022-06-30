@@ -24,11 +24,11 @@ namespace RocketSoundEnhancement.EffectBehaviours
         [Persistent] public bool EnableDistortionFilter = false;
         [Persistent] public float DopplerFactor = 0.5f;
         [Persistent] public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
-        [Persistent] public float FarLowpass = 2500;
+        [Persistent] public float FarLowpass = Settings.AirSimFarLowpass;
+        [Persistent] public float MaxCombDelay = Settings.AirSimMaxCombDelay;
+        [Persistent] public float MaxCombMix = Settings.AirSimMaxCombMix;
+        [Persistent] public float MaxDistortion = Settings.AirSimMaxDistortion;
         [Persistent] public float AngleHighpass = 0;
-        [Persistent] public float MaxCombDelay = 20;
-        [Persistent] public float MaxCombMix = 0.25f;
-        [Persistent] public float MaxDistortion = 0.5f;
 
         public FXCurve volume = new FXCurve("volume", 1f);
         public FXCurve pitch = new FXCurve("pitch", 1f);
@@ -85,11 +85,13 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
                 airSimFilter.EnableDistortionFilter = EnableDistortionFilter;
                 airSimFilter.SimulationUpdate = AirSimUpdateMode;
+
+                airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
                 airSimFilter.FarLowpass = FarLowpass;
-                airSimFilter.AngleHighPass = AngleHighpass;
                 airSimFilter.MaxCombDelay = MaxCombDelay;
                 airSimFilter.MaxCombMix = MaxCombMix;
                 airSimFilter.MaxDistortion = MaxDistortion;
+                airSimFilter.AngleHighpass = AngleHighpass;
             }
 
             GameEvents.onGamePause.Add(OnGamePaused);
@@ -157,8 +159,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     {
                         if (Settings.MachEffectsAmount > 0)
                         {
-                            float machLog = Mathf.Log10(Mathf.Lerp(1, 10, machPass));
-                            finalVolume *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machLog);
+                            finalVolume *= Mathf.Log10(Mathf.Lerp(0.1f, 10, machPass)) * 0.5f;
                         }
                     }
                 }
@@ -183,8 +184,6 @@ namespace RocketSoundEnhancement.EffectBehaviours
             }
 
             end:
-            if (airSimFilter != null && airSimFilter.enabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
-                airSimFilter.enabled = false;
 
             slowUpdate++;
             if (slowUpdate >= 60)
@@ -207,6 +206,9 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     airSimFilter.MachPass = machPass;
                 }
             }
+
+            if (airSimFilter != null && airSimFilter.enabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
+                airSimFilter.enabled = false;
         }
 
         public void FixedUpdate()
@@ -241,7 +243,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 {
                     mach = Mathf.Clamp01(hostPart.vessel.GetComponent<ShipEffects>().Mach);
                     machAngle = hostPart.vessel.GetComponent<ShipEffects>().MachAngle;
-                    machPass = 1f - Mathf.Clamp01(angle / machAngle) * mach;
+                    machPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(angle / machAngle) * mach);
                 }
             }
         }

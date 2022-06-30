@@ -126,6 +126,11 @@ namespace RocketSoundEnhancement
                         var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
                         airSimFilter.EnableLowpassFilter = true;
                         airSimFilter.EnableDistortionFilter = true;
+
+                        airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
+                        airSimFilter.FarLowpass = Settings.AirSimFarLowpass;
+                        airSimFilter.MaxDistortion = Settings.AirSimMaxDistortion;
+
                         AirSimFilters.Add(soundLayerName, airSimFilter);
                     }
                 }
@@ -209,7 +214,7 @@ namespace RocketSoundEnhancement
                 {
                     Mach = (float)vessel.mach * Mathf.Clamp01((float)(vessel.staticPressurekPa * 1000) / 404.1f);
                     MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
-                    MachPass = 1f - Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach);
+                    MachPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach));
                 }
             }
         }
@@ -221,7 +226,7 @@ namespace RocketSoundEnhancement
 
             if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM))
             {
-                if (MachPass > 0.0 && !SonicBoomed)
+                if (MachPass > Settings.MachEffectLowerLimit && !SonicBoomed)
                 {
                     SonicBoomed = true;
                     if (vessel.mach > 1)
@@ -236,7 +241,7 @@ namespace RocketSoundEnhancement
                     }
                 }
 
-                if (MachPass == 0)
+                if (MachPass == Settings.MachEffectLowerLimit)
                 {
                     SonicBoomed = false;
                 }
@@ -347,8 +352,8 @@ namespace RocketSoundEnhancement
                 {
                     if (Settings.MachEffectsAmount > 0)
                     {
-                        float machLog = Mathf.Log10(Mathf.Lerp(1, 10, MachPass));
-                        finalVolume *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machLog);
+                        float machLog = Mathf.Log10(Mathf.Lerp(0.1f, 10, MachPass)) * 0.5f;
+                        finalVolume *= machLog;
                     }
                 }
             }
