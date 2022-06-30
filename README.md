@@ -24,6 +24,7 @@ For eg: Using a different Loop sample for low thrust compared to High Thrust on 
 - RSE_RCS
 - RSE_Wheels
 - RSE_RotorEngines
+- RSE_KerbalEVA (For Jetpacks)
 
 Replace and/or Add Sounds to Decouplers, Launch Clamps and Docking Ports.
 - RSE_Coupler
