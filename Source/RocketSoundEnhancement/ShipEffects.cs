@@ -336,7 +336,6 @@ namespace RocketSoundEnhancement
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName))
                 {
                     AirSimFilters[soundLayerName].enabled = true;
-                    AirSimFilters[soundLayerName].SimulationUpdate = AirSimulationUpdate.Full;
                     AirSimFilters[soundLayerName].Distance = Distance;
                     AirSimFilters[soundLayerName].Mach = Mach;
                     AirSimFilters[soundLayerName].Angle = Angle;

@@ -290,13 +290,6 @@ namespace RocketSoundEnhancement
 
             if (!loop)
             {
-                //if (source.rolloffMode == AudioRolloffMode.Custom)
-                //{
-                //    source.clip = audioclip;
-                //    source.volume *= volumeScale;
-                //    source.Play();
-                //    return;
-                //}
                 source.PlayOneShot(audioclip, volumeScale);
                 return;
             }

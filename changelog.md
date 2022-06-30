@@ -8,6 +8,7 @@
 - Improved AirSimulationFilter Performance
 - Added RSE_KerbalEVA with support for jetpack sounds. by @pizzaoverhead in https://github.com/ensou04/RocketSoundEnhancement/pull/16
 - Renamed "EnableWaveShaperFilter" to "EnableDistortionFilter"
+- Removed "RSE_AUDIO_LOOP". assign a name to "RSE_AUDIO" if used more than once in a single EFFECTS subnode
 
 # [0.9.5] - 06-22-22
 ## Changes

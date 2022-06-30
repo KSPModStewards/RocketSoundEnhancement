@@ -10,22 +10,13 @@ using UnityEngine;
 
 namespace RocketSoundEnhancement.EffectBehaviours
 {
-    [EffectDefinition("RSE_AUDIO_LOOP")]
-    public class RSE_AudioEffectsLoop : RSE_AudioEffects
-    {
-        public override void OnLoad(ConfigNode node)
-        {
-            loop = true;
-            base.OnLoad(node);
-        }
-    }
-
     [EffectDefinition("RSE_AUDIO")]
     public class RSE_AudioEffects : EffectBehaviour
     {
         [Persistent] public AudioFX.AudioChannel channel;
         [Persistent] public string clip = "";
         [Persistent] public bool loop;
+        [Persistent] public bool loopAtRandom = true;
         [Persistent] public float spread;
 
         [Persistent] public bool EnableCombFilter = false;
@@ -52,6 +43,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
         private bool markForPlay;
         private bool playOneShot;
         private int slowUpdate;
+        private float loopRandomStart;
         private float control;
         private float distance;
         private float lastDistance;
@@ -92,7 +84,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 airSimFilter.EnableCombFilter = EnableCombFilter;
                 airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
                 airSimFilter.EnableDistortionFilter = EnableDistortionFilter;
-                airSimFilter.SimulationUpdate = hostPart != null ? AirSimUpdateMode : AirSimulationUpdate.Basic;
+                airSimFilter.SimulationUpdate = AirSimUpdateMode;
                 airSimFilter.FarLowpass = FarLowpass;
                 airSimFilter.AngleHighPass = AngleHighpass;
                 airSimFilter.MaxCombDelay = MaxCombDelay;
@@ -179,7 +171,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 {
                     if (audioSource.clip == null) audioSource.clip = audioClip;
 
-                    audioSource.time = audioClip.length * (float)random.NextDouble();
+                    audioSource.time = loopAtRandom ? audioClip.length * loopRandomStart : 0;
                     audioSource.Play();
                 }
 
@@ -203,6 +195,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
 
                 audioSource.enabled = false;
                 markForPlay = false;
+                loopRandomStart = (float)random.NextDouble();
 
                 if (!audioSource.enabled && airSimFilter != null)
                 {

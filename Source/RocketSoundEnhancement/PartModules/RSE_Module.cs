@@ -152,23 +152,6 @@ namespace RocketSoundEnhancement.PartModules
 
         public virtual void LateUpdate()
         {
-            if (Settings.EnableAudioEffects && Settings.MufflerQuality == AudioMufflerQuality.AirSim && UseAirSimulation)
-            {
-                foreach (var source in Sources.Keys)
-                {
-                    if (Sources[source].enabled)
-                    {
-                        AirSimFilters[source].enabled = true;
-                        AirSimFilters[source].Distance = distance;
-                        AirSimFilters[source].Mach = mach;
-                        AirSimFilters[source].Angle = angle;
-                        AirSimFilters[source].MachAngle = machAngle;
-                        AirSimFilters[source].MachPass = machPass;
-                        AirSimFiltersEnabled = true;
-                    }
-                }
-            }
-
             slowUpdate++;
             if (slowUpdate >= 60)
             {
@@ -272,7 +255,17 @@ namespace RocketSoundEnhancement.PartModules
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
             {
-                if (!UseAirSimulation || Settings.MufflerQuality == AudioMufflerQuality.AirSimLite)
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName) && UseAirSimulation)
+                {
+                    AirSimFilters[soundLayerName].enabled = true;
+                    AirSimFilters[soundLayerName].Distance = distance;
+                    AirSimFilters[soundLayerName].Mach = mach;
+                    AirSimFilters[soundLayerName].Angle = angle;
+                    AirSimFilters[soundLayerName].MachAngle = machAngle;
+                    AirSimFilters[soundLayerName].MachPass = machPass;
+                    AirSimFiltersEnabled = true;
+                }
+                else
                 {
                     if (Settings.MachEffectsAmount > 0)
                     {

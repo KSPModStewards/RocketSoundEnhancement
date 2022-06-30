@@ -120,13 +120,22 @@ namespace RocketSoundEnhancement.AudioFilters
             #region LowpassHighpassFilter Update
             if (EnableLowpassFilter)
             {
-                float lpcutOff = Mathf.Exp(-2.0f * Mathf.Clamp(LowpassFrequency, 0, 22000) / sampleRate);
-                a0 = 1.0f - lpcutOff;
-                b0 = -lpcutOff;
+                float clp = 1.0f / Mathf.Tan(Mathf.PI * Mathf.Clamp(LowpassFrequency, 10, 22000) / sampleRate);
 
-                float hpcutOff = Mathf.Exp(-2.0f * Mathf.Clamp(HighPassFrequency, 0, 22000) / sampleRate);
-                a1 = 1.0f - hpcutOff;
-                b1 = -hpcutOff;
+                float r = Mathf.Sqrt(2);
+                alp[0] = 1.0f / (1.0f + r * clp + clp * clp);
+                alp[1] = 2 * alp[0];
+                alp[2] = alp[0];
+                alp[3] = 2.0f * (1.0f - clp * clp) * alp[0];
+                alp[4] = (1.0f - r * clp + clp * clp) * alp[0];
+
+                if (AngleHighPass > 0)
+                {
+                    float chp = Mathf.Tan(Mathf.PI * Mathf.Clamp(HighPassFrequency, 0, 22000) / sampleRate);
+                    chp = (chp + r) * chp;
+                    ahp[0] = 1.0f / (1.0f + chp);
+                    ahp[1] = (1.0f - chp);
+                }
             }
             #endregion
 
@@ -183,23 +192,66 @@ namespace RocketSoundEnhancement.AudioFilters
         #endregion
 
         #region LowpassHighpass Filter
-        // source: https://www.musicdsp.org/en/latest/Filters/237-one-pole-filter-lp-and-hp.html
-        float lpOutputL, lpOutputR, a0, b0;
-        float hpOutputL, hpOutputR, a1, b1;
+        // source: https://www.musicdsp.org/en/latest/Filters/38-lp-and-hp-filter.html
+        float[] alp = new float[5];
+        float[] inlpl = new float[2], inlpr = new float[2];
+        float[] outlpl = new float[2], outlpr = new float[2];
+
+        float[] ahp = new float[2];
+        float[] inhpl = new float[2], inhpr = new float[2];
+        float[] outhpl = new float[2], outhpr = new float[2];
         private float LowpassHighpassFilter(float input, int index)
         {
+            float outputlp, outputhp;
+
             if (index % 2 == 0)
             {
-                lpOutputL = a0 * input - b0 * lpOutputL;
-                hpOutputL = a1 * lpOutputL - b1 * hpOutputL;
+                outputlp = alp[0] * input + alp[1] * inlpl[0] + alp[2] * inlpl[1] - alp[3] * outlpl[0] - alp[4] * outlpl[1];
 
-                return lpOutputL - hpOutputL;
+                inlpl[1] = inlpl[0];
+                inlpl[0] = input;
+
+                outlpl[1] = outlpl[0];
+                outlpl[0] = outputlp;
+
+                if (AngleHighPass > 0)
+                {
+                    outputhp = (ahp[0] * outhpl[1] + outputlp - inhpl[1]) * ahp[1];
+
+                    inhpl[1] = inhpl[0];
+                    inhpl[0] = outputlp;
+
+                    outhpl[1] = outhpl[0];
+                    outhpl[0] = outputhp;
+
+                    return outputhp;
+                }
+
+                return outputlp;
             }
 
-            lpOutputR = a0 * input - b0 * lpOutputR;
-            hpOutputR = a1 * lpOutputR - b1 * hpOutputR;
+            outputlp = alp[0] * input + alp[1] * inlpr[0] + alp[2] * inlpr[1] - alp[3] * outlpr[0] - alp[4] * outlpr[1];
 
-            return lpOutputR - hpOutputR;
+            inlpr[1] = inlpr[0];
+            inlpr[0] = input;
+
+            outlpr[1] = outlpr[0];
+            outlpr[0] = outputlp;
+
+            if (AngleHighPass > 0)
+            {
+                outputhp = (ahp[0] * outhpr[1] + outputlp - inhpr[1]) * ahp[1];
+
+                inhpr[1] = inhpr[0];
+                inhpr[0] = outputlp;
+
+                outhpr[1] = outhpr[0];
+                outhpr[0] = outputhp;
+
+                return outputhp;
+            }
+
+            return outputlp;
         }
         #endregion
 
@@ -208,11 +260,19 @@ namespace RocketSoundEnhancement.AudioFilters
             if (distortionFilter != null) distortionFilter.enabled = false;
 
             Array.Clear(buffer, 0, buffer.Length);
+
+            Array.Clear(inlpl, 0, inlpl.Length);
+            Array.Clear(inlpr, 0, inlpr.Length);
+            Array.Clear(outlpl, 0, outlpl.Length);
+            Array.Clear(outlpl, 0, outlpl.Length);
+
+            Array.Clear(inhpl, 0, inhpl.Length);
+            Array.Clear(inhpr, 0, inhpr.Length);
+            Array.Clear(outhpl, 0, outhpl.Length);
+            Array.Clear(outhpr, 0, outhpr.Length);
+
             counter = 0;
-            lpOutputL = 0;
-            lpOutputR = 0;
-            hpOutputL = 0;
-            hpOutputR = 0;
+
         }
 
         private void OnEnable()
@@ -221,4 +281,3 @@ namespace RocketSoundEnhancement.AudioFilters
         }
     }
 }
-
