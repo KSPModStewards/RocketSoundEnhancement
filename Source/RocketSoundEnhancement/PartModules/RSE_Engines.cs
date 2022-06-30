@@ -19,7 +19,7 @@ namespace RocketSoundEnhancement.PartModules
 
             EnableLowpassFilter = true;
             EnableCombFilter = true;
-            EnableWaveShaperFilter = true;
+            EnableDistortionFilter = true;
             base.OnStart(state);
 
             var soundLayersCache = new HashSet<string>();

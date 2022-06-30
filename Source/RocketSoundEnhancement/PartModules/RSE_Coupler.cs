@@ -17,7 +17,7 @@ namespace RocketSoundEnhancement.PartModules
                 return;
 
             EnableLowpassFilter = true;
-            EnableWaveShaperFilter = true;
+            EnableDistortionFilter = true;
             base.OnStart(state);
 
             if(part.GetComponent<ModuleDecouplerBase>()) {

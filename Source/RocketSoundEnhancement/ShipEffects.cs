@@ -112,7 +112,7 @@ namespace RocketSoundEnhancement
                 string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
                 {
-                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
+                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_{soundLayerName}");
                     sourceGameObject.transform.parent = audioParent.transform;
                     sourceGameObject.transform.position = audioParent.transform.position;
                     sourceGameObject.transform.rotation = audioParent.transform.rotation;
@@ -125,7 +125,7 @@ namespace RocketSoundEnhancement
                     {
                         var airSimFilter = sourceGameObject.AddComponent<AirSimulationFilter>();
                         airSimFilter.EnableLowpassFilter = true;
-                        airSimFilter.EnableWaveShaperFilter = true;
+                        airSimFilter.EnableDistortionFilter = true;
                         AirSimFilters.Add(soundLayerName, airSimFilter);
                     }
                 }

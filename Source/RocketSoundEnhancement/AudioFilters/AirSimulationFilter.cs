@@ -17,7 +17,7 @@ namespace RocketSoundEnhancement.AudioFilters
         // Simulation Settings
         public bool EnableCombFilter { get; set; }
         public bool EnableLowpassFilter { get; set; }
-        public bool EnableWaveShaperFilter { get; set; }
+        public bool EnableDistortionFilter { get; set; }
         public AirSimulationUpdate SimulationUpdate { get; set; }
         public float MaxDistance { get; set; } = Settings.AirSimMaxDistance;
         public float FarLowpass { get; set; } = 2500;
@@ -41,16 +41,26 @@ namespace RocketSoundEnhancement.AudioFilters
         public float Distortion = 0;
 
         private int sampleRate;
-        private double combDelaySamples;
+        private double delaySamples;
 
         private float distanceLog, machVelocityClamped, angleAbsolute, anglePositive, machPass;
+
+        private AudioDistortionFilter distortionFilter;
 
         private void Awake()
         {
             sampleRate = AudioSettings.outputSampleRate;
+
+            if (EnableDistortionFilter)
+            {
+                distortionFilter = gameObject.AddComponent<AudioDistortionFilter>();
+                distortionFilter.enabled = enabled;
+            }
+
+            InvokeRepeating("UpdateFilters", 0, 0.02f);
         }
 
-        private void LateUpdate()
+        private void UpdateFilters()
         {
             if (SimulationUpdate != AirSimulationUpdate.None)
             {
@@ -75,11 +85,10 @@ namespace RocketSoundEnhancement.AudioFilters
                     LowpassFrequency = Mathf.Lerp(FarLowpass, 22500, distanceLog);
                     if (SimulationUpdate == AirSimulationUpdate.Full)
                     {
-                        if(Settings.MachEffectsAmount > 0)
+                        if (Settings.MachEffectsAmount > 0)
                         {
                             LowpassFrequency *= Mathf.Lerp(Settings.MachEffectLowerLimit, 1, machPass);
                         }
-
                         HighPassFrequency = Mathf.Lerp(0, AngleHighPass * (1 + (machVelocityClamped * 2f)), anglePositive);
                     }
                     else
@@ -88,7 +97,7 @@ namespace RocketSoundEnhancement.AudioFilters
                     }
                 }
 
-                if (EnableWaveShaperFilter)
+                if (EnableDistortionFilter)
                 {
                     if (SimulationUpdate == AirSimulationUpdate.Full)
                     {
@@ -102,24 +111,29 @@ namespace RocketSoundEnhancement.AudioFilters
             }
 
             #region Combfilter Update
-            if (EnableCombFilter) { combDelaySamples = CombDelay * sampleRate / 1000; }
+            if (EnableCombFilter)
+            {
+                delaySamples = Mathf.FloorToInt(Mathf.Min(CombDelay * sampleRate / 1000, 500000));
+            }
             #endregion
 
             #region LowpassHighpassFilter Update
             if (EnableLowpassFilter)
             {
-                freqLP = Mathf.Clamp(LowpassFrequency, 20, 22000) * 2 / sampleRate;
-                freqHP = Mathf.Clamp(HighPassFrequency, 20, 22000) * 2 / sampleRate;
-                fbLP = 0; // q + q / (1 - freqLP);
-                fbHP = 0; // q + q / (1 - freqHP);
+                float lpcutOff = Mathf.Exp(-2.0f * Mathf.Clamp(LowpassFrequency, 0, 22000) / sampleRate);
+                a0 = 1.0f - lpcutOff;
+                b0 = -lpcutOff;
+
+                float hpcutOff = Mathf.Exp(-2.0f * Mathf.Clamp(HighPassFrequency, 0, 22000) / sampleRate);
+                a1 = 1.0f - hpcutOff;
+                b1 = -hpcutOff;
             }
             #endregion
 
             #region Waveshaper Update
-            if (EnableWaveShaperFilter)
+            if (EnableDistortionFilter && distortionFilter != null)
             {
-                float wsamount = Mathf.Min(Distortion, 0.999f);
-                wsK = 2 * wsamount / (1 - wsamount);
+                distortionFilter.distortionLevel = Mathf.Clamp01(Distortion);
             }
             #endregion
         }
@@ -134,11 +148,7 @@ namespace RocketSoundEnhancement.AudioFilters
                 }
                 if (EnableLowpassFilter)
                 {
-                    data[i] = LowpassHighpassFilter(data[i], i);
-                }
-                if (EnableWaveShaperFilter)
-                {
-                    data[i] = Waveshaper(data[i]);
+                    data[i] = LowpassHighpassFilter(Quantize(data[i]), i);
                 }
             }
         }
@@ -151,149 +161,64 @@ namespace RocketSoundEnhancement.AudioFilters
             return (+input) + dn;
         }
 
-        #region Time Variable Delay / Comb Filter
-        //Flexible-time, non-sample quantized delay , can be used for stuff like waveguide synthesis or time-based(chorus/flanger) fx.
-        //Source = https://www.musicdsp.org/en/latest/Effects/98-class-for-waveguide-delay-effects.html
-        private float[] buffer = new float[4096];
+        #region Comb Filter
+        private float[] buffer = new float[500000];
         private int counter = 0;
-        float CombFilter(float input)
+        private float CombFilter(float input)
         {
-            float output = input;
-            try
+            int delay = counter - (int)delaySamples;
+            delay = delay > buffer.Length || delay < 0 ? 0 : delay;
+
+            buffer[counter] = input;
+            float output = input + buffer[delay] * CombMix;
+
+            counter++;
+            if (counter >= buffer.Length)
             {
-                double back = (double)counter - combDelaySamples;
-
-                // clip lookback buffer-bound
-                if (back < 0.0)
-                    back = buffer.Length + back;
-
-                // compute interpolation left-floor
-                int index0 = (int)Math.Floor(back);
-
-                // compute interpolation right-floor
-                int index_1 = index0 - 1;
-                int index1 = index0 + 1;
-                int index2 = index0 + 2;
-
-                // clip interp. buffer-bound
-                if (index_1 < 0) index_1 = buffer.Length - 1;
-                if (index1 >= buffer.Length) index1 = 0;
-                if (index2 >= buffer.Length) index2 = 0;
-
-                // get neighbourgh samples
-                float y_1 = buffer[index_1];
-                float y0 = buffer[index0];
-                float y1 = buffer[index1];
-                float y2 = buffer[index2];
-
-                // compute interpolation x
-                float x = (float)back - index0;
-
-                // calculate
-                float c0 = y0;
-                float c1 = 0.5f * (y1 - y_1);
-                float c2 = y_1 - 2.5f * y0 + 2.0f * y1 - 0.5f * y2;
-                float c3 = 0.5f * (y2 - y_1) + 1.5f * (y0 - y1);
-
-                float combOutput = ((c3 * x + c2) * x + c1) * x + c0;
-
-                // add to delay buffer
-                //buffer[counter] = input + output * 0.12f;
-                buffer[counter] = input;
-
-                // increment delay counter
-                counter++;
-
-                // clip delay counter
-                if (counter >= buffer.Length)
-                    counter = 0;
-
-                output = input + (combOutput * CombMix);
+                counter = 0;
             }
-            catch
-            {
-                ClearCombFilter();
-            }
+
             return output;
-        }
-
-        private void ClearCombFilter()
-        {
-            Array.Clear(buffer, 0, buffer.Length);
-            counter = 0;
         }
         #endregion
 
         #region LowpassHighpass Filter
-        // source: https://www.musicdsp.org/en/latest/Filters/29-resonant-filter.html
-        private float buf0L, buf1L, buf0R, buf1R;
-        private float buf2L, buf3L, buf2R, buf3R, hpL, hpR;
-        private float freqLP, freqHP, fbLP, fbHP;
+        // source: https://www.musicdsp.org/en/latest/Filters/237-one-pole-filter-lp-and-hp.html
+        float lpOutputL, lpOutputR, a0, b0;
+        float hpOutputL, hpOutputR, a1, b1;
         private float LowpassHighpassFilter(float input, int index)
         {
-            float newOutput = input = Quantize(input);
-
             if (index % 2 == 0)
             {
-                buf0L += freqLP * (input - buf0L + fbLP * (buf0L - buf1L));
-                buf1L += freqLP * (buf0L - buf1L);
+                lpOutputL = a0 * input - b0 * lpOutputL;
+                hpOutputL = a1 * lpOutputL - b1 * hpOutputL;
 
-                newOutput = buf1L;
-                if (freqHP > 0)
-                {
-                    hpL = buf1L - buf2L;
-                    buf2L += freqHP * (hpL + fbHP * (buf2L - buf3L));
-                    buf3L += freqHP * (buf2L - buf3L);
-                    newOutput = hpL;
-                }
+                return lpOutputL - hpOutputL;
             }
-            else
-            {
-                buf0R += freqLP * (input - buf0R + fbLP * (buf0R - buf1R));
-                buf1R += freqLP * (buf0R - buf1R);
 
-                newOutput = buf1R;
-                if (freqHP > 0)
-                {
-                    hpR = buf1R - buf2R;
-                    buf2R += freqHP * (hpR + fbHP * (buf2R - buf3R));
-                    buf3R += freqHP * (buf2R - buf3R);
-                    newOutput = hpR;
-                }
-            }
-            return newOutput;
-        }
-        #endregion
+            lpOutputR = a0 * input - b0 * lpOutputR;
+            hpOutputR = a1 * lpOutputR - b1 * hpOutputR;
 
-        #region Waveshaper
-        // Source: https://www.musicdsp.org/en/latest/Effects/46-waveshaper.html
-        private float wsK;
-
-        private float Waveshaper(float input)
-        {
-            float output = Mathf.Min(Mathf.Max(input, -1), 1);
-            output = (1 + wsK) * output / (1 + wsK * Mathf.Abs(output));
-
-            return output;
+            return lpOutputR - hpOutputR;
         }
         #endregion
 
         private void OnDisable()
         {
-            buffer = new float[4096];
+            if (distortionFilter != null) distortionFilter.enabled = false;
+
+            Array.Clear(buffer, 0, buffer.Length);
             counter = 0;
+            lpOutputL = 0;
+            lpOutputR = 0;
+            hpOutputL = 0;
+            hpOutputR = 0;
+        }
 
-            buf0L = 0;
-            buf1L = 0;
-            buf0R = 0;
-            buf1R = 0;
-            buf2L = 0;
-            buf3L = 0;
-            buf2R = 0;
-            buf3R = 0;
-            hpL = 0;
-            hpR = 0;
-
+        private void OnEnable()
+        {
+            if (distortionFilter != null) distortionFilter.enabled = true;
         }
     }
 }
+

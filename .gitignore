@@ -368,3 +368,4 @@ FodyWeavers.xsd
 /Source/Unity/RSE_Assets/Temp
 /Source/Unity/RSE_Assets/Library/ScriptAssemblies/*.dll
 /Source/Unity/RSE_Assets/Library
+/Source/Unity/RSE_Testing

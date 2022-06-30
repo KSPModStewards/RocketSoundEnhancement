@@ -30,7 +30,7 @@ namespace RocketSoundEnhancement.PartModules
         public bool UseAirSimulation = false;
         public bool EnableCombFilter = false;
         public bool EnableLowpassFilter = false;
-        public bool EnableWaveShaperFilter = false;
+        public bool EnableDistortionFilter = false;
         public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
         public float FarLowpass = 2500;
         public float AngleHighpass = 0;
@@ -65,7 +65,7 @@ namespace RocketSoundEnhancement.PartModules
 
                 if (node.HasValue("EnableCombFilter")) bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
                 if (node.HasValue("EnableLowpassFilter")) bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
-                if (node.HasValue("EnableWaveShaperFilter")) bool.TryParse(node.GetValue("EnableWaveShaperFilter"), out EnableWaveShaperFilter);
+                if (node.HasValue("EnableDistortionFilter")) bool.TryParse(node.GetValue("EnableDistortionFilter"), out EnableDistortionFilter);
 
                 if (node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
 
@@ -76,7 +76,7 @@ namespace RocketSoundEnhancement.PartModules
                 if (node.HasValue("MaxDistortion")) MaxDistortion = float.Parse(node.GetValue("MaxDistortion"));
             }
 
-            UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableWaveShaperFilter);
+            UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableDistortionFilter);
 
             if (PrepareSoundLayers)
             {
@@ -121,7 +121,7 @@ namespace RocketSoundEnhancement.PartModules
                 string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
                 {
-                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_soundLayerName");
+                    var sourceGameObject = new GameObject($"{AudioUtility.RSETag}_{soundLayerName}");
                     sourceGameObject.transform.SetParent(AudioParent.transform, false);
                     sourceGameObject.transform.localPosition = Vector3.zero;
                     sourceGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
@@ -135,7 +135,7 @@ namespace RocketSoundEnhancement.PartModules
 
                     airSimFilter.EnableCombFilter = EnableCombFilter;
                     airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                    airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+                    airSimFilter.EnableDistortionFilter = EnableDistortionFilter;
                     airSimFilter.SimulationUpdate = AirSimUpdateMode;
 
                     airSimFilter.FarLowpass = FarLowpass;
@@ -156,7 +156,7 @@ namespace RocketSoundEnhancement.PartModules
             {
                 foreach (var source in Sources.Keys)
                 {
-                    if (Sources[source].isPlaying)
+                    if (Sources[source].enabled)
                     {
                         AirSimFilters[source].enabled = true;
                         AirSimFilters[source].Distance = distance;

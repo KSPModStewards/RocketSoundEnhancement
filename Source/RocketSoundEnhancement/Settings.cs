@@ -37,7 +37,7 @@ namespace RocketSoundEnhancement
         public static float AirSimMaxDistance = 5000;
         public static float MufflerInternalMode = 1500;
         public static float MufflerExternalMode = 22000;
-        public static float MachEffectsAmount = 0.8f;
+        public static float MachEffectsAmount = 0.9f;
         public static float MachEffectLowerLimit
         {
             get {

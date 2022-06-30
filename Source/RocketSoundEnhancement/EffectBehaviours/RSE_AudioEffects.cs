@@ -30,7 +30,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
 
         [Persistent] public bool EnableCombFilter = false;
         [Persistent] public bool EnableLowpassFilter = false;
-        [Persistent] public bool EnableWaveShaperFilter = false;
+        [Persistent] public bool EnableDistortionFilter = false;
         [Persistent] public float DopplerFactor = 0.5f;
         [Persistent] public AirSimulationUpdate AirSimUpdateMode = AirSimulationUpdate.Full;
         [Persistent] public float FarLowpass = 2500;
@@ -84,14 +84,14 @@ namespace RocketSoundEnhancement.EffectBehaviours
             audioSource.enabled = false;
             audioSource.clip = audioClip;
 
-            if (hostPart != null && (EnableCombFilter || EnableLowpassFilter || EnableWaveShaperFilter))
+            if (hostPart != null && (EnableCombFilter || EnableLowpassFilter || EnableDistortionFilter))
             {
                 airSimFilter = audioParent.AddComponent<AirSimulationFilter>();
                 airSimFilter.enabled = false;
 
                 airSimFilter.EnableCombFilter = EnableCombFilter;
                 airSimFilter.EnableLowpassFilter = EnableLowpassFilter;
-                airSimFilter.EnableWaveShaperFilter = EnableWaveShaperFilter;
+                airSimFilter.EnableDistortionFilter = EnableDistortionFilter;
                 airSimFilter.SimulationUpdate = hostPart != null ? AirSimUpdateMode : AirSimulationUpdate.Basic;
                 airSimFilter.FarLowpass = FarLowpass;
                 airSimFilter.AngleHighPass = AngleHighpass;
