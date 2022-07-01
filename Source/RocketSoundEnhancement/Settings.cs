@@ -34,13 +34,6 @@ namespace RocketSoundEnhancement
         public static float LimiterAttack = 10;
         public static float LimiterRelease = 20;
 
-        // reference: https://codeandsound.files.wordpress.com/2014/08/att21.png
-        public static float AirSimMaxDistance = 1000;
-        public static float AirSimFarLowpass = 500;
-        public static float AirSimMaxCombDelay = 20;
-        public static float AirSimMaxCombMix = 0.25f;
-        public static float AirSimMaxDistortion = 0.5f;
-
         public static float MufflerInternalMode = 1500;
         public static float MufflerExternalMode = 22000;
         public static float MachEffectsAmount = 0.9f;
@@ -50,6 +43,13 @@ namespace RocketSoundEnhancement
                 return (1 - Mathf.Log10(Mathf.Lerp(0.1f, 10, MachEffectsAmount))) * 0.5f;
             }
         }
+
+        // reference: https://codeandsound.files.wordpress.com/2014/08/att21.png
+        public static float AirSimMaxDistance = 1000;
+        public static float AirSimFarLowpass = 1000;
+        public static float AirSimMaxCombDelay = 20;
+        public static float AirSimMaxCombMix = 0.25f;
+        public static float AirSimMaxDistortion = 0.5f;
 
         private static bool initialized;
         private static ConfigNode settingsConfigNode;
