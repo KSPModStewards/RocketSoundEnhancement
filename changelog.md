@@ -10,6 +10,7 @@
 - Renamed "EnableWaveShaperFilter" to "EnableDistortionFilter"
 - Removed "RSE_AUDIO_LOOP". assign a name to "RSE_AUDIO" if used more than once in a single EFFECTS subnode
 - Tweaked Global AirSim Settings
+- Alternative "SOUNDLAYERGROUP" Node for SoundLayer Groups in RSE_Engines, RSE_RotorEngines & RSE_Wheels
 
 # [0.9.5] - 06-22-22
 ## Changes

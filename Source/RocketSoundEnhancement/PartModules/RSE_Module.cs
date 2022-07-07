@@ -86,6 +86,12 @@ namespace RocketSoundEnhancement.PartModules
                     if (soundLayers.Count == 0) continue;
 
                     var groupName = node.name;
+
+                    if(node.name == "SOUNDLAYERGROUP")
+                    {
+                        groupName = node.GetValue("name");
+                    }
+
                     if (SoundLayerGroups.ContainsKey(groupName)) { SoundLayerGroups[groupName].AddRange(soundLayers); continue; }
 
                     SoundLayerGroups.Add(groupName, soundLayers);
