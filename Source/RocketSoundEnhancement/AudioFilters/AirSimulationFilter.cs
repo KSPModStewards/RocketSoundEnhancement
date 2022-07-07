@@ -84,14 +84,11 @@ namespace RocketSoundEnhancement.AudioFilters
                 if (EnableLowpassFilter)
                 {
                     LowpassFrequency = Mathf.Lerp(FarLowpass, 22000, distanceLog);
+                    HighPassFrequency = AngleHighpass * anglePositive;
+
                     if (SimulationUpdate == AirSimulationUpdate.Full)
                     {
                         LowpassFrequency *= machPass;
-                        HighPassFrequency = Mathf.Lerp(0, AngleHighpass * (1 + (machVelocityClamped * 2f)), anglePositive);
-                    }
-                    else
-                    {
-                        HighPassFrequency = AngleHighpass * anglePositive;
                     }
                 }
 
@@ -177,7 +174,7 @@ namespace RocketSoundEnhancement.AudioFilters
             delay = delay > buffer.Length || delay < 0 ? 0 : delay;
 
             buffer[counter] = input;
-            float output =  buffer[delay] * CombMix;
+            float output = buffer[delay] * CombMix;
 
             counter++;
             if (counter >= buffer.Length)
