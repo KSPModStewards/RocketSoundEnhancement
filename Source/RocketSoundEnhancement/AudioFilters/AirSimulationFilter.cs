@@ -177,7 +177,7 @@ namespace RocketSoundEnhancement.AudioFilters
             delay = delay > buffer.Length || delay < 0 ? 0 : delay;
 
             buffer[counter] = input;
-            float output = input + buffer[delay] * CombMix;
+            float output =  buffer[delay] * CombMix;
 
             counter++;
             if (counter >= buffer.Length)
@@ -185,7 +185,7 @@ namespace RocketSoundEnhancement.AudioFilters
                 counter = 0;
             }
 
-            return output;
+            return input + output;
         }
         #endregion
 
