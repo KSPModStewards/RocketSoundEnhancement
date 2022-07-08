@@ -36,8 +36,8 @@ Part Modules dedicated for assigning and controlling sound effects for Parts bey
 - RSE_AUDIO (A Simpler non-layer EFFECTS Node version of RSE Modules for drop-in replacement of Stock AUDIO{} with full AirSim Support and a more direct Muffling Support.)
 
 ### ShipEffects - Physics based Sound Effects System
-- Add Sounds and assign it's Pitch or Volume to any physics event available for each Vessel. (air pressure, jerk, g-forces, etc)
-- Add Sonic Boom sound during Mach Events.
+- Add Sounds and assign it's Pitch or Volume to any physics control available for each Vessel. (air pressure, jerk, g-forces, etc)
+- Add Sonic Boom sound during Mach Angle Events.
 - Replace or Disable Staging Sound Effects.
 - ShipEffectsCollisions (Part Module) - Add Collision Sound Effects for different impact surfaces to any Part.
 
