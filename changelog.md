@@ -3,7 +3,7 @@
 # [Unreleased]
 ## Changes
 
-# [0.9.6]
+# [0.9.6] - 07-09-22
 ## Changes
 - Improved AirSimulationFilter Performance
 - Added RSE_KerbalEVA with support for jetpack sounds. by @pizzaoverhead in https://github.com/ensou04/RocketSoundEnhancement/pull/16
