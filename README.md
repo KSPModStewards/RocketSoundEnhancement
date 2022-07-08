@@ -41,5 +41,5 @@ Part Modules dedicated for assigning and controlling sound effects for Parts bey
 - ShipEffectsCollisions (Part Module) - Add Collision Sound Effects for different impact surfaces to any Part.
 
 ### Known Issues
-- Sound glitches and stuttering might occur in large part ships more so when AirSim is enabled and when loading in-between scenes.
+- Sound glitches and stuttering might occur in large part ships and more so when AirSim is enabled or when loading in-between scenes.
 - Stock sounds might be un-muffled for a single frame or two. Replacing AUDIO with RSE_AUDIO in Part's EFFECTS node via it's config fixes this issue.
