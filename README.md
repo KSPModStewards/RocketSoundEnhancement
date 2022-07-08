@@ -14,6 +14,7 @@ Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused V
 
 ### Audio Muffler - AirSim & AirSim Lite
  An Audio Muffler that works on top of the regular muffler that takes into account the Mach Angle, Velocity and Distance of a Vessel with Sonic Booms Effects (provided by a Config Pack via ShipEffects). 
+
 Parts with RSE Modules will simulate realistic sound attenuation over distance, comb-filtering, and distortion. Game Events like distant explosions will now sound muffled just like in real life.
 
 **AirSim Lite** is a version of **AirSim** that does similar effects without using sound filters.
