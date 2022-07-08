@@ -9,6 +9,9 @@ If you release a mod that uses RSE, let me know so I can add it here in a list!
 - [Rocket Sound Enhancement Default](https://github.com/ensou04/RocketSoundEnhancementDefault) (The Default Sound Library and Config)
 
 ## Features
+### Master Audio Limiter/Compressor
+Sound Mastering that controls the overall loudness of the game with Adjustable Amount for different dynamics with the "Auto-Limiter" feature or you can tweak your own settings.
+
 ### Audio Muffler - Normal
 Mixer based Audio Muffler with Dedicated channels for Exterior Sounds, Focused Vessel and Interior while ignoring UI sounds like Music.
 
@@ -21,9 +24,6 @@ Parts with RSE Modules will simulate realistic sound attenuation over distance, 
 
 ### Additional Effects
 RSE also adds a more robust Doppler Effect.
-
-### Master Audio Limiter/Compressor
-Sound Mastering that controls the overall loudness of the game with Adjustable Amount for different dynamics with the "Auto-Limiter" feature or you can tweak your own settings.
 
 ### Part Modules
 Part Modules dedicated for assigning and controlling sound effects for Parts beyond what the regular stock audio can do. Including parts that didn't have any support for sounds before like Rotors, Wheels and Kerbal Jetpacks.
