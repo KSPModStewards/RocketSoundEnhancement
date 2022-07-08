@@ -5,9 +5,8 @@ It features a robust Layering System for use of multiple sounds just like in oth
 By itself, RSE only does Sound Limiting and Muffling. You'll need to download a Config Pack Mod in order to have new sounds in your game.
 If you release a mod that uses RSE, let me know so I can add it here in a list!
 
-Get the Default Config here:
-[Rocket Sound Enhancement Default](https://github.com/ensou04/RocketSoundEnhancementDefault)
-
+## Config and Sound Mods
+- [Rocket Sound Enhancement Default](https://github.com/ensou04/RocketSoundEnhancementDefault) (The Default Sound Library and Config)
 
 ## Features
 ### Audio Muffler
