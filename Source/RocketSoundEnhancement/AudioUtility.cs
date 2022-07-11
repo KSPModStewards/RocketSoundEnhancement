@@ -112,13 +112,21 @@ namespace RocketSoundEnhancement
                 for (int i = 0; i < clipValues.Length; i++)
                 {
                     string value = clipValues[i];
-                    AudioClip clip;
-                    if (clip = GameDatabase.Instance.GetAudioClip(value))
+                    AudioClip clip = GameDatabase.Instance.GetAudioClip(value);
+                    if (clip == null)
                     {
-                        clips.Add(clip);
+                        Debug.Log($"[RSE]: Cannot find AudioClip [{value}] in SoundLayer [{soundLayer.name}]");
+                        continue;
                     }
+
+                    clips.Add(clip);
                 }
                 soundLayer.audioClips = clips.ToArray();
+            }
+
+            if(soundLayer.audioClips == null || soundLayer.audioClips.Length == 0)
+            {
+                Debug.Log($"[RSE]: [{soundLayer.name}] audioClip is empty.");
             }
 
             if (!node.TryGetValue("loopAtRandom", ref soundLayer.loopAtRandom)) { soundLayer.loopAtRandom = true; }

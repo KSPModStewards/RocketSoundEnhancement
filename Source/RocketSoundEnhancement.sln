@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement", "R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement.Unity", "RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj", "{5DFF0176-7BA8-49F4-8155-F5D9B37D7D3D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23E94561-E5A6-43BE-90D8-A93E167D6A5F}"
+	ProjectSection(SolutionItems) = preProject
+		..\changelog.md = ..\changelog.md
+		..\GameData\RocketSoundEnhancement\RocketSoundEnhancement.version = ..\GameData\RocketSoundEnhancement\RocketSoundEnhancement.version
+		..\GameData\RocketSoundEnhancement\Settings.cfg = ..\GameData\RocketSoundEnhancement\Settings.cfg
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

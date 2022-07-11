@@ -26,7 +26,16 @@ namespace RocketSoundEnhancement.PartModules
 
             var thrustTransformsCount = moduleRCSFX.thrusterTransforms.Count > 0 ? moduleRCSFX.thrusterTransforms.Count : 1;
             var thrustForces = moduleRCSFX.thrustForces;
-            float control = thrustForces.Take(thrustTransformsCount).Average() / moduleRCSFX.thrusterPower;
+            float control = 0;
+
+            if(thrustForces != null || thrustForces.Length > 0)
+            {
+                for (int i = 0; i < thrustForces.Length; i++)
+                {
+                    control += thrustForces[i] / moduleRCSFX.thrusterPower;
+                }
+                control /= thrustTransformsCount;
+            }
 
             foreach (var soundLayer in SoundLayers)
             {
