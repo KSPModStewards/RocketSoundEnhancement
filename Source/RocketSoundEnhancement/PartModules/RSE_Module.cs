@@ -282,12 +282,12 @@ namespace RocketSoundEnhancement.PartModules
             }
 
             float volumeScale = !soundLayer.loop ? finalVolume * GameSettings.SHIP_VOLUME * volume : 1;
-            volumeScale *= rndOneShotVol ? UnityEngine.Random.Range(0.9f, 1.0f) : 1;
+            volumeScale *= rndOneShotVol ? Random.Range(0.9f, 1.0f) : 1;
 
             source.volume = !soundLayer.loop ? 1 : finalVolume * GameSettings.SHIP_VOLUME * volume;
             source.pitch = finalPitch;
 
-            int index = soundLayer.audioClips.Length > 1 ? UnityEngine.Random.Range(0, soundLayer.audioClips.Length) : 0;
+            int index = soundLayer.audioClips.Length > 1 ? Random.Range(0, soundLayer.audioClips.Length - 1) : 0;
 
             if (soundLayer.loop && soundLayer.audioClips != null && (source.clip == null || source.clip != soundLayer.audioClips[index]))
             {
