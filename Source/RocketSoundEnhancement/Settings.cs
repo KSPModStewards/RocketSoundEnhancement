@@ -261,6 +261,7 @@ namespace RocketSoundEnhancement
             mufflerNode.SetValue("InternalMode", MufflerInternalMode, true);
             mufflerNode.SetValue("ExternalMode", MufflerExternalMode, true);
             mufflerNode.SetValue("DopplerFactor", DopplerFactor, true);
+            mufflerNode.SetValue("MachEffectsAmount", MachEffectsAmount, true);
 
             settingsConfigNode.Save(ModPath + "Settings.cfg");
         }

@@ -39,11 +39,11 @@ namespace RocketSoundEnhancement.PartModules
         public float AngleHighpass;
 
         private float doppler = 1;
-        private float distance;
-        private float angle;
-        private float mach;
-        private float machAngle;
-        private float machPass;
+        private float distance = 0;
+        private float angle = 0;
+        private float mach = 0;
+        private float machAngle = 90;
+        private float machPass = 1;
         private float lastDistance;
         private float loopRandomStart;
 
@@ -217,7 +217,7 @@ namespace RocketSoundEnhancement.PartModules
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
 
                 bool isActiveAndInternal = vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
-                if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
+                if (isActiveAndInternal)
                 {
                     angle = 0;
                     machPass = 1;
@@ -229,6 +229,12 @@ namespace RocketSoundEnhancement.PartModules
                     mach = Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
                     machAngle = vessel.GetComponent<ShipEffects>().MachAngle;
                     machPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(angle / machAngle) * mach);
+                }
+                else
+                {
+                    mach = 0;
+                    machAngle = 90;
+                    machPass = 1;
                 }
             }
         }

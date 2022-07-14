@@ -39,11 +39,11 @@ namespace RocketSoundEnhancement
         public float VesselMass;
 
         //  Air Simulation Values
-        public float Distance;
-        public float Angle;
-        public float MachAngle;
-        public float MachPass;
-        public float Mach;
+        public float Distance = 0;
+        public float Angle = 0;
+        public float MachAngle = 90;
+        public float MachPass = 1;
+        public float Mach = 0;
         public Vector3 MachTipCameraNormal = new Vector3();
 
         public bool SonicBoomed = true;
@@ -203,7 +203,7 @@ namespace RocketSoundEnhancement
                 Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);  
                 Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
 
-                if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
+                if (isActiveAndInternal)
                 {
                     Angle = 0;
                     MachPass = 1;
@@ -216,6 +216,12 @@ namespace RocketSoundEnhancement
                     MachAngle = Mathf.Asin(1 / Mathf.Max(Mach, 1)) * Mathf.Rad2Deg;
                     MachPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(Angle / MachAngle) * Mathf.Clamp01(Mach));
                 }
+                else
+                {
+                    Mach = 0;
+                    MachAngle = 90;
+                    MachPass = 1;
+                }
             }
         }
 
@@ -224,7 +230,7 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
-            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM))
+            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM) && Settings.MachEffectsAmount > 0)
             {
                 if (MachPass > Settings.MachEffectLowerLimit && !SonicBoomed)
                 {

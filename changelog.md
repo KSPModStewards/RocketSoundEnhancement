@@ -2,6 +2,7 @@
 
 # [Unreleased]
 ## Changes
+- Fixed MachEffectsAmount not saving and causing crashes when set to zero.
 
 # [0.9.6] - 07-09-22
 ## Changes

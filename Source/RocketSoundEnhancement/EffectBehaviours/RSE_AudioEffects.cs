@@ -232,7 +232,7 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 angle = (1 + Vector3.Dot(hostPart.vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + hostPart.vessel.velocityD).normalized)) * 90;
 
                 bool isActiveAndInternal = hostPart.vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
-                if (isActiveAndInternal || Settings.MachEffectsAmount == 0)
+                if (isActiveAndInternal)
                 {
                     angle = 0;
                     machPass = 1;
@@ -244,6 +244,12 @@ namespace RocketSoundEnhancement.EffectBehaviours
                     mach = Mathf.Clamp01(hostPart.vessel.GetComponent<ShipEffects>().Mach);
                     machAngle = hostPart.vessel.GetComponent<ShipEffects>().MachAngle;
                     machPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(angle / machAngle) * mach);
+                }
+                else
+                {
+                    mach = 0;
+                    machAngle = 90;
+                    machPass = 1;
                 }
             }
         }
