@@ -172,9 +172,15 @@ namespace RocketSoundEnhancement
                 return;
             }
 
-            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().Where(x => !x.name.Contains(AudioUtility.RSETag)).ToHashSet();
+            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().Where(x=>x.enabled).ToHashSet();
             foreach (var source in audioSources)
             {
+                if (source.name.Contains(AudioUtility.RSETag))
+                    continue;
+
+                if (unmanagedSources.Contains(source))
+                    continue;
+
                 if (source == null)
                 {
                     if (managedSources.Contains(source))
@@ -184,9 +190,6 @@ namespace RocketSoundEnhancement
                     }
                     continue;
                 }
-
-                if (unmanagedSources.Contains(source))
-                    continue;
 
                 // assume this source is a GUI source and ignore
                 if (source.transform.position == Vector3.zero || source.spatialBlend == 0) continue;
