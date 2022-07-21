@@ -216,7 +216,7 @@ namespace RocketSoundEnhancement.PartModules
 
                 angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
 
-                bool isActiveAndInternal = vessel.isActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
+                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
                 if (isActiveAndInternal)
                 {
                     angle = 0;

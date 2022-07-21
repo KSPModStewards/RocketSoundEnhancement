@@ -186,7 +186,7 @@ namespace RocketSoundEnhancement
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
             {
-                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && (InternalCamera.Instance.isActive || MapView.MapCamera.isActiveAndEnabled);
+                bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
                 var velocityDirection = vessel.velocityD.normalized * vessel.vesselSize.magnitude;
                 var positionTip = transform.position + velocityDirection;
                 var positionRear = transform.position - velocityDirection;
@@ -199,8 +199,10 @@ namespace RocketSoundEnhancement
                     vesselTip = tipHit.point;
                 }
 
-                MachTipCameraNormal = (CameraManager.GetCurrentCamera().transform.position - vesselTip).normalized;
-                Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);  
+                var cameraPosition = CameraManager.GetCurrentCamera().transform.position;
+
+                MachTipCameraNormal = (cameraPosition - vesselTip).normalized;
+                Distance = Vector3.Distance(cameraPosition, transform.position);  
                 Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
 
                 if (isActiveAndInternal)
@@ -230,7 +232,7 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
-            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM) && Settings.MachEffectsAmount > 0)
+            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM) && Settings.MachEffectsAmount > 0 && !MapView.MapCamera.isActiveAndEnabled)
             {
                 if (MachPass > Settings.MachEffectLowerLimit && !SonicBoomed)
                 {
