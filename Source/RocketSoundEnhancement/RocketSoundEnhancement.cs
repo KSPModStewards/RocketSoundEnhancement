@@ -53,7 +53,7 @@ namespace RocketSoundEnhancement
         private float lastCutoffFreq;
         private float lastInteriorCutoffFreq;
 
-        private HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
+        private HashSet<int> managedSources = new HashSet<int>();
 
         private bool gamePaused;
 
@@ -91,20 +91,21 @@ namespace RocketSoundEnhancement
             {
                 var source = (AudioSource)sourceObj;
                 if (source == null) continue;
+                int instanceID = source.GetInstanceID();
 
                 if (source.name.Contains(AudioUtility.RSETag))
                 {
-                    managedSources.Add(source);
+                    managedSources.Add(instanceID);
                 }
                 else if (Settings.CustomAudioSources.TryGetValue(source.gameObject.name, out MixerGroup mixerChannel))
                 {
-                    managedSources.Add(source);
+                    managedSources.Add(instanceID);
 
                     source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
                 }
                 else if (source.clip != null && Settings.CustomAudioClips.TryGetValue(source.clip.name, out mixerChannel))
                 {
-                    managedSources.Add(source);
+                    managedSources.Add(instanceID);
 
                     source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
                 }
@@ -113,7 +114,7 @@ namespace RocketSoundEnhancement
                     if (source.clip != null && source.clip.name != "sound_wind_constant")
                         source.mute = ShipEffectsConfig.MuteStockAeroSounds;
 
-                    managedSources.Add(source);
+                    managedSources.Add(instanceID);
                     source.outputAudioMixerGroup = Settings.EnableAudioEffects ? ExteriorMixer : null;
                 }
             }
@@ -153,8 +154,10 @@ namespace RocketSoundEnhancement
 
             if (!Settings.EnableAudioEffects || Mixer == null)
             {
-                foreach (var source in managedSources)
+                // TODO: some kind of latch so this only runs once
+                foreach (var sourceObj in FindObjectsOfType(typeof(AudioSource)))
                 {
+                    AudioSource source = (AudioSource)sourceObj;
                     if (source != null) source.outputAudioMixerGroup = null;
                 }
                 managedSources.Clear();
@@ -167,15 +170,16 @@ namespace RocketSoundEnhancement
             {
                 AudioSource source = (AudioSource)sourceObj;
 
+                int instanceID = source.GetInstanceID();
+
                 // handle deleted sources
-                if (source == null)
+                if (instanceID == 0)
                 {
-                    managedSources.Remove(source);
                     continue;
                 }
 
                 // if the source was already in the set, we're done
-                if (!managedSources.Add(source)) continue;
+                if (!managedSources.Add(instanceID)) continue;
 
                 if (source.name.Contains(AudioUtility.RSETag)) continue;
 
