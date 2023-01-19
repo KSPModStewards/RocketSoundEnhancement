@@ -242,7 +242,7 @@ namespace RocketSoundEnhancement.PartModules
         public void PlaySoundLayer(SoundLayer soundLayer, float control, float volume, bool rndOneShotVol = false)
         {
             string soundLayerName = soundLayer.name;
-            if (!Sources.ContainsKey(soundLayerName)) return;
+            if (!Sources.TryGetValue(soundLayerName, out AudioSource source)) return;
 
             float finalVolume, finalPitch;
             finalVolume = soundLayer.volumeFC?.Evaluate(control) ?? soundLayer.volume.Value(control);
@@ -254,28 +254,27 @@ namespace RocketSoundEnhancement.PartModules
 
             if (finalVolume < float.Epsilon)
             {
-                if (Sources[soundLayerName].volume == 0 && soundLayer.loop)
-                    Sources[soundLayerName].Stop();
+                if (source.volume == 0 && soundLayer.loop)
+                    source.Stop();
 
-                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
-                    Sources[soundLayerName].volume = 0;
+                if (source.isPlaying && soundLayer.loop)
+                    source.volume = 0;
                     
                 return;
             }
 
-            AudioSource source = Sources[soundLayerName];
             source.enabled = true;
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
             {
-                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName) && UseAirSimulation)
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.TryGetValue(soundLayerName, out var filter) && UseAirSimulation)
                 {
-                    AirSimFilters[soundLayerName].enabled = true;
-                    AirSimFilters[soundLayerName].Distance = distance;
-                    AirSimFilters[soundLayerName].Mach = mach;
-                    AirSimFilters[soundLayerName].Angle = angle;
-                    AirSimFilters[soundLayerName].MachAngle = machAngle;
-                    AirSimFilters[soundLayerName].MachPass = machPass;
+                    filter.enabled = true;
+                    filter.Distance = distance;
+                    filter.Mach = mach;
+                    filter.Angle = angle;
+                    filter.MachAngle = machAngle;
+                    filter.MachPass = machPass;
                     AirSimFiltersEnabled = true;
                 }
                 else
