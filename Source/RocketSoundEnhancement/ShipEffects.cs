@@ -330,9 +330,9 @@ namespace RocketSoundEnhancement
             if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
                 foreach (var filter in AirSimFilters.Values)
-				{
+                {
                     filter.enabled = false;
-				}
+                }
                 airSimFiltersEnabled = false;
             }
         }
@@ -469,18 +469,18 @@ namespace RocketSoundEnhancement
         private void OnGamePause()
         {
             foreach (var source in Sources.Values)
-			{
+            {
                 source.Pause();
-			}
+            }
             gamePaused = true;
         }
 
         private void OnGameUnpause()
         {
             foreach (var source in Sources.Values)
-			{
+            {
                 source.UnPause();
-			}
+            }
             gamePaused = false;
         }
 
@@ -488,9 +488,9 @@ namespace RocketSoundEnhancement
         {
             if (!initialized) return;
             foreach (var source in Sources.Values)
-			{
+            {
                 source.Stop();
-			}
+            }
             Unload();
         }
     }
