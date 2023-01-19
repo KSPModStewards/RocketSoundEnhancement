@@ -42,7 +42,7 @@ namespace RocketSoundEnhancement
         None
     }
 
-    public struct SoundLayer
+    public class SoundLayer
     {
         public string name;
         public string data;
