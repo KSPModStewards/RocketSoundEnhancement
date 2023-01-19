@@ -53,9 +53,7 @@ namespace RocketSoundEnhancement
         private float lastCutoffFreq;
         private float lastInteriorCutoffFreq;
 
-        private HashSet<AudioSource> unmanagedSources = new HashSet<AudioSource>();
         private HashSet<AudioSource> managedSources = new HashSet<AudioSource>();
-        private Dictionary<int, float> managedMinDistance = new Dictionary<int, float>();
 
         private bool gamePaused;
 
@@ -88,36 +86,34 @@ namespace RocketSoundEnhancement
                 stageSource.enabled = !Settings.DisableStagingSound;
             }
 
-            unmanagedSources.Clear();
-            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().ToHashSet();
-            foreach (var source in audioSources)
+            managedSources.Clear();
+            foreach (var sourceObj in FindObjectsOfType(typeof(AudioSource)))
             {
+                var source = (AudioSource)sourceObj;
                 if (source == null) continue;
-                if (source.name.Contains(AudioUtility.RSETag)) continue;
 
-                if (Settings.CustomAudioSources.Count > 0 && Settings.CustomAudioSources.ContainsKey(source.gameObject.name))
+                if (source.name.Contains(AudioUtility.RSETag))
                 {
-                    if (!unmanagedSources.Contains(source)) unmanagedSources.Add(source);
-
-                    var mixerChannel = Settings.CustomAudioSources[source.gameObject.name];
-                    source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
-                    continue;
+                    managedSources.Add(source);
                 }
-
-                if (Settings.CustomAudioClips.Count > 0 && source.clip != null && Settings.CustomAudioClips.ContainsKey(source.clip.name))
+                else if (Settings.CustomAudioSources.TryGetValue(source.gameObject.name, out MixerGroup mixerChannel))
                 {
-                    if (!unmanagedSources.Contains(source)) unmanagedSources.Add(source);
+                    managedSources.Add(source);
 
-                    var mixerChannel = Settings.CustomAudioClips[source.clip.name];
                     source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
-                    continue;
                 }
+                else if (source.clip != null && Settings.CustomAudioClips.TryGetValue(source.clip.name, out mixerChannel))
+                {
+                    managedSources.Add(source);
 
-                if (source.name == "FX Sound" || source.name == "airspeedNoise")
+                    source.outputAudioMixerGroup = AudioUtility.GetMixerGroup(mixerChannel);
+                }
+                else if (source.name == "FX Sound" || source.name == "airspeedNoise")
                 {
                     if (source.clip != null && source.clip.name != "sound_wind_constant")
                         source.mute = ShipEffectsConfig.MuteStockAeroSounds;
 
+                    managedSources.Add(source);
                     source.outputAudioMixerGroup = Settings.EnableAudioEffects ? ExteriorMixer : null;
                 }
             }
@@ -157,76 +153,63 @@ namespace RocketSoundEnhancement
 
             if (!Settings.EnableAudioEffects || Mixer == null)
             {
-                if (managedSources.Count > 0)
+                foreach (var source in managedSources)
                 {
-                    foreach (var source in managedSources.ToHashSet())
-                    {
-                        if (source != null) source.outputAudioMixerGroup = null;
-                        managedSources.Remove(source);
-                    }
+                    if (source != null) source.outputAudioMixerGroup = null;
                 }
-                if (managedMinDistance.Count > 0)
-                {
-                    managedMinDistance.Clear();
-                }
+                managedSources.Clear();
+                
                 return;
             }
 
-            HashSet<AudioSource> audioSources = FindObjectsOfType<AudioSource>().Where(x=>x.enabled).ToHashSet();
-            foreach (var source in audioSources)
+            // NOTE: the generic (strongly typed) version of FindObjectsOfType is slower!
+            foreach (var sourceObj in FindObjectsOfType(typeof(AudioSource)))
             {
-                if (source.name.Contains(AudioUtility.RSETag))
-                    continue;
+                AudioSource source = (AudioSource)sourceObj;
 
-                if (unmanagedSources.Contains(source))
-                    continue;
-
+                // handle deleted sources
                 if (source == null)
                 {
-                    if (managedSources.Contains(source))
-                    {
-                        managedSources.Remove(source);
-                        managedMinDistance.Remove(source.GetInstanceID());
-                    }
+                    managedSources.Remove(source);
                     continue;
                 }
+
+                // if the source was already in the set, we're done
+                if (!managedSources.Add(source)) continue;
+
+                if (source.name.Contains(AudioUtility.RSETag)) continue;
 
                 // assume this source is a GUI source and ignore
-                if (source.transform.position == Vector3.zero || source.spatialBlend == 0) continue;
-
-                if (source.GetComponent<InternalProp>() || source.GetComponentInParent<InternalProp>())
+                if (source.transform.position == Vector3.zero || source.spatialBlend == 0)
                 {
-                    source.outputAudioMixerGroup = InteriorMixer;
-                    if (!managedSources.Contains(source))
-                    {
-                        managedSources.Add(source);
-                    }
                     continue;
                 }
 
-                if (!managedSources.Contains(source)) { managedSources.Add(source); }
-
-                int managedSourceID = source.GetInstanceID();
-                Part sourcePart;
-                if ((sourcePart = source.GetComponent<Part>()) || (sourcePart = source.GetComponentInParent<Part>()))
+                if (source.GetComponentInParent<InternalProp>())
                 {
+                    source.outputAudioMixerGroup = InteriorMixer;
+                    continue;
+                }
+
+                Part sourcePart;
+                if (sourcePart = source.GetComponentInParent<Part>())
+                {
+                    int managedSourceID = source.GetInstanceID();
                     source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExteriorMixer;
+
+                    var partAudioManager = source.gameObject.GetComponent<RSE_PartAudioManager>();
 
                     if (Settings.MufflerQuality > AudioMufflerQuality.Normal && Settings.MachEffectsAmount > 0)
                     {
-                        float machPass = sourcePart.vessel.GetComponent<ShipEffects>().MachPass;
-
-                        if (!managedMinDistance.ContainsKey(managedSourceID))
-                            managedMinDistance.Add(managedSourceID, source.minDistance);
-
-                        source.minDistance = managedMinDistance[managedSourceID] * machPass;
-                        continue;
+                        if (partAudioManager == null)
+                        {
+                            partAudioManager = source.gameObject.AddComponent<RSE_PartAudioManager>();
+                            partAudioManager.Initialize(sourcePart, source);
+                        }
                     }
-
-                    if (managedMinDistance.Count > 0 && managedMinDistance.ContainsKey(managedSourceID))
+                    else if (partAudioManager != null)
                     {
-                        source.minDistance = managedMinDistance[managedSourceID];
-                        managedMinDistance.Remove(managedSourceID);
+                        Component.Destroy(partAudioManager);
                     }
                     continue;
                 }
@@ -235,13 +218,7 @@ namespace RocketSoundEnhancement
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && source.gameObject.GetComponents<AudioSource>().Length == 1)
                 {
                     var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
-                    airSimFilter.enabled = true;
-                    airSimFilter.EnableLowpassFilter = true;
-                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
-                    airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
-                    airSimFilter.FarLowpass = Settings.AirSimFarLowpass;
-
-                    airSimFilter.Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, source.transform.position);
+                    airSimFilter.SetFilterProperties();
                 }
             }
 
@@ -270,6 +247,28 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Remove(() => gamePaused = true);
             GameEvents.onGameUnpause.Remove(() => gamePaused = false);
+
+            instance = null;
+        }
+    }
+
+    class RSE_PartAudioManager : MonoBehaviour
+    {
+        ShipEffects shipEffects;
+        AudioSource source;
+        float managedMinDistance;
+
+        public void Initialize(Part part, AudioSource source)
+        {
+            shipEffects = part.vessel.GetComponent<ShipEffects>();
+            this.source = source;
+            managedMinDistance = source.minDistance;
+        }
+
+        void LateUpdate()
+        {
+            float machPass = shipEffects.MachPass;
+            source.minDistance = managedMinDistance * machPass;
         }
     }
 }

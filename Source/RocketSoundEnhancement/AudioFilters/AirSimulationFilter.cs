@@ -61,6 +61,21 @@ namespace RocketSoundEnhancement.AudioFilters
             InvokeRepeating("UpdateFilters", 0, 0.02f);
         }
 
+        public void SetFilterProperties()
+        {
+            EnableLowpassFilter = true;
+            SimulationUpdate = AirSimulationUpdate.Basic;
+            MaxDistance = Settings.AirSimMaxDistance;
+            FarLowpass = Settings.AirSimFarLowpass;
+
+            Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
+        }
+
+        private void LateUpdate()
+        {
+            SetFilterProperties();
+        }
+
         private void UpdateFilters()
         {
             if (SimulationUpdate != AirSimulationUpdate.None)
