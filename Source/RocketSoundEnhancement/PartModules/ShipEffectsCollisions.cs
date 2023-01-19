@@ -65,6 +65,7 @@ namespace RocketSoundEnhancement.PartModules
                     if (source.isPlaying && source.loop)
                         source.volume = 0;
                 }
+                enabled = false;
                 goto baseLateUpdate;
             }
 
@@ -97,6 +98,8 @@ namespace RocketSoundEnhancement.PartModules
 
         public void OnCollisionEnter(Collision col)
         {
+            enabled = true;
+
             collided = true;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
             collisionType = CollisionType.CollisionEnter;
