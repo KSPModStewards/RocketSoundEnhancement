@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
 using RocketSoundEnhancement.Unity;
 using UnityEngine;
@@ -100,14 +99,49 @@ namespace RocketSoundEnhancement
                 }
             }
 
+            CacheVesselData();
+
+            GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountChanged);
+
             GameEvents.onGamePause.Add(OnGamePause);
             GameEvents.onGameUnpause.Add(OnGameUnpause);
             return true;
         }
 
-        IEnumerator SetupAudioSources(List<SoundLayer> soundLayers, bool hasAirSimFilter = true)
+        List<Part> asteroidParts = new List<Part>();
+        List<ModuleEngines> engines = new List<ModuleEngines>();
+
+        void CacheVesselData()
+		{
+            asteroidParts.Clear();
+            engines.Clear();
+
+            foreach (var part in vessel.parts)
+            {
+                foreach (var module in part.modules)
+                {
+                    if (module is ModuleAsteroid asteroid)
+                    {
+                        asteroidParts.Add(part);
+                    }
+                    else if (module is ModuleEngines engine)
+                    {
+                        engines.Add(engine);
+                    }
+                }
+            }
+        }
+
+        private void OnVesselPartCountChanged(Vessel data)
         {
-            foreach (var soundLayer in soundLayers.ToList())
+            if (data != vessel) return;
+
+            CacheVesselData();
+        }
+
+		IEnumerator SetupAudioSources(List<SoundLayer> soundLayers, bool hasAirSimFilter = true)
+        {
+            foreach (var soundLayer in soundLayers)
             {
                 string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
@@ -148,6 +182,11 @@ namespace RocketSoundEnhancement
 
             GameEvents.onGamePause.Remove(OnGamePause);
             GameEvents.onGameUnpause.Remove(OnGameUnpause);
+
+            asteroidParts.Clear();
+            engines.Clear();
+            GameEvents.onVesselPartCountChanged.Remove(OnVesselPartCountChanged);
+
             initialized = false;
         }
 
@@ -168,6 +207,12 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
+            if (!vessel.loaded)
+            {
+                Unload();
+                return;
+            }
+
             float acceleration = vessel.LandedOrSplashed ? (float)vessel.acceleration.magnitude : (float)(vessel.geeForce * PhysicsGlobals.GravitationalAcceleration);
             Acceleration = acceleration + (Mathf.Abs(pastAngularVelocity - vessel.angularVelocity.magnitude) / Time.fixedDeltaTime);
             Acceleration = Mathf.Round(Acceleration * 100) * 0.01f;
@@ -177,9 +222,9 @@ namespace RocketSoundEnhancement
             pastAngularVelocity = vessel.angularVelocity.magnitude;
             pastAcceleration = Acceleration;
 
-            VesselMass = vessel.GetTotalMass();
-            var excludedPart = vessel.Parts.Find(x => x.Modules.Contains("ModuleAsteroid"));
-            if (excludedPart != null)
+            VesselMass = (float)vessel.totalMass;
+            
+            foreach (var excludedPart in asteroidParts)
             {
                 VesselMass -= excludedPart.mass;
             }
@@ -284,7 +329,10 @@ namespace RocketSoundEnhancement
 
             if (AirSimFilters.Count > 0 && airSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
-                AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
+                foreach (var filter in AirSimFilters.Values)
+                {
+                    filter.enabled = false;
+                }
                 airSimFiltersEnabled = false;
             }
         }
@@ -346,14 +394,14 @@ namespace RocketSoundEnhancement
 
             if (Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior && !isSonicBoom)
             {
-                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName))
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.TryGetValue(soundLayerName, out var airSimFilter))
                 {
-                    AirSimFilters[soundLayerName].enabled = true;
-                    AirSimFilters[soundLayerName].Distance = Distance;
-                    AirSimFilters[soundLayerName].Mach = Mach;
-                    AirSimFilters[soundLayerName].Angle = Angle;
-                    AirSimFilters[soundLayerName].MachPass = MachPass;
-                    AirSimFilters[soundLayerName].MachAngle = MachAngle;
+                    airSimFilter.enabled = true;
+                    airSimFilter.Distance = Distance;
+                    airSimFilter.Mach = Mach;
+                    airSimFilter.Angle = Angle;
+                    airSimFilter.MachPass = MachPass;
+                    airSimFilter.MachAngle = MachAngle;
                     airSimFiltersEnabled = true;
                 }
                 else
@@ -400,12 +448,10 @@ namespace RocketSoundEnhancement
                     controller = (float)vessel.dynamicPressurekPa;
                     break;
                 case PhysicsControl.THRUST:
-                    var engines = vessel.parts.Where(x => x.GetComponent<ModuleEngines>()).ToList();
-                    if (engines.Count() == 0) { ThrustToWeight = 0; break; }
                     float totalThrust = 0;
                     foreach (var engine in engines)
                     {
-                        totalThrust += engine.GetComponents<ModuleEngines>().Sum(x => x.GetCurrentThrust());
+                        totalThrust += engine.GetCurrentThrust();
                     }
                     controller = totalThrust / VesselMass;
                     ThrustToWeight = controller;
@@ -422,23 +468,30 @@ namespace RocketSoundEnhancement
 
         private void OnGamePause()
         {
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
+            foreach (var source in Sources.Values)
+            {
+                source.Pause();
+            }
             gamePaused = true;
         }
 
         private void OnGameUnpause()
         {
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
+            foreach (var source in Sources.Values)
+            {
+                source.UnPause();
+            }
             gamePaused = false;
         }
 
         private void OnDestroy()
         {
             if (!initialized) return;
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
-            UnityEngine.Object.Destroy(audioParent);
-            GameEvents.onGamePause.Remove(OnGamePause);
-            GameEvents.onGameUnpause.Remove(OnGameUnpause);
+            foreach (var source in Sources.Values)
+            {
+                source.Stop();
+            }
+            Unload();
         }
     }
 }

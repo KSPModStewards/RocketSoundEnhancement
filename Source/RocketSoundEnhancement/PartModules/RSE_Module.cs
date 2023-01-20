@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using RocketSoundEnhancement.AudioFilters;
 using RocketSoundEnhancement.Unity;
 using UnityEngine;
@@ -122,7 +121,7 @@ namespace RocketSoundEnhancement.PartModules
 
         public IEnumerator SetupAudioSources(List<SoundLayer> soundLayers)
         {
-            foreach (var soundLayer in soundLayers.ToList())
+            foreach (var soundLayer in soundLayers)
             {
                 string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
@@ -164,23 +163,23 @@ namespace RocketSoundEnhancement.PartModules
             {
                 if (Sources.Count > 0)
                 {
-                    foreach (var source in Sources.Keys)
+                    foreach (var source in Sources)
                     {
                         //disable the filter but keep the fields updated
-                        if (!Sources[source].isPlaying && AirSimFilters.ContainsKey(source))
+                        if (!source.Value.isPlaying && AirSimFilters.TryGetValue(source.Key, out var airSimFilter))
                         {
-                            AirSimFilters[source].enabled = false;
-                            AirSimFilters[source].Distance = distance;
-                            AirSimFilters[source].Mach = mach;
-                            AirSimFilters[source].Angle = angle;
-                            AirSimFilters[source].MachAngle = machAngle;
-                            AirSimFilters[source].MachPass = machPass;
+                            airSimFilter.enabled = false;
+                            airSimFilter.Distance = distance;
+                            airSimFilter.Mach = mach;
+                            airSimFilter.Angle = angle;
+                            airSimFilter.MachAngle = machAngle;
+                            airSimFilter.MachPass = machPass;
                         }
 
-                        if (Sources[source].isPlaying || !Sources[source].enabled)
+                        if (source.Value.isPlaying || !source.Value.enabled)
                             continue;
 
-                        Sources[source].enabled = false;
+                        source.Value.enabled = false;
 
                         loopRandomStart = (float)random.NextDouble();
                     }
@@ -190,7 +189,10 @@ namespace RocketSoundEnhancement.PartModules
 
             if (AirSimFilters.Count > 0 && AirSimFiltersEnabled && Settings.MufflerQuality != AudioMufflerQuality.AirSim)
             {
-                AirSimFilters.Values.ToList().ForEach(x => x.enabled = false);
+                foreach (var airSimFilter in AirSimFilters.Values)
+                {
+                    airSimFilter.enabled = false;
+                }
                 AirSimFiltersEnabled = false;
             }
         }
@@ -242,7 +244,7 @@ namespace RocketSoundEnhancement.PartModules
         public void PlaySoundLayer(SoundLayer soundLayer, float control, float volume, bool rndOneShotVol = false)
         {
             string soundLayerName = soundLayer.name;
-            if (!Sources.ContainsKey(soundLayerName)) return;
+            if (!Sources.TryGetValue(soundLayerName, out AudioSource source)) return;
 
             float finalVolume, finalPitch;
             finalVolume = soundLayer.volumeFC?.Evaluate(control) ?? soundLayer.volume.Value(control);
@@ -254,28 +256,27 @@ namespace RocketSoundEnhancement.PartModules
 
             if (finalVolume < float.Epsilon)
             {
-                if (Sources[soundLayerName].volume == 0 && soundLayer.loop)
-                    Sources[soundLayerName].Stop();
+                if (source.volume == 0 && soundLayer.loop)
+                    source.Stop();
 
-                if (Sources[soundLayerName].isPlaying && soundLayer.loop)
-                    Sources[soundLayerName].volume = 0;
+                if (source.isPlaying && soundLayer.loop)
+                    source.volume = 0;
                     
                 return;
             }
 
-            AudioSource source = Sources[soundLayerName];
             source.enabled = true;
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal && soundLayer.channel == FXChannel.Exterior)
             {
-                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.ContainsKey(soundLayerName) && UseAirSimulation)
+                if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && AirSimFilters.TryGetValue(soundLayerName, out var filter) && UseAirSimulation)
                 {
-                    AirSimFilters[soundLayerName].enabled = true;
-                    AirSimFilters[soundLayerName].Distance = distance;
-                    AirSimFilters[soundLayerName].Mach = mach;
-                    AirSimFilters[soundLayerName].Angle = angle;
-                    AirSimFilters[soundLayerName].MachAngle = machAngle;
-                    AirSimFilters[soundLayerName].MachPass = machPass;
+                    filter.enabled = true;
+                    filter.Distance = distance;
+                    filter.Mach = mach;
+                    filter.Angle = angle;
+                    filter.MachAngle = machAngle;
+                    filter.MachPass = machPass;
                     AirSimFiltersEnabled = true;
                 }
                 else
@@ -306,25 +307,34 @@ namespace RocketSoundEnhancement.PartModules
 
         public void OnGamePause()
         {
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Pause()); }
+            foreach (var source in Sources.Values)
+            {
+                source.Pause();
+            }
             GamePaused = true;
         }
 
         public void OnGameUnpause()
         {
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.UnPause()); }
+            foreach (var source in Sources.Values)
+            {
+                source.UnPause();
+            }
 
             GamePaused = false;
         }
 
         public virtual void OnDestroy()
         {
-            if (!Initialized) return;
-            if (Sources.Count > 0) { Sources.Values.ToList().ForEach(x => x.Stop()); }
-            Destroy(AudioParent);
-
             GameEvents.onGamePause.Remove(OnGamePause);
             GameEvents.onGameUnpause.Remove(OnGameUnpause);
+
+            if (!Initialized) return;
+            foreach (var source in Sources.Values)
+            {
+                source.Stop();
+            }
+            Destroy(AudioParent);
         }
     }
 }

@@ -57,8 +57,22 @@ namespace RocketSoundEnhancement.AudioFilters
                 distortionFilter = gameObject.AddComponent<AudioDistortionFilter>();
                 distortionFilter.enabled = enabled;
             }
+        }
 
-            InvokeRepeating("UpdateFilters", 0, 0.02f);
+        public void SetFilterProperties()
+        {
+            EnableLowpassFilter = true;
+            SimulationUpdate = AirSimulationUpdate.Basic;
+            MaxDistance = Settings.AirSimMaxDistance;
+            FarLowpass = Settings.AirSimFarLowpass;
+
+            Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
+        }
+
+        private void LateUpdate()
+        {
+            SetFilterProperties();
+            UpdateFilters();
         }
 
         private void UpdateFilters()
