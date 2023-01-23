@@ -198,16 +198,15 @@ namespace RocketSoundEnhancement
                 Part sourcePart;
                 if (sourcePart = source.GetComponentInParent<Part>())
                 {
-                    int managedSourceID = source.GetInstanceID();
                     source.outputAudioMixerGroup = sourcePart?.vessel == FlightGlobals.ActiveVessel ? FocusMixer : ExteriorMixer;
 
-                    var partAudioManager = source.gameObject.GetComponent<RSE_PartAudioManager>();
+                    var partAudioManager = sourcePart.GetComponent<RSE_PartAudioManager>();
 
                     if (Settings.MufflerQuality > AudioMufflerQuality.Normal && Settings.MachEffectsAmount > 0)
                     {
                         if (partAudioManager == null)
                         {
-                            partAudioManager = source.gameObject.AddComponent<RSE_PartAudioManager>();
+                            partAudioManager = sourcePart.gameObject.AddComponent<RSE_PartAudioManager>();
                             partAudioManager.Initialize(sourcePart, source);
                         }
                     }
@@ -222,7 +221,12 @@ namespace RocketSoundEnhancement
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && source.gameObject.GetComponents<AudioSource>().Length == 1)
                 {
                     var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
-                    airSimFilter.SetFilterProperties();
+                    airSimFilter.EnableLowpassFilter = true;
+                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
+                    airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
+                    airSimFilter.FarLowpass = Settings.AirSimFarLowpass;
+
+                    airSimFilter.StartCoroutine(airSimFilter.UpdateDistance());
                 }
             }
 
@@ -258,19 +262,23 @@ namespace RocketSoundEnhancement
 
     class RSE_PartAudioManager : MonoBehaviour
     {
+        Part part;
         ShipEffects shipEffects;
         AudioSource source;
         float managedMinDistance;
 
         public void Initialize(Part part, AudioSource source)
         {
-            shipEffects = part.vessel.GetComponent<ShipEffects>();
+            this.part = part;
             this.source = source;
             managedMinDistance = source.minDistance;
         }
 
         void LateUpdate()
         {
+            // the vessel object may change on decoupling etc so we can't just cache the shipEffects object
+            part.vessel.GetComponentCached(ref shipEffects);
+
             float machPass = shipEffects.MachPass;
             source.minDistance = managedMinDistance * machPass;
         }

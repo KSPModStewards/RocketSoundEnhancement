@@ -198,6 +198,16 @@ namespace RocketSoundEnhancement
 
         public override void OnUnloadVessel()
         {
+            // strange stock behavior: when the vessel is unloaded, all parts *except* for the root are destroyed
+            if (vessel.rootPart != null)
+            {
+                var partAudioManager = vessel.rootPart.GetComponent<RSE_PartAudioManager>();
+                if (partAudioManager != null)
+                {
+                    Destroy(partAudioManager);
+                }
+            }
+
             if (!initialized) return;
             Unload();
         }
