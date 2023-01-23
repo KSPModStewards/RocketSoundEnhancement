@@ -31,3 +31,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("0.9.6.*")]
 [assembly: AssemblyInformationalVersion("0.9.6")]
 [assembly: KSPAssembly("RocketSoundEnhancement", 0, 9, 6)]
+[assembly: KSPAssemblyDependency("RocketSoundEnhancement.Unity", 1, 0)]
