@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -59,20 +60,16 @@ namespace RocketSoundEnhancement.AudioFilters
             }
         }
 
-        public void SetFilterProperties()
-        {
-            EnableLowpassFilter = true;
-            SimulationUpdate = AirSimulationUpdate.Basic;
-            MaxDistance = Settings.AirSimMaxDistance;
-            FarLowpass = Settings.AirSimFarLowpass;
-
-            Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
-        }
 
         private void LateUpdate()
         {
-            SetFilterProperties();
             UpdateFilters();
+        }
+
+        public IEnumerator UpdateDistance()
+        {
+            Distance = Vector3.Distance(CameraManager.GetCurrentCamera().transform.position, transform.position);
+            yield return null;
         }
 
         private void UpdateFilters()

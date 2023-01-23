@@ -221,7 +221,12 @@ namespace RocketSoundEnhancement
                 if (Settings.MufflerQuality == AudioMufflerQuality.AirSim && source.gameObject.GetComponents<AudioSource>().Length == 1)
                 {
                     var airSimFilter = source.gameObject.AddOrGetComponent<AirSimulationFilter>();
-                    airSimFilter.SetFilterProperties();
+                    airSimFilter.EnableLowpassFilter = true;
+                    airSimFilter.SimulationUpdate = AirSimulationUpdate.Basic;
+                    airSimFilter.MaxDistance = Settings.AirSimMaxDistance;
+                    airSimFilter.FarLowpass = Settings.AirSimFarLowpass;
+
+                    airSimFilter.StartCoroutine(airSimFilter.UpdateDistance());
                 }
             }
 
