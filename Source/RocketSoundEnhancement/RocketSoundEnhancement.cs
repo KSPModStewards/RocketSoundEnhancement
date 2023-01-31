@@ -74,8 +74,18 @@ namespace RocketSoundEnhancement
             FlightCamera.fetch.AudioListenerGameObject.transform.localPosition = Vector3.zero;
             FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles = Vector3.zero;
 
-            GameEvents.onGamePause.Add(() => gamePaused = true);
-            GameEvents.onGameUnpause.Add(() => gamePaused = false);
+            GameEvents.onGamePause.Add(OnGamePause);
+            GameEvents.onGameUnpause.Add(OnGameUnpause);
+        }
+
+        void OnGamePause()
+        {
+            gamePaused = true;
+        }
+
+        void OnGameUnpause()
+        {
+            gamePaused = false;
         }
 
         public void ApplySettings()
@@ -253,8 +263,8 @@ namespace RocketSoundEnhancement
         {
             AudioListener.volume = 0;   // Temp fix for sound stuttering between scene changes
 
-            GameEvents.onGamePause.Remove(() => gamePaused = true);
-            GameEvents.onGameUnpause.Remove(() => gamePaused = false);
+            GameEvents.onGamePause.Remove(OnGamePause);
+            GameEvents.onGameUnpause.Remove(OnGameUnpause);
 
             instance = null;
         }
