@@ -3,6 +3,7 @@
 # [Unreleased]
 ## Changes
 - Fixed MachEffectsAmount not saving and causing crashes when set to zero.
+- Fixed Sonic Booms being triggered in MapView
 
 # [0.9.6] - 07-09-22
 ## Changes
