@@ -1,9 +1,12 @@
 # Changelog
 
-# [Unreleased]
+# [0.9.7] - 03-07-23
 ## Changes
 - Fixed MachEffectsAmount not saving and causing crashes when set to zero.
 - Fixed Sonic Booms being triggered in MapView
+- RCS sounds use thruster power
+- Major performance optimizations
+- Fixed memory leaks from scene changes
 
 # [0.9.6] - 07-09-22
 ## Changes
