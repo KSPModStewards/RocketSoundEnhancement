@@ -243,6 +243,8 @@ namespace RocketSoundEnhancement.PartModules
 
         public void PlaySoundLayer(SoundLayer soundLayer, float control, float volume, bool rndOneShotVol = false)
         {
+            if (soundLayer.audioClips == null || soundLayer.audioClips.Length == 0) return;
+
             string soundLayerName = soundLayer.name;
             if (!Sources.TryGetValue(soundLayerName, out AudioSource source)) return;
 
@@ -296,7 +298,7 @@ namespace RocketSoundEnhancement.PartModules
 
             int index = soundLayer.audioClips.Length > 1 ? Random.Range(0, soundLayer.audioClips.Length - 1) : 0;
 
-            if (soundLayer.loop && soundLayer.audioClips != null && (source.clip == null || source.clip != soundLayer.audioClips[index]))
+            if (soundLayer.loop && (source.clip == null || source.clip != soundLayer.audioClips[index]))
             {
                 source.clip = soundLayer.audioClips[index];
                 source.time = soundLayer.loopAtRandom ? loopRandomStart * source.clip.length : 0;
