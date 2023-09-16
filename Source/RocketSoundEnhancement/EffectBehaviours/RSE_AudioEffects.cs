@@ -55,6 +55,15 @@ namespace RocketSoundEnhancement.EffectBehaviours
 
         public override void OnInitialize()
         {
+            if (audioParent != null)
+            {
+                Debug.LogWarningFormat("[RSE] AudioEffect named {0} already has an audioParent", effectName);
+            }
+            if (audioSource != null)
+            {
+                Debug.LogWarningFormat("[RSE] AudioEffect named {0} already has an audioSource", effectName);
+            }
+
             audioParent = new GameObject($"{AudioUtility.RSETag}_{this.effectName}");
             audioParent.transform.SetParent(transform, false);
             audioParent.transform.localRotation = Quaternion.Euler(0, 0, 0);
@@ -93,10 +102,13 @@ namespace RocketSoundEnhancement.EffectBehaviours
                 airSimFilter.MaxDistortion = MaxDistortion;
                 airSimFilter.AngleHighpass = AngleHighpass;
             }
-
-            GameEvents.onGamePause.Add(OnGamePaused);
-            GameEvents.onGameUnpause.Add(OnGameUnpaused);
         }
+
+        void Start()
+        {
+			GameEvents.onGamePause.Add(OnGamePaused);
+			GameEvents.onGameUnpause.Add(OnGameUnpaused);
+		}
 
         public override void OnLoad(ConfigNode node)
         {
