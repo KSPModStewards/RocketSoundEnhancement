@@ -43,16 +43,16 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"D:\Games\KSP Mod Projects\pdb2mdb\pdb2mdb.exe" "RocketSoundEnhancement.dll"
-      copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"
-</PostBuildEvent>
     <!--<PostBuildEvent>copy "$(TargetDir)*" "D:\Games\Kerbal Space Program\KSP 1.12.3\GameData\RocketSoundEnhancement\Plugins\"</PostBuildEvent>-->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>..\..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <OutputPath>..\..\GameData\RocketSoundEnhancement\Plugins\</OutputPath>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
