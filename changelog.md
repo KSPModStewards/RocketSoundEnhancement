@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.9.8] - 09-16-23
+- Fixed index out of range exception when a sound layer has no clips
+- Potential fix for memory leak due to ongamepaused events
+
 # [0.9.7] - 03-07-23
 ## Changes
 - Fixed MachEffectsAmount not saving and causing crashes when set to zero.
