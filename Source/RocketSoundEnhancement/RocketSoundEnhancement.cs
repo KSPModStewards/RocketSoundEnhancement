@@ -1,6 +1,7 @@
 ﻿using KSP.UI.Screens;
 using RocketSoundEnhancement.AudioFilters;
 using RocketSoundEnhancement.Unity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -191,13 +192,13 @@ namespace RocketSoundEnhancement
                 // if the source was already in the set, we're done
                 if (!managedSources.Add(instanceID)) continue;
 
-                if (source.name.Contains(AudioUtility.RSETag)) continue;
-
                 // assume this source is a GUI source and ignore
                 if (source.transform.position == Vector3.zero || source.spatialBlend == 0)
                 {
                     continue;
                 }
+
+                if (source.name.Contains(AudioUtility.RSETag)) continue;
 
                 if (source.GetComponentInParent<InternalProp>())
                 {
@@ -282,6 +283,16 @@ namespace RocketSoundEnhancement
             this.part = part;
             this.source = source;
             managedMinDistance = source.minDistance;
+
+            // The root gameobject of a vessel holds both the vessel component and the part component
+            // The part component is created and destroyed as the vessel is loaded and unloaded but the gameobject is never destroyed (until the vessel is...)
+            // So we need to make sure to delete the RSE_PartAudioManager when the part is destroyed.
+            part.OnJustAboutToBeDestroyed += OnPartDestroyed;
+        }
+
+        private void OnPartDestroyed()
+        {
+            Destroy(this);
         }
 
         void LateUpdate()
