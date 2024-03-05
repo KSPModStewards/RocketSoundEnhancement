@@ -1,5 +1,8 @@
 # Changelog
 
+# [0.9.9] - 03-05-24
+- Improved memory leak/exception spam fix when vessels are unloaded
+
 # [0.9.8] - 09-16-23
 - Fixed index out of range exception when a sound layer has no clips
 - Potential fix for memory leak due to ongamepaused events
