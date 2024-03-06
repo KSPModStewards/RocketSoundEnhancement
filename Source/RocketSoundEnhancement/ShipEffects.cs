@@ -143,6 +143,9 @@ namespace RocketSoundEnhancement
         {
             foreach (var soundLayer in soundLayers)
             {
+                // if the vessel was unloaded while the coroutine was running, abort
+                if (!initialized) break;
+
                 string soundLayerName = soundLayer.name;
                 if (!Sources.ContainsKey(soundLayerName))
                 {
