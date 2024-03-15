@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.9.10] - 03-15-24
+- Fixed NRE spam when a vessel is unloaded quickly after being loaded (often when crashing into terrain)
+- Massively reduce the memory impact of the comb filter
+
 # [0.9.9] - 03-05-24
 - Improved memory leak/exception spam fix when vessels are unloaded
 
