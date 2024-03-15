@@ -16,7 +16,23 @@ namespace RocketSoundEnhancement.AudioFilters
     public class AirSimulationFilter : MonoBehaviour
     {
         // Simulation Settings
-        public bool EnableCombFilter { get; set; }
+        public bool EnableCombFilter
+        {
+            get => _enableCombFilter;
+            set
+            {
+                if (!value)
+                {
+                    buffer = null;
+                }
+
+                _enableCombFilter = value;
+
+                AllocateCombFilterBuffer();
+            }
+        }
+        bool _enableCombFilter;
+
         public bool EnableLowpassFilter { get; set; }
         public bool EnableDistortionFilter { get; set; }
         public AirSimulationUpdate SimulationUpdate { get; set; }
@@ -60,6 +76,10 @@ namespace RocketSoundEnhancement.AudioFilters
             }
         }
 
+        void Start()
+        {
+            AllocateCombFilterBuffer();
+        }
 
         private void LateUpdate()
         {
@@ -177,7 +197,7 @@ namespace RocketSoundEnhancement.AudioFilters
         }
 
         #region Comb Filter
-        private float[] buffer = new float[500000];
+        private float[] buffer;
         private int counter = 0;
         private float CombFilter(float input)
         {
@@ -265,7 +285,7 @@ namespace RocketSoundEnhancement.AudioFilters
         {
             if (distortionFilter != null) distortionFilter.enabled = false;
 
-            Array.Clear(buffer, 0, buffer.Length);
+            buffer = null;
 
             Array.Clear(inlpl, 0, inlpl.Length);
             Array.Clear(inlpr, 0, inlpr.Length);
@@ -284,6 +304,16 @@ namespace RocketSoundEnhancement.AudioFilters
         private void OnEnable()
         {
             if (distortionFilter != null) distortionFilter.enabled = true;
+
+            AllocateCombFilterBuffer();
         }
+
+        void AllocateCombFilterBuffer()
+        {
+			if (HighLogic.LoadedScene != GameScenes.LOADING && EnableCombFilter && buffer == null)
+			{
+				buffer = new float[500000];
+			}
+		}
     }
 }
