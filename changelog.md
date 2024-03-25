@@ -1,5 +1,8 @@
 # Changelog
 
+# [0.9.11] - 
+- Fixed missing reentry and wind sounds
+
 # [0.9.10] - 03-15-24
 - Fixed NRE spam when a vessel is unloaded quickly after being loaded (often when crashing into terrain)
 - Massively reduce the memory impact of the comb filter
