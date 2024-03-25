@@ -1,6 +1,6 @@
 # Changelog
 
-# [0.9.11] - 
+# [0.9.11] - 03-25-24
 - Fixed missing reentry and wind sounds
 
 # [0.9.10] - 03-15-24
