@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement", "RocketSoundEnhancement\RocketSoundEnhancement.csproj", "{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement", "Source\RocketSoundEnhancement\RocketSoundEnhancement.csproj", "{BBC72A52-EE4F-4DC0-9845-4350A54AC1CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement.Unity", "RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj", "{5DFF0176-7BA8-49F4-8155-F5D9B37D7D3D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketSoundEnhancement.Unity", "Source\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj", "{5DFF0176-7BA8-49F4-8155-F5D9B37D7D3D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23E94561-E5A6-43BE-90D8-A93E167D6A5F}"
 	ProjectSection(SolutionItems) = preProject
-		..\changelog.md = ..\changelog.md
-		..\GameData\RocketSoundEnhancement\RocketSoundEnhancement.version = ..\GameData\RocketSoundEnhancement\RocketSoundEnhancement.version
-		..\GameData\RocketSoundEnhancement\Settings.cfg = ..\GameData\RocketSoundEnhancement\Settings.cfg
+		changelog.md = changelog.md
+		GameData\RocketSoundEnhancement\RocketSoundEnhancement.version = GameData\RocketSoundEnhancement\RocketSoundEnhancement.version
+		GameData\RocketSoundEnhancement\Settings.cfg = GameData\RocketSoundEnhancement\Settings.cfg
 	EndProjectSection
 EndProject
 Global
