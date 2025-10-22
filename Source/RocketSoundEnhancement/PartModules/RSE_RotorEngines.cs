@@ -24,14 +24,18 @@ namespace RocketSoundEnhancement.PartModules
         private ModuleResourceIntake resourceIntake;
         private int childPartsCount = 0;
 
+        public RSE_RotorEngines()
+        {
+            EnableLowpassFilter = true;
+            EnableCombFilter = true;
+            EnableDistortionFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if(state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
-            EnableCombFilter = true;
-            EnableDistortionFilter = true;
             base.OnStart(state);
 
             rotorModule = part.GetComponent<ModuleRoboticServoRotor>();
@@ -58,8 +62,8 @@ namespace RocketSoundEnhancement.PartModules
             childPartsCount = childParts.Count;
             foreach (var childPart in childParts)
             {
-                var configNode = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(x => x.name.Replace("_", ".") == childPart.partInfo.name);
-                var propConfig = configNode.config.GetNode("RSE_Propellers");
+                var configNode = childPart.partInfo.partConfig;
+                var propConfig = configNode.GetNode("RSE_Propellers");
 
                 if (propConfig != null)
                 {

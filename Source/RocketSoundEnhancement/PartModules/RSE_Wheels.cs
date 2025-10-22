@@ -23,34 +23,17 @@ namespace RocketSoundEnhancement.PartModules
         private float wheelSpeed = 0;
         private float slipDisplacement = 0;
 
+        public RSE_Wheels()
+        {
+            EnableLowpassFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
             base.OnStart(state);
-
-            if (PartConfigNode.HasNode("Motor"))
-            {
-                ConfigNode offLoadVolumeScaleNode;
-                if ((offLoadVolumeScaleNode = PartConfigNode.GetNode("Motor").GetNode("offLoadVolumeScale")) != null && offLoadVolumeScaleNode.HasValues())
-                {
-                    foreach (ConfigNode.Value node in offLoadVolumeScaleNode.values)
-                    {
-                        string soundLayerName = node.name;
-                        float value = float.Parse(node.value);
-
-                        if (offLoadVolumeScale.ContainsKey(soundLayerName))
-                        {
-                            offLoadVolumeScale[soundLayerName] = value;
-                            continue;
-                        }
-
-                        offLoadVolumeScale.Add(soundLayerName, value);
-                    }
-                }
-            }
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
             moduleMotor = part.GetComponent<ModuleWheelMotor>();
@@ -188,5 +171,41 @@ namespace RocketSoundEnhancement.PartModules
 
             slipDisplacement = Mathf.Sqrt(x * x + y * y);
         }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+
+            if (part?.partInfo?.partPrefab != null)
+            {
+                var prefab = part.partInfo.partPrefab.FindModuleImplementing<RSE_Wheels>();
+                offLoadVolumeScale = prefab.offLoadVolumeScale;
+                return;
+            }
+
+            ConfigNode motor = null;
+            if (node.TryGetNode("Motor", ref motor))
+            {
+                ConfigNode offLoadVolumeScaleNode = motor.GetNode("offLoadVolumeScale");
+
+                if (offLoadVolumeScaleNode != null && offLoadVolumeScaleNode.HasValue())
+                {
+                    foreach (ConfigNode.Value vnode in offLoadVolumeScaleNode.values)
+                    {
+                        string soundLayerName = vnode.name;
+                        float value = float.Parse(vnode.value);
+
+                        if (offLoadVolumeScale.ContainsKey(soundLayerName))
+                        {
+                            offLoadVolumeScale[soundLayerName] = value;
+                            continue;
+                        }
+
+                        offLoadVolumeScale.Add(soundLayerName, value);
+                    }
+                }
+            }
+        }
+
     }
 }

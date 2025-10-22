@@ -5,12 +5,16 @@ namespace RocketSoundEnhancement.PartModules
 {
     public class RSE_KerbalEVA : RSE_Module
     {
+        public RSE_KerbalEVA()
+        {
+            EnableLowpassFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
             base.OnStart(state);
 
             Initialized = true;
