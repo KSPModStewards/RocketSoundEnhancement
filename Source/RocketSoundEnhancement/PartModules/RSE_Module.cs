@@ -303,7 +303,8 @@ namespace RocketSoundEnhancement.PartModules
 
             if (part?.partInfo?.partPrefab != null)
             {
-                var prefab = part.partInfo.partPrefab.FindModuleImplementing<RSE_Module>();
+                int moduleIndex = part.Modules.IndexOf(this);
+                var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Module;
 
                 SoundLayerGroups = prefab.SoundLayerGroups;
                 SoundLayers = prefab.SoundLayers;
