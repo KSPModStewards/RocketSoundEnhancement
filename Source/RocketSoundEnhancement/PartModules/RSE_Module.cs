@@ -53,7 +53,6 @@ namespace RocketSoundEnhancement.PartModules
         {
             string partParentName = part.name + "_" + this.moduleName;
             AudioParent = AudioUtility.CreateAudioParent(part, partParentName);
-            PartConfigNode = AudioUtility.GetConfigNode(part.partInfo.name, this.moduleName);
 
             if (!float.TryParse(PartConfigNode.GetValue("volume"), out Volume)) Volume = 1;
             if (!float.TryParse(PartConfigNode.GetValue("DopplerFactor"), out DopplerFactor)) DopplerFactor = 0.5f;
@@ -338,5 +337,22 @@ namespace RocketSoundEnhancement.PartModules
             }
             Destroy(AudioParent);
         }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+
+            if (part.partInfo is null)
+            {
+                PartConfigNode = node;
+            }
+            else
+            {
+                PartConfigNode = part.partInfo.partPrefab
+                    .FindModuleImplementing<RSE_Module>()
+                    .PartConfigNode;
+            }
+        }
+
     }
 }

@@ -58,8 +58,8 @@ namespace RocketSoundEnhancement.PartModules
             childPartsCount = childParts.Count;
             foreach (var childPart in childParts)
             {
-                var configNode = GameDatabase.Instance.GetConfigs("PART").FirstOrDefault(x => x.name.Replace("_", ".") == childPart.partInfo.name);
-                var propConfig = configNode.config.GetNode("RSE_Propellers");
+                var configNode = childPart.partInfo.partConfig;
+                var propConfig = configNode.GetNode("RSE_Propellers");
 
                 if (propConfig != null)
                 {
