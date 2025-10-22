@@ -297,6 +297,14 @@ namespace RocketSoundEnhancement
 
         void LateUpdate()
         {
+            // many things can destroy an audio source without us knowing about it
+            // for example an AUDIO effect connected to ModuleAnimationGroup
+            if (source == null)
+            {
+                Destroy(this);
+                return;
+            }
+
             // the vessel object may change on decoupling etc so we can't just cache the shipEffects object
             part.vessel.GetComponentCached(ref shipEffects);
 
