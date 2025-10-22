@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using RocketSoundEnhancement.AudioFilters;
 using RocketSoundEnhancement.Unity;
 using UnityEngine;
@@ -17,7 +18,6 @@ namespace RocketSoundEnhancement.PartModules
 
         public GameObject AudioParent { get; protected set; }
 
-        public ConfigNode PartConfigNode;
         public bool PrepareSoundLayers = true;
         public bool Initialized;
         public bool GamePaused;
@@ -54,49 +54,8 @@ namespace RocketSoundEnhancement.PartModules
             string partParentName = part.name + "_" + this.moduleName;
             AudioParent = AudioUtility.CreateAudioParent(part, partParentName);
 
-            if (!float.TryParse(PartConfigNode.GetValue("volume"), out Volume)) Volume = 1;
-            if (!float.TryParse(PartConfigNode.GetValue("DopplerFactor"), out DopplerFactor)) DopplerFactor = 0.5f;
-
-            if (PartConfigNode.HasNode("AIRSIMULATION"))
-            {
-                var node = PartConfigNode.GetNode("AIRSIMULATION");
-
-                if (node.HasValue("EnableCombFilter")) bool.TryParse(node.GetValue("EnableCombFilter"), out EnableCombFilter);
-                if (node.HasValue("EnableLowpassFilter")) bool.TryParse(node.GetValue("EnableLowpassFilter"), out EnableLowpassFilter);
-                if (node.HasValue("EnableDistortionFilter")) bool.TryParse(node.GetValue("EnableDistortionFilter"), out EnableDistortionFilter);
-
-                if (node.HasValue("UpdateMode")) node.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
-
-                if (node.HasValue("FarLowpass")) FarLowpass = float.Parse(node.GetValue("FarLowpass"));
-                if (node.HasValue("MaxCombDelay")) MaxCombDelay = float.Parse(node.GetValue("MaxCombDelay"));
-                if (node.HasValue("MaxCombMix")) MaxCombMix = float.Parse(node.GetValue("MaxCombMix"));
-                if (node.HasValue("MaxDistortion")) MaxDistortion = float.Parse(node.GetValue("MaxDistortion"));
-                if (node.HasValue("AngleHighpass")) AngleHighpass = float.Parse(node.GetValue("AngleHighpass"));
-            }
-
-            UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableDistortionFilter);
-
             if (PrepareSoundLayers)
             {
-                foreach (var node in PartConfigNode.GetNodes())
-                {
-                    var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                    if (soundLayers.Count == 0) continue;
-
-                    var groupName = node.name;
-
-                    if(node.name == "SOUNDLAYERGROUP")
-                    {
-                        groupName = node.GetValue("name");
-                    }
-
-                    if (SoundLayerGroups.ContainsKey(groupName)) { SoundLayerGroups[groupName].AddRange(soundLayers); continue; }
-
-                    SoundLayerGroups.Add(groupName, soundLayers);
-                }
-
-                SoundLayers = AudioUtility.CreateSoundLayerGroup(PartConfigNode.GetNodes("SOUNDLAYER"));
-
                 if (SoundLayerGroups.Count > 0)
                 {
                     foreach (var soundLayerGroup in SoundLayerGroups)
@@ -262,7 +221,7 @@ namespace RocketSoundEnhancement.PartModules
 
                 if (source.isPlaying && soundLayer.loop)
                     source.volume = 0;
-                    
+
                 return;
             }
 
@@ -342,15 +301,58 @@ namespace RocketSoundEnhancement.PartModules
         {
             base.OnLoad(node);
 
-            if (part.partInfo is null)
+            if (part?.partInfo?.partPrefab != null)
             {
-                PartConfigNode = node;
+                var prefab = part.partInfo.partPrefab.FindModuleImplementing<RSE_Module>();
+
+                SoundLayerGroups = prefab.SoundLayerGroups;
+                SoundLayers = prefab.SoundLayers;
+                return;
             }
-            else
+
+            // Do the actual parsing during part compilation.
+
+            node.TryGetValue("volume", ref Volume);
+            node.TryGetValue("DopplerFactor", ref DopplerFactor);
+
+            ConfigNode sim = null;
+            if (node.TryGetNode("AIRSIMULATION", ref sim))
             {
-                PartConfigNode = part.partInfo.partPrefab
-                    .FindModuleImplementing<RSE_Module>()
-                    .PartConfigNode;
+                sim.TryGetValue("EnableCombFilter", ref EnableCombFilter);
+                sim.TryGetValue("EnableLowpassFilter", ref EnableLowpassFilter);
+                sim.TryGetValue("EnableDistortionFilter", ref EnableDistortionFilter);
+
+                sim.TryGetEnum("UpdateMode", ref AirSimUpdateMode, AirSimulationUpdate.Full);
+
+                sim.TryGetValue("FarLowpass", ref FarLowpass);
+                sim.TryGetValue("MaxCombDelay", ref MaxCombDelay);
+                sim.TryGetValue("MaxCombMix", ref MaxCombMix);
+                sim.TryGetValue("MaxDistortion", ref MaxDistortion);
+                sim.TryGetValue("AngleHighpass", ref AngleHighpass);
+            }
+
+            UseAirSimulation = !(!EnableLowpassFilter && !EnableCombFilter && !EnableDistortionFilter);
+
+            if (PrepareSoundLayers)
+            {
+                foreach (var lnode in node.GetNodes())
+                {
+                    var soundLayers = AudioUtility.CreateSoundLayerGroup(lnode.GetNodes("SOUNDLAYER"));
+                    if (soundLayers.Count == 0) continue;
+
+                    var groupName = lnode.name;
+
+                    if (lnode.name == "SOUNDLAYERGROUP")
+                    {
+                        groupName = lnode.GetValue("name");
+                    }
+
+                    if (SoundLayerGroups.ContainsKey(groupName)) { SoundLayerGroups[groupName].AddRange(soundLayers); continue; }
+
+                    SoundLayerGroups.Add(groupName, soundLayers);
+                }
+
+                SoundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
             }
         }
     }

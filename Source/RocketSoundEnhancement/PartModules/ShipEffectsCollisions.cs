@@ -31,18 +31,8 @@ namespace RocketSoundEnhancement.PartModules
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
+
             base.OnStart(state);
-
-            foreach (var node in PartConfigNode.GetNodes())
-            {
-                var soundLayerNodes = node.GetNodes("SOUNDLAYER");
-                CollisionType collisionType;
-
-                if (Enum.TryParse(node.name, out collisionType))
-                {
-                    SoundLayerCollisionGroups.Add(collisionType, AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
-                }
-            }
 
             if (SoundLayerCollisionGroups.Count > 0)
             {
@@ -123,6 +113,29 @@ namespace RocketSoundEnhancement.PartModules
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
             collisionType = CollisionType.CollisionExit;
             collision = col;
+        }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+
+            if (part?.partInfo?.partPrefab != null)
+            {
+                var prefab = part.partInfo.partPrefab.FindModuleImplementing<ShipEffectsCollisions>();
+
+                SoundLayerCollisionGroups = prefab.SoundLayerCollisionGroups;
+                return;
+            }
+
+            foreach (var child in node.GetNodes())
+            {
+                var soundLayerNodes = child.GetNodes("SOUNDLAYER");
+
+                if (Enum.TryParse(child.name, out CollisionType collisionType))
+                {
+                    SoundLayerCollisionGroups.Add(collisionType, AudioUtility.CreateSoundLayerGroup(soundLayerNodes));
+                }
+            }
         }
     }
 }
