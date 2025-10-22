@@ -301,6 +301,7 @@ namespace RocketSoundEnhancement.PartModules
         {
             base.OnLoad(node);
 
+            // This likely doesn't work correctly with B9PS which can call OnLoad at unexpected times
             if (part?.partInfo?.partPrefab != null)
             {
                 int moduleIndex = part.Modules.IndexOf(this);
