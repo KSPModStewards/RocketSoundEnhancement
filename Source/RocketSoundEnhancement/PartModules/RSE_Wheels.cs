@@ -178,8 +178,9 @@ namespace RocketSoundEnhancement.PartModules
 
             if (part?.partInfo?.partPrefab != null)
             {
-                var prefab = part.partInfo.partPrefab.FindModuleImplementing<RSE_Wheels>();
-                offLoadVolumeScale = prefab.offLoadVolumeScale;
+                int moduleIndex = part.modules.IndexOf(this);
+                var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Wheels;
+				offLoadVolumeScale = prefab.offLoadVolumeScale;
                 return;
             }
 

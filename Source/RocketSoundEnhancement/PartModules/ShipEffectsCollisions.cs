@@ -121,9 +121,10 @@ namespace RocketSoundEnhancement.PartModules
 
             if (part?.partInfo?.partPrefab != null)
             {
-                var prefab = part.partInfo.partPrefab.FindModuleImplementing<ShipEffectsCollisions>();
+                int moduleIndex = part.modules.IndexOf(this);
+				var prefab = part.partInfo.partPrefab.modules[moduleIndex] as ShipEffectsCollisions;
 
-                SoundLayerCollisionGroups = prefab.SoundLayerCollisionGroups;
+				SoundLayerCollisionGroups = prefab.SoundLayerCollisionGroups;
                 return;
             }
 
