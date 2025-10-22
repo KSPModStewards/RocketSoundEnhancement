@@ -7,6 +7,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Audio;
 
+// once KSPBT supports generating this for project references it can be removed
+[assembly:KSPAssemblyDependency("RocketSoundEnhancement.Unity", 0, 0)]
+
 namespace RocketSoundEnhancement
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
