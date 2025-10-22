@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using KSPBuildTools;
+using System.Linq;
 using UnityEngine;
 
 namespace RocketSoundEnhancement.PartModules
@@ -21,6 +22,11 @@ namespace RocketSoundEnhancement.PartModules
             base.OnStart(state);
 
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();
+            if (moduleRCSFX == null)
+            {
+                Log.Error("No ModuleRCSFX found on part " + part.partInfo.name);
+                return;
+            }
             Initialized = true;
         }
 
