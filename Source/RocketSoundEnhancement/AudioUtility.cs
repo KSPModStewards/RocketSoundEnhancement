@@ -70,27 +70,6 @@ namespace RocketSoundEnhancement
         public static AnimationCurve SmoothControl = AnimationCurve.EaseInOut(0f, 0.04f, 1f, 1f);
         public static string RSETag = "RSE";
 
-        public static ConfigNode GetConfigNode(string partInfoName, string moduleName, string moduleID = "")
-        {
-            var configs = GameDatabase.Instance.GetConfigs("PART");
-
-            foreach (var configNode in configs)
-            {
-                if (configNode.name.Replace("_", ".") == partInfoName)
-                {
-                    if (moduleID == "")
-                    {
-                        return Array.FindAll(configNode.config.GetNodes("MODULE"), x => x.GetValue("name") == moduleName).FirstOrDefault();
-                    }
-                    else
-                    {
-                        return Array.FindAll(configNode.config.GetNodes("MODULE"), x => x.GetValue("name") == moduleName && x.GetValue("moduleID") == moduleID).FirstOrDefault();
-                    }
-                }
-            }
-            return null;
-        }
-
         public static List<SoundLayer> CreateSoundLayerGroup(ConfigNode[] groupNodes)
         {
             var group = new List<SoundLayer>();

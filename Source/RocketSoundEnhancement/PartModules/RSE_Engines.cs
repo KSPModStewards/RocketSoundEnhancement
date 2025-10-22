@@ -12,14 +12,18 @@ namespace RocketSoundEnhancement.PartModules
         public Dictionary<string, int> sharedSoundLayers = new Dictionary<string, int>();
         private List<ModuleEngines> engineModules = new List<ModuleEngines>();
 
-        public override void OnStart(StartState state)
+        public RSE_Engines()
         {
-            if(state == StartState.Editor || state == StartState.None)
-                return;
-
             EnableLowpassFilter = true;
             EnableCombFilter = true;
             EnableDistortionFilter = true;
+        }
+
+        public override void OnStart(StartState state)
+        {
+            if (state == StartState.Editor || state == StartState.None)
+                return;
+
             base.OnStart(state);
 
             var soundLayersCache = new HashSet<string>();
