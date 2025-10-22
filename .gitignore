@@ -3,7 +3,7 @@ bin/
 obj/
 Releases/
 *.user
-GameData/RocketSoundEnhancement/RocketSoundEnhancement.dll
-GameData/RocketSoundEnhancement/RocketSoundEnhancement.pdb
-GameData/RocketSoundEnhancement/RocketSoundEnhancement.Unity.dll
-GameData/RocketSoundEnhancement/RocketSoundEnhancement.Unity.pdb
+GameData/RocketSoundEnhancement/Plugins/RocketSoundEnhancement.dll
+GameData/RocketSoundEnhancement/Plugins/RocketSoundEnhancement.pdb
+GameData/RocketSoundEnhancement/Plugins/RocketSoundEnhancement.Unity.dll
+GameData/RocketSoundEnhancement/Plugins/RocketSoundEnhancement.Unity.pdb
