@@ -353,6 +353,5 @@ namespace RocketSoundEnhancement.PartModules
                     .PartConfigNode;
             }
         }
-
     }
 }

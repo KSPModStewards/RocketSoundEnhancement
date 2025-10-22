@@ -21,13 +21,16 @@ namespace RocketSoundEnhancement.PartModules
         private CollidingObject collidingObject;
         private CollisionType collisionType;
 
+        public ShipEffectsCollisions()
+        {
+            PrepareSoundLayers = false;
+            EnableLowpassFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
-
-            PrepareSoundLayers = false;
-            EnableLowpassFilter = true;
             base.OnStart(state);
 
             foreach (var node in PartConfigNode.GetNodes())

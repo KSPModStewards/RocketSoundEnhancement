@@ -11,13 +11,17 @@ namespace RocketSoundEnhancement.PartModules
         private bool isDecoupler;
         private bool hasDecoupled;
 
+        public RSE_Coupler()
+        {
+            EnableLowpassFilter = true;
+            EnableDistortionFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
-            EnableDistortionFilter = true;
             base.OnStart(state);
 
             if(part.GetComponent<ModuleDecouplerBase>()) {

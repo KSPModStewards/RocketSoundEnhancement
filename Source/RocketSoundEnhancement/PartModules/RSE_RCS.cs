@@ -7,12 +7,17 @@ namespace RocketSoundEnhancement.PartModules
     {
         private ModuleRCSFX moduleRCSFX;
 
+        public RSE_RCS()
+        {
+            EnableLowpassFilter = true;
+        }
+
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
             base.OnStart(state);
 
             moduleRCSFX = part.Modules.GetModule<ModuleRCSFX>();

@@ -23,12 +23,16 @@ namespace RocketSoundEnhancement.PartModules
         private float wheelSpeed = 0;
         private float slipDisplacement = 0;
 
+        public RSE_Wheels()
+        {
+            EnableLowpassFilter = true;
+        }
+
         public override void OnStart(StartState state)
         {
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
-            EnableLowpassFilter = true;
             base.OnStart(state);
 
             if (PartConfigNode.HasNode("Motor"))
