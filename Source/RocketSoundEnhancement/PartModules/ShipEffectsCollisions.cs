@@ -17,7 +17,7 @@ namespace RocketSoundEnhancement.PartModules
         private Dictionary<CollisionType, List<SoundLayer>> SoundLayerCollisionGroups = new Dictionary<CollisionType, List<SoundLayer>>();
 
         private bool collided;
-        private Collision collision;
+        private Vector3 collisionRelativeVelocity;
         private CollidingObject collidingObject;
         private CollisionType collisionType;
 
@@ -65,7 +65,7 @@ namespace RocketSoundEnhancement.PartModules
             if (!SoundLayerCollisionGroups.ContainsKey(collisionType)) return;
 
             string collidingObjectString = collidingObject.ToString().ToLower();
-            float control = collision != null ? collision.relativeVelocity.magnitude : 0;
+            float control = collisionRelativeVelocity.magnitude;
 
             foreach (var soundLayer in SoundLayerCollisionGroups[collisionType])
             {
@@ -76,7 +76,8 @@ namespace RocketSoundEnhancement.PartModules
             }
 
             baseLateUpdate:
-            base.LateUpdate();
+			collisionRelativeVelocity = Vector3.zero;
+			base.LateUpdate();
         }
 
         public override void FixedUpdate()
@@ -96,7 +97,7 @@ namespace RocketSoundEnhancement.PartModules
             collided = true;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
             collisionType = CollisionType.CollisionEnter;
-            collision = col;
+            collisionRelativeVelocity = col.relativeVelocity;
         }
 
         public void OnCollisionStay(Collision col)
@@ -104,7 +105,7 @@ namespace RocketSoundEnhancement.PartModules
             collided = true;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
             collisionType = CollisionType.CollisionStay;
-            collision = col;
+            collisionRelativeVelocity = col.relativeVelocity;
         }
 
         public void OnCollisionExit(Collision col)
@@ -112,7 +113,7 @@ namespace RocketSoundEnhancement.PartModules
             collided = false;
             collidingObject = AudioUtility.GetCollidingObject(col.gameObject);
             collisionType = CollisionType.CollisionExit;
-            collision = col;
+            collisionRelativeVelocity = col.relativeVelocity;
         }
 
         public override void OnLoad(ConfigNode node)
