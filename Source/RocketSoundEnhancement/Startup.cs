@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HarmonyLib;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -15,7 +11,7 @@ namespace RocketSoundEnhancement
             AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
             audioConfig.numRealVoices = Settings.VoiceCount;
 
-            if(AudioSettings.Reset(audioConfig)) {
+            if (AudioSettings.Reset(audioConfig)) {
                 Debug.Log("[RSE]: Audio Settings Applied");
                 Debug.Log("[RSE]: DSP Buffer Size : " + AudioSettings.GetConfiguration().dspBufferSize);
                 Debug.Log("[RSE]: Real Voices : " +     AudioSettings.GetConfiguration().numRealVoices);
@@ -23,6 +19,9 @@ namespace RocketSoundEnhancement
                 Debug.Log("[RSE]: Samplerate : " +      AudioSettings.GetConfiguration().sampleRate);
                 Debug.Log("[RSE]: Spearker Mode : " +   AudioSettings.GetConfiguration().speakerMode);
             }
+
+            Harmony harmony = new Harmony("RocketSoundEnhancement");
+            harmony.PatchAll(typeof(Startup).Assembly);
         }
     }
 }
