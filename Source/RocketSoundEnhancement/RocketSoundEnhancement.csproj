@@ -7,26 +7,34 @@
 		<Publicize Include="Assembly-CSharp" IncludeCompilerGeneratedMembers="false" />
 	</ItemGroup>
 
-  <PropertyGroup>
-    <BinariesOutputRelativePath>GameData\RocketSoundEnhancement\Plugins</BinariesOutputRelativePath>
-    <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
-    <GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
-  </PropertyGroup>
+	<PropertyGroup>
+		<BinariesOutputRelativePath>GameData\RocketSoundEnhancement\Plugins</BinariesOutputRelativePath>
+		<GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
+		<GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj">
-      <Project>{5dff0176-7ba8-49f4-8155-f5d9b37d7d3d}</Project>
-      <Name>RocketSoundEnhancement.Unity</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference
+			Include="..\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj">
+			<Project>{5dff0176-7ba8-49f4-8155-f5d9b37d7d3d}</Project>
+			<Name>RocketSoundEnhancement.Unity</Name>
+			<Private>False</Private>
+		</ProjectReference>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="KSPBuildTools" Version="0.0.4" />
+
+		<Reference Include="HarmonyKSP">
+			<HintPath>$(KSPRoot)/GameData/000_Harmony/0Harmony.dll</HintPath>
+			<Private>false</Private>
+			<KSPAssembly>HarmonyKSP</KSPAssembly>
+			<KSPAssemblyVersion>2.2.1</KSPAssemblyVersion>
+		</Reference>
 	</ItemGroup>
 
 </Project>

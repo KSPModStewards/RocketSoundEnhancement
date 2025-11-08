@@ -58,6 +58,7 @@ namespace RocketSoundEnhancement
         private float lastInteriorCutoffFreq;
 
         private HashSet<int> managedSources = new HashSet<int>();
+        internal readonly List<AudioSource> newAudioSources = new List<AudioSource>();
 
         private bool gamePaused;
 
@@ -65,6 +66,8 @@ namespace RocketSoundEnhancement
         {
             if (instance != null) { Destroy(instance); }
 
+            // Get all the currently existing audio sources.
+            newAudioSources.AddRange((AudioSource[])FindObjectsOfType(typeof(AudioSource)));
             instance = this;
         }
 
@@ -162,27 +165,42 @@ namespace RocketSoundEnhancement
             return Mathf.Lerp(1, windModulation, Mathf.Clamp01((float)FlightGlobals.ActiveVessel.atmDensity));
         }
 
+        bool GetNextAudioSource(out AudioSource source)
+        {
+            if (newAudioSources.Count == 0)
+            {
+                source = null;
+                return false;
+            }
+
+            // This makes sure things still work even if a new audio source ends
+            // up being created while we are running.
+            source = newAudioSources[newAudioSources.Count - 1];
+            newAudioSources.RemoveAt(newAudioSources.Count - 1);
+            return true;
+        }
+
         public void LateUpdate()
         {
             if (gamePaused || !HighLogic.LoadedSceneIsFlight) return;
 
             if (!Settings.EnableAudioEffects || Mixer == null)
             {
-                // TODO: some kind of latch so this only runs once
-                foreach (var sourceObj in FindObjectsOfType(typeof(AudioSource)))
+                while (GetNextAudioSource(out var source))
                 {
-                    AudioSource source = (AudioSource)sourceObj;
-                    if (source != null) source.outputAudioMixerGroup = null;
+                    if (source != null)
+                        source.outputAudioMixerGroup = null;
                 }
+
                 managedSources.Clear();
-                
                 return;
             }
 
             // NOTE: the generic (strongly typed) version of FindObjectsOfType is slower!
-            foreach (var sourceObj in FindObjectsOfType(typeof(AudioSource)))
+            while (GetNextAudioSource(out var source))
             {
-                AudioSource source = (AudioSource)sourceObj;
+                if (source == null)
+                    continue;
 
                 int instanceID = source.GetInstanceID();
 
