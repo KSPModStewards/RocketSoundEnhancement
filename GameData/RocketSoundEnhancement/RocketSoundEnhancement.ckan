@@ -1,0 +1,17 @@
+{
+	"spec_version": 1,
+	"identifier": "RocketSoundEnhancement",
+	"author": [
+		"ensou04",
+		"JonnyOThan",
+		"steamroller"
+	],
+	"depends": [
+		{
+			"name": "RocketSoundEnhancement-Config"
+		},
+		{
+			"name": "Harmony2"
+		}
+	]
+}

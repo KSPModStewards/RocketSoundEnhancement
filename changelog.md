@@ -8,8 +8,8 @@
 
 ### Changes
 
-- Improved scene switch performance (thanks @Phantomical )
-- Improved in-flight performance (thanks @Phantomical )
+- Improved scene switch performance (thanks steamroller)
+- Improved in-flight performance (thanks steamroller)
 - Fixed NRE spam when audio sources are destroyed in certain ways
 - Fixed NRE spam when a RSE_RCS module was added to a part that doesn't have RCS
 
