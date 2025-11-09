@@ -34,6 +34,7 @@
 			<Private>false</Private>
 			<KSPAssembly>HarmonyKSP</KSPAssembly>
 			<KSPAssemblyVersion>2.2.1</KSPAssemblyVersion>
+			<CKANIdentifier>Harmony2</CKANIdentifier>
 		</Reference>
 	</ItemGroup>
 

@@ -5,9 +5,13 @@ on:
     branches: [ "master" ]
     paths:
       - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.props'
   pull_request:
     paths:
       - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.props'
   workflow_dispatch:
   workflow_call:
 
@@ -15,4 +19,4 @@ jobs:
   build:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@0.0.4
     with:
-      dependency-identifiers: Harmony2
+      use-ckan: true
