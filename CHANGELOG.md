@@ -13,6 +13,7 @@
 - Fixed NRE spam when audio sources are destroyed in certain ways
 - Fixed NRE spam when a RSE_RCS module was added to a part that doesn't have RCS
 
+
 ## [0.9.11] - 03-25-24
 
 - Fixed missing reentry and wind sounds
