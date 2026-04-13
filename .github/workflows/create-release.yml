@@ -1,0 +1,13 @@
+name: create-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-string:
+        type: string
+        required: true
+
+jobs:
+  create-release:
+    uses: KSPModdingLibs/KSPBuildTools/.github/workflows/create-release.yml@1.1.1
+      version-string: ${{ inputs.version-string }}
