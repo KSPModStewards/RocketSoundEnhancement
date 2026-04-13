@@ -5,8 +5,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference
-			Include="..\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj">
+		<ProjectReference Include="..\RocketSoundEnhancement.Unity\RocketSoundEnhancement.Unity.csproj">
 			<Project>{5dff0176-7ba8-49f4-8155-f5d9b37d7d3d}</Project>
 			<Name>RocketSoundEnhancement.Unity</Name>
 			<Private>False</Private>
@@ -32,7 +31,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="KSPBuildTools" Version="0.0.4" />
+		<PackageReference Include="KSPBuildTools" Version="1.1.1" />
+		<PackageReference Include="KSPCommunityLib" Version="0.1.1" />
 
 		<Publicize Include="Assembly-CSharp" IncludeCompilerGeneratedMembers="false" />
 	</ItemGroup>

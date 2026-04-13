@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="Source/RocketSoundEnhancement.version.props" />
   <PropertyGroup>
-    <BinariesOutputRelativePath>GameData\RocketSoundEnhancement\Plugins</BinariesOutputRelativePath>
-    <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
+    <KSPBT_ModRoot>$(MSBuildThisFileDirectory)/GameData/RocketSoundEnhancement/</KSPBT_ModRoot>
+    <KSPBT_ModPluginFolder>Plugins</KSPBT_ModPluginFolder>
   </PropertyGroup>
 </Project>
