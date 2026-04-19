@@ -56,6 +56,16 @@ namespace RocketSoundEnhancement.PartModules
 
             if (PrepareSoundLayers)
             {
+                // This likely doesn't work correctly with B9PS if it's trying to modify the module config
+                if (part != null && part.partInfo != null && part.partInfo.partPrefab != null)
+                {
+                    int moduleIndex = part.Modules.IndexOf(this);
+                    var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Module;
+
+                    SoundLayerGroups = prefab.SoundLayerGroups;
+                    SoundLayers = prefab.SoundLayers;
+                }
+
                 if (SoundLayerGroups.Count > 0)
                 {
                     foreach (var soundLayerGroup in SoundLayerGroups)
@@ -302,13 +312,8 @@ namespace RocketSoundEnhancement.PartModules
             base.OnLoad(node);
 
             // This likely doesn't work correctly with B9PS which can call OnLoad at unexpected times
-            if (part?.partInfo?.partPrefab != null)
+            if (HighLogic.LoadedScene != GameScenes.LOADING)
             {
-                int moduleIndex = part.Modules.IndexOf(this);
-                var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Module;
-
-                SoundLayerGroups = prefab.SoundLayerGroups;
-                SoundLayers = prefab.SoundLayers;
                 return;
             }
 
