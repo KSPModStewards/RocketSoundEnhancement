@@ -1,4 +1,6 @@
 ﻿using HarmonyLib;
+using KSPCommunityLib.Logging;
+using System;
 using UnityEngine;
 
 namespace RocketSoundEnhancement
@@ -12,16 +14,24 @@ namespace RocketSoundEnhancement
             audioConfig.numRealVoices = Settings.VoiceCount;
 
             if (AudioSettings.Reset(audioConfig)) {
-                Debug.Log("[RSE]: Audio Settings Applied");
-                Debug.Log("[RSE]: DSP Buffer Size : " + AudioSettings.GetConfiguration().dspBufferSize);
-                Debug.Log("[RSE]: Real Voices : " +     AudioSettings.GetConfiguration().numRealVoices);
-                Debug.Log("[RSE]: Virtual Voices : " +  AudioSettings.GetConfiguration().numVirtualVoices);
-                Debug.Log("[RSE]: Samplerate : " +      AudioSettings.GetConfiguration().sampleRate);
-                Debug.Log("[RSE]: Spearker Mode : " +   AudioSettings.GetConfiguration().speakerMode);
+                Log.Debug("[RSE]: Audio Settings Applied");
+                Log.Debug("[RSE]: DSP Buffer Size : " + AudioSettings.GetConfiguration().dspBufferSize);
+                Log.Debug("[RSE]: Real Voices : " +     AudioSettings.GetConfiguration().numRealVoices);
+                Log.Debug("[RSE]: Virtual Voices : " +  AudioSettings.GetConfiguration().numVirtualVoices);
+                Log.Debug("[RSE]: Samplerate : " +      AudioSettings.GetConfiguration().sampleRate);
+                Log.Debug("[RSE]: Spearker Mode : " +   AudioSettings.GetConfiguration().speakerMode);
             }
 
-            Harmony harmony = new Harmony("RocketSoundEnhancement");
-            harmony.PatchAll(typeof(Startup).Assembly);
+            try
+            {
+                Harmony harmony = new Harmony("RocketSoundEnhancement");
+                harmony.PatchAll(typeof(Startup).Assembly);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Harmony patching failed!");
+                Log.Exception(ex);
+            }
         }
     }
 }
