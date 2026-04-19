@@ -33,6 +33,14 @@ namespace RocketSoundEnhancement.PartModules
             if (state == StartState.Editor || state == StartState.None)
                 return;
 
+            // This likely doesn't work correctly with B9PS if it's trying to modify the module config
+            if (part != null && part.partInfo != null && part.partInfo.partPrefab != null)
+            {
+                int moduleIndex = part.modules.IndexOf(this);
+                var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Wheels;
+                offLoadVolumeScale = prefab.offLoadVolumeScale;
+            }
+
             base.OnStart(state);
 
             moduleWheel = part.GetComponent<ModuleWheelBase>();
@@ -176,11 +184,8 @@ namespace RocketSoundEnhancement.PartModules
         {
             base.OnLoad(node);
 
-            if (part?.partInfo?.partPrefab != null)
+            if (HighLogic.LoadedScene != GameScenes.LOADING)
             {
-                int moduleIndex = part.modules.IndexOf(this);
-                var prefab = part.partInfo.partPrefab.modules[moduleIndex] as RSE_Wheels;
-				offLoadVolumeScale = prefab.offLoadVolumeScale;
                 return;
             }
 
