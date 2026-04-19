@@ -39,7 +39,6 @@ namespace RocketSoundEnhancement.PartModules
                 var prefab = part.partInfo.partPrefab.modules[moduleIndex] as ShipEffectsCollisions;
 
                 SoundLayerCollisionGroups = prefab.SoundLayerCollisionGroups;
-                return;
             }
 
             base.OnStart(state);
