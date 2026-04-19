@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fix duplicate EVA module being added to the base EVA parts
+- Fix audio not working in cases where OnLoad was never called for the part, e.g. when going EVA
+- Fix all sounds being muted when Slo-Mo physics warp rates are selected in BetterTimeWarp
+
 ## 0.9.12 - 2026-04-13
 
 ### New Dependencies

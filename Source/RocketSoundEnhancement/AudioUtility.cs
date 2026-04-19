@@ -261,7 +261,11 @@ namespace RocketSoundEnhancement
         {
             if (source == null || !source.isActiveAndEnabled) return;
 
-            if (TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last()) source.volume = 0;
+            // NOTE: BetterTimeWarp's Slo-Mo mode has the physics warp rates in *decreasing* order, which causes this code to mute all engines when it's enabled
+            if (TimeWarp.CurrentRate > 1 && TimeWarp.CurrentRate > TimeWarp.fetch.physicsWarpRates.Last())
+            {
+                source.volume = 0;
+            }
 
             source.outputAudioMixerGroup = GetMixerGroup(channel, isActiveVessel);
             switch (channel)
