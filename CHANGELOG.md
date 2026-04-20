@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.9.13 - 2026-04-20
 
 - Fix audio not working in cases where OnLoad was never called for the part, e.g. when going EVA
 - Fix all sounds being muted when Slo-Mo physics warp rates are selected in BetterTimeWarp
+
 
 ## 0.9.12 - 2026-04-13
 
