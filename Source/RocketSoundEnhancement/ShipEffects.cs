@@ -54,10 +54,41 @@ namespace RocketSoundEnhancement
         private bool airSimFiltersEnabled;
         private float pastAngularVelocity;
         private float pastAcceleration;
+		
+		// ShipEffectsConfig is loaded once globally and AudioClip references from GameDatabase are immutable so
+        // SoundLayer objects can be safely shared between all vessels. Pre-building the groups once avoids ~120ms per-vessel cost of
+        // GameDatabase.GetAudioClip lookups during separation events that spawn multiple new vessels in one frame.
+		private static Dictionary<PhysicsControl, List<SoundLayer>> cachedSoundLayerGroups;
+
+        private static Dictionary<PhysicsControl, List<SoundLayer>> GetCachedSoundLayerGroups()
+        {
+            if (cachedSoundLayerGroups != null) return cachedSoundLayerGroups;
+
+            cachedSoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
+            if (ShipEffectsConfig.ShipEffectsConfigNode.Count == 0) return cachedSoundLayerGroups;
+
+            foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
+            {
+                if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
+                if (!node.HasNode("SOUNDLAYER")) continue;
+
+                var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
+                if (soundLayers.Count == 0) continue;
+
+                if (cachedSoundLayerGroups.ContainsKey(controlGroup))
+                    cachedSoundLayerGroups[controlGroup].AddRange(soundLayers);
+                else
+                    cachedSoundLayerGroups.Add(controlGroup, soundLayers);
+            }
+
+            return cachedSoundLayerGroups;
+        }
 
         public bool Initialize()
         {
             if (vessel == null) return false;
+
+			SoundLayerGroups.Clear();
 
             if (vessel.Parts.Count <= 1)
             {
@@ -66,23 +97,15 @@ namespace RocketSoundEnhancement
                 return true;
             }
 
-            if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
+            foreach (var pair in GetCachedSoundLayerGroups())
             {
-                foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
-                {
-                    if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
-                    if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;
+                if (ignoreVessel && pair.Key != PhysicsControl.SONICBOOM) continue;
 
-                    if (node.HasNode("SOUNDLAYER"))
-                    {
-                        var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                        if (soundLayers.Count == 0) continue;
-
-                        if (SoundLayerGroups.ContainsKey(controlGroup)) { SoundLayerGroups[controlGroup].AddRange(soundLayers); continue; }
-
-                        SoundLayerGroups.Add(controlGroup, soundLayers);
-                    }
-                }
+                // Copy the list — SoundLayer instances are shared, but the per-vessel SoundLayerGroups dictionary owns its own list to avoid leaking hypothetical future mutations across vessels.
+                if (SoundLayerGroups.ContainsKey(pair.Key))
+                    SoundLayerGroups[pair.Key].AddRange(pair.Value);
+                else
+                    SoundLayerGroups.Add(pair.Key, new List<SoundLayer>(pair.Value));
             }
 
             audioParent = new GameObject($"ShipEffects_{vessel.vesselName}");
@@ -178,6 +201,7 @@ namespace RocketSoundEnhancement
         public void Unload()
         {
             Destroy(audioParent);
+			SoundLayerGroups.Clear();
             Sources.Clear();
             AirSimFilters.Clear();
             volumeControls.Clear();
