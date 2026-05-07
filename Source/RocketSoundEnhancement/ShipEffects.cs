@@ -65,6 +65,16 @@ namespace RocketSoundEnhancement
                 noPhysics = vessel.Parts[0].PhysicsSignificance == 1;
                 return true;
             }
+			// Debris vessels have no engines, no command modules — nothing useful to play sounds for.
+            // Reinit if vesselType promotes (e.g. kerbal boards a stranded vessel).
+            if (vessel.vesselType == VesselType.Debris ||
+                vessel.vesselType == VesselType.SpaceObject ||
+                vessel.vesselType == VesselType.DroppedPart)
+            {
+                ignoreVessel = true;
+                GameEvents.onVesselTypeChange.Add(OnVesselTypeChange);
+                return true;
+            }
 
             if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
             {
@@ -138,6 +148,19 @@ namespace RocketSoundEnhancement
 
             CacheVesselData();
         }
+		private void OnVesselTypeChange(Vessel data, VesselType newType)
+        {
+            if (data != vessel) return;
+            if (newType == VesselType.Debris ||
+                newType == VesselType.SpaceObject ||
+                newType == VesselType.DroppedPart)
+                return;
+
+            GameEvents.onVesselTypeChange.Remove(OnVesselTypeChange);
+            ignoreVessel = false;
+            initialized = false;
+            initialized = Initialize();
+        }
 
 		IEnumerator SetupAudioSources(List<SoundLayer> soundLayers, bool hasAirSimFilter = true)
         {
@@ -189,6 +212,7 @@ namespace RocketSoundEnhancement
             asteroidParts.Clear();
             engines.Clear();
             GameEvents.onVesselPartCountChanged.Remove(OnVesselPartCountChanged);
+			GameEvents.onVesselTypeChange.Remove(OnVesselTypeChange);
 
             initialized = false;
         }
