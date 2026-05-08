@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Improve performance when new vessels are created (e.g. during RUD) - thanks @bimo1d
+- Improve performance by avoiding reparsing the ShipEffects config when new vessels are created (e.g. during RUD) - thanks @bimo1d
 - Avoid creating ShipEffects VesselModule for debris, spaceobjects, and dropped items - thanks @bimo1d
+- Improve performance when vessel part count changes several times in a frame (e.g. during RUD)
+- Avoid creating ShipEffects VesselModule for non-loaded vessels
 
 ## 0.9.13 - 2026-04-20
 

@@ -101,6 +101,7 @@ namespace RocketSoundEnhancement
 
         List<Part> asteroidParts = new List<Part>();
         List<ModuleEngines> engines = new List<ModuleEngines>();
+        bool vesselDataDirty = false;
 
         void CacheVesselData()
 		{
@@ -121,13 +122,14 @@ namespace RocketSoundEnhancement
                     }
                 }
             }
+            vesselDataDirty = false;
         }
 
         private void OnVesselPartCountChanged(Vessel data)
         {
             if (data != vessel) return;
 
-            CacheVesselData();
+            vesselDataDirty = true;
         }
 
 		IEnumerator SetupAudioSources(List<SoundLayer> soundLayers, bool hasAirSimFilter = true)
@@ -270,6 +272,11 @@ namespace RocketSoundEnhancement
         {
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
+
+            if (vesselDataDirty)
+            {
+                CacheVesselData();
+            }
 
             foreach (var soundLayerGroup in ShipEffectsConfig.SoundLayerGroups)
             {
