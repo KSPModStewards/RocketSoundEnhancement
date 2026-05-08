@@ -42,7 +42,6 @@ namespace RocketSoundEnhancement
         public float MachAngle = 90;
         public float MachPass = 1;
         public float Mach = 0;
-        public Vector3 MachTipCameraNormal = new Vector3();
 
         public bool SonicBoomed = true;
 
@@ -224,33 +223,49 @@ namespace RocketSoundEnhancement
             {
                 VesselMass -= excludedPart.mass;
             }
+        }
+
+        private void LateUpdate()
+        {
+            if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
+                return;
+
+            if (vesselDataDirty)
+            {
+                CacheVesselData();
+            }
 
             if (Settings.EnableAudioEffects && Settings.MufflerQuality > AudioMufflerQuality.Normal)
             {
                 bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
-                var velocityDirection = vessel.velocityD.normalized * vessel.vesselSize.magnitude;
-                var positionTip = transform.position + velocityDirection;
-                var positionRear = transform.position - velocityDirection;
-                var vesselTip = transform.position;
-                var vesselRear = transform.position;
-                RaycastHit tipHit;
-
-                if (Physics.BoxCast(positionTip, vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
-                {
-                    vesselTip = tipHit.point;
-                }
-
                 var cameraPosition = CameraManager.GetCurrentCamera().transform.position;
 
-                MachTipCameraNormal = (cameraPosition - vesselTip).normalized;
                 Distance = Vector3.Distance(cameraPosition, transform.position);  
-                Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
 
                 if (isActiveAndInternal)
                 {
                     Angle = 0;
                     MachPass = 1;
                     return;
+                }
+
+                if (vessel.staticPressurekPa > 0)
+                {
+                    var vesselTip = transform.position;
+                    var velocityDirection = vessel.velocityD.normalized * vessel.vesselSize.magnitude;
+                    var positionTip = transform.position + velocityDirection;
+                    Vector3 MachTipCameraNormal = (cameraPosition - vesselTip).normalized;
+                    RaycastHit tipHit;
+
+                    if (Physics.BoxCast(positionTip, vessel.vesselSize, -vessel.velocityD.normalized, out tipHit))
+                    {
+                        vesselTip = tipHit.point;
+                    }
+                    Angle = (1 + Vector3.Dot(MachTipCameraNormal, vessel.velocityD.normalized)) * 90;
+                }
+                else
+                {
+                    Angle = 0;
                 }
 
                 if (Settings.MachEffectsAmount > 0)
@@ -265,17 +280,6 @@ namespace RocketSoundEnhancement
                     MachAngle = 90;
                     MachPass = 1;
                 }
-            }
-        }
-
-        private void LateUpdate()
-        {
-            if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
-                return;
-
-            if (vesselDataDirty)
-            {
-                CacheVesselData();
             }
 
             foreach (var soundLayerGroup in ShipEffectsConfig.SoundLayerGroups)

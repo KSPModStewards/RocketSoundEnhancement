@@ -8,6 +8,7 @@
 - Avoid creating ShipEffects VesselModule for non-loaded vessels
 - Cache references to mixer groups
 - Fix NRE in comb filter during launch or when parts break
+- Reduce performance cost of mach effects when not in atmosphere
 
 ## 0.9.13 - 2026-04-20
 

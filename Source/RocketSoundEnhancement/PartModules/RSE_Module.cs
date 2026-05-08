@@ -184,8 +184,6 @@ namespace RocketSoundEnhancement.PartModules
                     doppler = Mathf.MoveTowards(doppler, dopplerRaw, 0.5f * TimeWarp.fixedDeltaTime);
                 }
 
-                angle = (1 + Vector3.Dot(vessel.GetComponent<ShipEffects>().MachTipCameraNormal, (transform.up + vessel.velocityD).normalized)) * 90;
-
                 bool isActiveAndInternal = vessel == FlightGlobals.ActiveVessel && InternalCamera.Instance.isActive;
                 if (isActiveAndInternal)
                 {
@@ -194,10 +192,14 @@ namespace RocketSoundEnhancement.PartModules
                     return;
                 }
 
+                var shipEffects = vessel.GetComponent<ShipEffects>();
+
+                angle = shipEffects.Angle;
+
                 if (Settings.MachEffectsAmount > 0)
                 {
-                    mach = Mathf.Clamp01(vessel.GetComponent<ShipEffects>().Mach);
-                    machAngle = vessel.GetComponent<ShipEffects>().MachAngle;
+                    mach = Mathf.Clamp01(shipEffects.Mach);
+                    machAngle = shipEffects.MachAngle;
                     machPass = Mathf.Lerp(1, Settings.MachEffectLowerLimit, Mathf.Clamp01(angle / machAngle) * mach);
                 }
                 else
