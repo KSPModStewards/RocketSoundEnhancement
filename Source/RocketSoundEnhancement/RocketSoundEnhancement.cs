@@ -41,16 +41,22 @@ namespace RocketSoundEnhancement
                 if (mixer == null)
                 {
                     mixer = RSE_Bundle.LoadAsset("RSE_Mixer") as AudioMixer;
+
+                    MasterMixer = mixer.FindMatchingGroups("Master")[0];
+                    FocusMixer = mixer.FindMatchingGroups("FOCUS")[0];
+                    InteriorMixer = mixer.FindMatchingGroups("INTERIOR")[0];
+                    ExteriorMixer = mixer.FindMatchingGroups("EXTERIOR")[0];
+
                     Debug.Log("[RSE]: AudioMixer loaded");
                 }
                 return mixer;
             }
         }
 
-        public static AudioMixerGroup MasterMixer { get { return Mixer.FindMatchingGroups("Master")[0]; } }
-        public static AudioMixerGroup FocusMixer { get { return Mixer.FindMatchingGroups("FOCUS")[0]; } }
-        public static AudioMixerGroup InteriorMixer { get { return Mixer.FindMatchingGroups("INTERIOR")[0]; } }
-        public static AudioMixerGroup ExteriorMixer { get { return Mixer.FindMatchingGroups("EXTERIOR")[0]; } }
+        public static AudioMixerGroup MasterMixer { get; private set; }
+        public static AudioMixerGroup FocusMixer { get; private set; }
+        public static AudioMixerGroup InteriorMixer { get; private set; }
+        public static AudioMixerGroup ExteriorMixer { get; private set; }
 
         public float MufflingFrequency { get; set; } = 30000;
         public float FocusMufflingFrequency { get; set; } = 30000;
