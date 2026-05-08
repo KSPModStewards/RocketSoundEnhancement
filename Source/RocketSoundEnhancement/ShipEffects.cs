@@ -54,6 +54,11 @@ namespace RocketSoundEnhancement
         private float pastAngularVelocity;
         private float pastAcceleration;
 
+        public override Activation GetActivation()
+        {
+            return Activation.FlightScene | Activation.LoadedVessels;
+        }
+
         public bool Initialize()
         {
             if (vessel == null) return false;

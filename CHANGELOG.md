@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Improve performance when new vessels are created (e.g. during RUD) - thanks @bimo1d
+- Avoid creating ShipEffects VesselModule for debris, spaceobjects, and dropped items - thanks @bimo1d
+
 ## 0.9.13 - 2026-04-20
 
 - Fix audio not working in cases where OnLoad was never called for the part, e.g. when going EVA
