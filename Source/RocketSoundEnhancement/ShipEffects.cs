@@ -65,6 +65,15 @@ namespace RocketSoundEnhancement
                 return true;
             }
 
+            // Debris vessels have no engines, no command modules — nothing useful to play sounds for.
+            if (vessel.vesselType == VesselType.Debris ||
+                vessel.vesselType == VesselType.SpaceObject ||
+                vessel.vesselType == VesselType.DroppedPart)
+            {
+                ignoreVessel = true;
+                return true;
+            }
+
             audioParent = new GameObject($"ShipEffects_{vessel.vesselName}");
             audioParent.transform.rotation = vessel.transform.rotation;
             audioParent.transform.position = vessel.transform.position;
