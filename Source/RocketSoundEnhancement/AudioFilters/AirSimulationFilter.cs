@@ -177,7 +177,7 @@ namespace RocketSoundEnhancement.AudioFilters
         {
             for (int i = 0; i < data.Length; i++)
             {
-                if (EnableCombFilter)
+                if (buffer != null)
                 {
                     data[i] = CombFilter(data[i]);
                 }

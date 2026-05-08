@@ -7,6 +7,7 @@
 - Improve performance when vessel part count changes several times in a frame (e.g. during RUD)
 - Avoid creating ShipEffects VesselModule for non-loaded vessels
 - Cache references to mixer groups
+- Fix NRE in comb filter during launch or when parts break
 
 ## 0.9.13 - 2026-04-20
 
