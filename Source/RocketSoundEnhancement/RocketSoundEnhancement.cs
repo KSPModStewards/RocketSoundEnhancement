@@ -74,7 +74,9 @@ namespace RocketSoundEnhancement
         private void Start()
         {
             Settings.Load();
+            // TODO: eventually separate these; we don't need to Load every time we enter the flight scene!
             ShipEffectsConfig.Load();
+            ShipEffectsConfig.Start();
 
             ApplySettings();
 

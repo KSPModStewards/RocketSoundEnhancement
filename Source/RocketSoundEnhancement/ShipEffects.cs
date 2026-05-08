@@ -21,7 +21,6 @@ namespace RocketSoundEnhancement
             }
         }
 
-        public Dictionary<PhysicsControl, List<SoundLayer>> SoundLayerGroups = new Dictionary<PhysicsControl, List<SoundLayer>>();
         public Dictionary<string, AudioSource> Sources = new Dictionary<string, AudioSource>();
         public Dictionary<string, AirSimulationFilter> AirSimFilters = new Dictionary<string, AirSimulationFilter>();
 
@@ -66,37 +65,15 @@ namespace RocketSoundEnhancement
                 return true;
             }
 
-            if (ShipEffectsConfig.ShipEffectsConfigNode.Count > 0)
-            {
-                foreach (var node in ShipEffectsConfig.ShipEffectsConfigNode)
-                {
-                    if (!Enum.TryParse(node.name, true, out PhysicsControl controlGroup)) continue;
-                    if (ignoreVessel && controlGroup != PhysicsControl.SONICBOOM) continue;
-
-                    if (node.HasNode("SOUNDLAYER"))
-                    {
-                        var soundLayers = AudioUtility.CreateSoundLayerGroup(node.GetNodes("SOUNDLAYER"));
-                        if (soundLayers.Count == 0) continue;
-
-                        if (SoundLayerGroups.ContainsKey(controlGroup)) { SoundLayerGroups[controlGroup].AddRange(soundLayers); continue; }
-
-                        SoundLayerGroups.Add(controlGroup, soundLayers);
-                    }
-                }
-            }
-
             audioParent = new GameObject($"ShipEffects_{vessel.vesselName}");
             audioParent.transform.rotation = vessel.transform.rotation;
             audioParent.transform.position = vessel.transform.position;
             audioParent.transform.parent = vessel.transform;
 
-            if (SoundLayerGroups.Count > 0)
+            foreach (var soundLayerGroup in ShipEffectsConfig.SoundLayerGroups)
             {
-                foreach (var soundLayerGroup in SoundLayerGroups)
-                {
-                    var hasAirSimFilter = soundLayerGroup.Key != PhysicsControl.SONICBOOM;
-                    StartCoroutine(SetupAudioSources(soundLayerGroup.Value, hasAirSimFilter));
-                }
+                var hasAirSimFilter = soundLayerGroup.Key != PhysicsControl.SONICBOOM;
+                StartCoroutine(SetupAudioSources(soundLayerGroup.Value, hasAirSimFilter));
             }
 
             CacheVesselData();
@@ -280,40 +257,43 @@ namespace RocketSoundEnhancement
             if (!HighLogic.LoadedSceneIsFlight || !initialized || gamePaused || noPhysics || ignoreVessel)
                 return;
 
-            if (SoundLayerGroups.ContainsKey(PhysicsControl.SONICBOOM) && Settings.MachEffectsAmount > 0 && !MapView.MapCamera.isActiveAndEnabled)
+            foreach (var soundLayerGroup in ShipEffectsConfig.SoundLayerGroups)
             {
-                if (MachPass > Settings.MachEffectLowerLimit && !SonicBoomed)
+                if (soundLayerGroup.Key == PhysicsControl.SONICBOOM)
                 {
-                    SonicBoomed = true;
-                    if (vessel.mach > 1)
+                    if (Settings.MachEffectsAmount > 0 && !MapView.MapCamera.isActiveAndEnabled)
                     {
-                        foreach (var soundLayer in SoundLayerGroups[PhysicsControl.SONICBOOM])
+                        if (MachPass > Settings.MachEffectLowerLimit && !SonicBoomed)
                         {
-                            if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
-                                continue;
+                            SonicBoomed = true;
+                            if (vessel.mach > 1)
+                            {
+                                foreach (var soundLayer in soundLayerGroup.Value)
+                                {
+                                    if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
+                                        continue;
 
-                            PlaySonicBoom(soundLayer);
+                                    PlaySonicBoom(soundLayer);
+                                }
+                            }
+                        }
+
+                        if (MachPass == Settings.MachEffectLowerLimit)
+                        {
+                            SonicBoomed = false;
                         }
                     }
                 }
-
-                if (MachPass == Settings.MachEffectLowerLimit)
+                else
                 {
-                    SonicBoomed = false;
-                }
-            }
+                    float rawControl = GetPhysicsController(soundLayerGroup.Key);
+                    foreach (var soundLayer in soundLayerGroup.Value)
+                    {
+                        if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
+                            continue;
 
-            foreach (var soundLayerGroup in SoundLayerGroups)
-            {
-                if (soundLayerGroup.Key == PhysicsControl.SONICBOOM) continue;
-
-                float rawControl = GetPhysicsController(soundLayerGroup.Key);
-                foreach (var soundLayer in soundLayerGroup.Value)
-                {
-                    if (vessel.crewableParts == 0 && soundLayer.channel == FXChannel.Interior)
-                        continue;
-
-                    PlaySoundLayer(soundLayer, rawControl);
+                        PlaySoundLayer(soundLayer, rawControl);
+                    }
                 }
             }
 
