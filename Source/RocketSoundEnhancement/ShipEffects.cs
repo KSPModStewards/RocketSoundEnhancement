@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Collections;
 using System.Collections.Generic;
 using RocketSoundEnhancement.AudioFilters;
@@ -28,6 +30,10 @@ namespace RocketSoundEnhancement
         private Dictionary<string, float> pitchControls = new Dictionary<string, float>();
 
         private GameObject audioParent;
+
+        // HullcamVDS support
+        private delegate PartModule HullCam();
+        HullCam GetHullCam;
 
         //  Physics Sound Effects Controls
         public float Acceleration;
@@ -91,8 +97,21 @@ namespace RocketSoundEnhancement
 
             CacheVesselData();
 
-            GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountChanged);
+            DynamicMethod currentHC = new DynamicMethod("CurrentHullCamera", typeof(PartModule), new Type[] { });
+            Type hcType = Type.GetType("HullcamVDS.MuMechModuleHullCamera, HullcamVDSContinued");
+            ILGenerator il = currentHC.GetILGenerator();
 
+            // Returning null if HullCamVDS not found saves us from having to do another check
+            if (hcType != null)
+                il.Emit(OpCodes.Ldsfld, hcType.GetField("sCurrentCamera", BindingFlags.Public | BindingFlags.Static));
+            else
+                il.Emit(OpCodes.Ldnull);
+
+            il.Emit(OpCodes.Ret);
+
+            GetHullCam = (HullCam)currentHC.CreateDelegate(typeof(HullCam));
+
+            GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountChanged);
             GameEvents.onGamePause.Add(OnGamePause);
             GameEvents.onGameUnpause.Add(OnGameUnpause);
             return true;
@@ -345,9 +364,33 @@ namespace RocketSoundEnhancement
             }
         }
 
+        private bool IsVesselCam(Vessel v)
+        {
+            PartModule hullCam = GetHullCam();
+
+            // HullCam can be on any vessel not just active
+            if (hullCam != null)
+            {
+                if (hullCam.vessel == v)
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                if (InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void PlaySonicBoom(SoundLayer soundLayer)
         {
-            if (InternalCamera.Instance.isActive && vessel == FlightGlobals.ActiveVessel)
+            // Hull cameras shouldn't hear sonic booms, isVesselCam is only used here because other active vessel checks relate to interior camera
+            if (IsVesselCam(vessel))
                 return;
 
             PlaySoundLayer(soundLayer, Mathf.Min(Mach, 4) , false, true);
