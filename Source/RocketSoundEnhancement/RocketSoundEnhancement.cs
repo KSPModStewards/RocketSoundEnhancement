@@ -86,6 +86,7 @@ namespace RocketSoundEnhancement
 
             ApplySettings();
 
+            AudioListener.volume = GameSettings.MASTER_VOLUME;
             FlightCamera.fetch.AudioListenerGameObject.transform.localPosition = Vector3.zero;
             FlightCamera.fetch.AudioListenerGameObject.transform.localEulerAngles = Vector3.zero;
 
